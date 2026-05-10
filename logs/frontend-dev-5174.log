@@ -1,0 +1,253 @@
+
+> @workspace/erp@0.0.0 dev C:\Users\USER\Downloads\LocalHelper New One\frontend
+> vite --config vite.config.ts --host 0.0.0.0
+
+
+  [32m[1mVITE[22m v7.3.2[39m  [2mready in [0m[1m1200[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5174[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.1.5:[1m5174[22m/[39m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+[2m9:38:24 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/dashboard.tsx, /src/index.css[22m
+[2m9:38:24 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/dashboard.tsx, /src/index.css[22m
+[2m9:39:21 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/purchase-orders.tsx, /src/index.css[22m
+[2m9:39:26 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/purchase-orders.tsx, /src/index.css[22m
+[2m9:39:31 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/purchase-orders.tsx, /src/index.css[22m
+[2m9:39:44 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/invoices.tsx, /src/index.css[22m
+[2m9:40:01 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/ledger.tsx, /src/index.css[22m
+[2m9:40:16 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/customers.tsx, /src/index.css[22m
+[2m9:40:29 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/employees.tsx, /src/index.css[22m
+[2m9:40:41 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/projects.tsx, /src/index.css[22m
+[2m9:42:10 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/inventory.tsx, /src/index.css[22m
+[2m9:42:11 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/inventory.tsx, /src/index.css[22m
+[2m9:42:30 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/revenue.tsx, /src/index.css[22m
+[2m9:42:31 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/expenses.tsx, /src/index.css[22m
+[2m9:42:31 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/payroll.tsx, /src/index.css[22m
+[2m9:42:51 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/reports.tsx, /src/index.css[22m
+[2m9:42:57 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/work-allocation.tsx, /src/index.css[22m
+[2m9:43:10 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/attendance.tsx, /src/index.css[22m
+[2m9:43:16 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/leaves.tsx, /src/index.css[22m
+[2m9:43:19 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/leaves.tsx, /src/index.css[22m
+[2m9:43:26 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/vendors.tsx, /src/index.css[22m
+[2m9:43:34 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/inventory-movements.tsx, /src/index.css[22m
+[2m9:48:16 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/employees/stats[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m9:48:16 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/employees?page=1&limit=12[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m9:48:17 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/leaves?page=1&limit=10[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m9:48:17 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/employees?page=1&limit=100[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m9:48:19 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/customers?page=1&limit=10[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m9:48:19 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/invoices/stats[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m9:48:19 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/projects?page=1&limit=100[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m9:48:19 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/customers?page=1&limit=100[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m9:48:19 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/invoices?page=1&limit=10[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m9:48:20 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/projects?page=1&limit=100[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m9:48:24 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/ledger/projects/1[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m10:33:22 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m10:33:36 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/contexts/ThemeUIContext.tsx, /src/index.css[22m
+[2m10:33:37 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/contexts/ThemeUIContext.tsx[22m Could not Fast Refresh ("useThemeUI" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m10:33:37 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[2m10:33:41 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m10:33:46 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/contexts/ThemeUIContext.tsx, /src/index.css[22m
+[2m10:33:47 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/contexts/ThemeUIContext.tsx[22m Could not Fast Refresh ("useThemeUI" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m10:33:47 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[2m10:33:56 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/settings.tsx, /src/index.css[22m
+[2m10:34:03 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/ui/table.tsx[22m
+[2m10:34:09 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/ui/dialog.tsx[22m
+[2m10:34:13 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/ui/sheet.tsx[22m
+[2m10:34:21 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/ui/select.tsx[22m
+[2m10:34:28 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/ui/toast.tsx[22m
+[2m10:34:32 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/inventory.tsx, /src/pages/revenue.tsx, /src/pages/attendance.tsx, /src/pages/change-password.tsx, /src/pages/purchase-orders.tsx, /src/pages/employees.tsx, /src/pages/vendors.tsx, /src/pages/reminders.tsx, /src/pages/customers.tsx, /src/pages/ledger.tsx, /src/pages/login.tsx, /src/components/ui/toaster.tsx, /src/pages/employee-detail.tsx, /src/pages/settings.tsx, /src/pages/inventory-movements.tsx, /src/pages/notifications.tsx, /src/pages/expenses.tsx, /src/pages/payroll.tsx, /src/pages/profile.tsx, /src/pages/roles.tsx, /src/pages/leaves.tsx, /src/pages/invoices.tsx, /src/pages/documents.tsx, /src/pages/work-allocation.tsx, /src/pages/projects.tsx[22m
+[2m10:34:58 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/invoices.tsx, /src/index.css[22m
+[2m10:35:11 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/purchase-orders.tsx, /src/index.css[22m
+[2m10:35:18 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/purchase-orders.tsx, /src/index.css[22m
+[2m10:35:23 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/invoices.tsx, /src/index.css[22m
+[2m10:37:51 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/login.tsx, /src/index.css[22m
+[2m10:38:07 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/login.tsx, /src/index.css[22m
+[2m10:38:14 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/layout/AppLayout.tsx, /src/index.css[22m
+[2m10:56:32 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/reports/employees[39m
+Error: read ECONNRESET
+    at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[2m10:56:32 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/reports/projects[39m
+Error: read ECONNRESET
+    at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[2m10:56:32 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/reports/inventory[39m
+Error: read ECONNRESET
+    at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[2m10:56:32 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/reports/revenue[39m
+Error: read ECONNRESET
+    at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[2m10:56:32 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/reports/expenses[39m
+Error: read ECONNRESET
+    at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[2m10:56:32 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/reports/payroll[39m
+Error: read ECONNRESET
+    at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[2m10:56:33 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/dashboard/recent-activity[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m10:56:33 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/dashboard/summary[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m10:56:33 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/dashboard/monthly-financials[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m10:56:33 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/expenses/stats[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m10:56:34 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/reports/summary[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m10:56:34 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/reports/employees[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m10:56:34 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/reports/payroll[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m10:56:34 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/reports/expenses[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m10:56:34 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/reports/revenue[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m10:56:34 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/reports/inventory[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m10:56:34 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/reports/projects[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m10:56:35 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/payroll/stats[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m10:56:35 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/payroll?page=1&limit=10&month=2026-04[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m10:56:35 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/employees?page=1&limit=100[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m10:56:36 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/leaves?page=1&limit=10[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m10:56:36 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/employees?page=1&limit=100[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m11:02:58 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/leaves?page=1&limit=10[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m11:02:58 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/employees?page=1&limit=100[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m11:02:58 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/payroll/stats[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m11:02:58 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/payroll?page=1&limit=10&month=2026-04[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m11:02:58 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/employees?page=1&limit=100[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m11:03:00 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/attendance/monthly?month=2024-01[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m11:03:00 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/attendance/summary?month=2024-01[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m11:03:04 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/employees/stats[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m11:03:04 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/employees?page=1&limit=12[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m11:03:05 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/attendance/monthly?month=2024-01[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m11:03:05 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/attendance/summary?month=2024-01[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m11:03:06 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/payroll/stats[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m11:03:06 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/payroll?page=1&limit=10&month=2026-04[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m11:03:06 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/employees?page=1&limit=100[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m11:03:08 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/leaves?page=1&limit=10[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m11:03:08 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/employees?page=1&limit=100[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m11:03:09 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/employees?page=1&limit=200&status=active[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m11:03:09 pm[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/projects?page=1&limit=100[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+ ELIFECYCLE  Command failed with exit code 4294967295.

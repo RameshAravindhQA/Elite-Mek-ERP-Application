@@ -1,0 +1,2529 @@
+
+> @workspace/api-server@0.0.0 dev C:\Users\USER\Downloads\LocalHelper New One\backend
+> cross-env NODE_ENV=development pnpm run build && pnpm run start
+
+
+> @workspace/api-server@0.0.0 build C:\Users\USER\Downloads\LocalHelper New One\backend
+> node ./build.mjs
+
+
+  dist\index.mjs                   6.9mb
+  dist\pino-worker.mjs           153.2kb
+  dist\pino-file.mjs             141.9kb
+  dist\pino-pretty.mjs           114.3kb
+  dist\thread-stream-worker.mjs    7.3kb
+  ...and 5 more output files...
+
+Done in 4832ms
+
+> @workspace/api-server@0.0.0 start C:\Users\USER\Downloads\LocalHelper New One\backend
+> node --enable-source-maps ./dist/index.mjs
+
+[21:55:46.132] [32mINFO[39m (19160): [36mServer listening[39m
+    [35mport[39m: 3000
+[21:55:50.224] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 1,
+      "method": "GET",
+      "url": "/api/healthz"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 31
+[21:55:58.704] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 2,
+      "method": "POST",
+      "url": "/api/auth/login"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 259
+[21:55:59.037] [31mERROR[39m (19160): [36mFailed query: select count(*) from "purchase_orders" left join "customers" on "purchase_orders"."customer_id" = "customers"."id"
+params: [39m
+    [35mreq[39m: {
+      "id": 3,
+      "method": "GET",
+      "url": "/api/purchase-orders"
+    }
+    err: {
+      "type": "_DrizzleQueryError",
+      "message": "Failed query: select count(*) from \"purchase_orders\" left join \"customers\" on \"purchase_orders\".\"customer_id\" = \"customers\".\"id\"\nparams: : column purchase_orders.customer_id does not exist",
+      "stack":
+          Error: Failed query: select count(*) from "purchase_orders" left join "customers" on "purchase_orders"."customer_id" = "customers"."id"
+          params: 
+              at NodePgPreparedQuery.queryWithCache (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\drizzle-orm@0.45.2_@types+pg@8.18.0_pg@8.20.0\node_modules\src\pg-core\session.ts:73:11)
+              at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+              at async <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\drizzle-orm@0.45.2_@types+pg@8.18.0_pg@8.20.0\node_modules\src\node-postgres\session.ts:154:19)
+              at async <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\backend\src\routes\purchase_orders.ts:37:25)
+          caused by: error: column purchase_orders.customer_id does not exist
+              at <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\pg-pool@3.13.0_pg@8.20.0\node_modules\pg-pool\index.js:45:11)
+              at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+              at async <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\drizzle-orm@0.45.2_@types+pg@8.18.0_pg@8.20.0\node_modules\src\node-postgres\session.ts:161:13)
+              at async NodePgPreparedQuery.queryWithCache (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\drizzle-orm@0.45.2_@types+pg@8.18.0_pg@8.20.0\node_modules\src\pg-core\session.ts:71:12)
+              at async <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\drizzle-orm@0.45.2_@types+pg@8.18.0_pg@8.20.0\node_modules\src\node-postgres\session.ts:154:19)
+              at async <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\backend\src\routes\purchase_orders.ts:37:25)
+      "query": "select count(*) from \"purchase_orders\" left join \"customers\" on \"purchase_orders\".\"customer_id\" = \"customers\".\"id\"",
+      "params": []
+    }
+[21:55:59.479] [32mINFO[39m (19160): [36mrequest errored[39m
+    [35mreq[39m: {
+      "id": 3,
+      "method": "GET",
+      "url": "/api/purchase-orders"
+    }
+    [35mres[39m: {
+      "statusCode": 500
+    }
+    [35mresponseTime[39m: 491
+    err: {
+      "type": "Error",
+      "message": "failed with status code 500",
+      "stack":
+          Error: failed with status code 500
+              at onResFinished (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\pino-http@10.5.0\node_modules\pino-http\logger.js:115:39)
+              at ServerResponse.onResponseComplete (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\pino-http@10.5.0\node_modules\pino-http\logger.js:178:14)
+              at ServerResponse.emit (node:events:520:35)
+              at onFinish (node:_http_outgoing:1026:10)
+              at callback (node:internal/streams/writable:764:21)
+              at afterWrite (node:internal/streams/writable:708:5)
+              at afterWriteTick (node:internal/streams/writable:694:10)
+              at process.processTicksAndRejections (node:internal/process/task_queues:88:21)
+    }
+[21:56:07.200] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 4,
+      "method": "GET",
+      "url": "/api/reports/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 422
+[21:56:07.369] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 8,
+      "method": "GET",
+      "url": "/api/reports/expenses"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 568
+[21:56:07.399] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 9,
+      "method": "GET",
+      "url": "/api/reports/revenue"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 593
+[21:56:07.461] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 5,
+      "method": "GET",
+      "url": "/api/reports/summary"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 673
+[21:56:07.494] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 7,
+      "method": "GET",
+      "url": "/api/reports/payroll"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 698
+[21:56:07.577] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 6,
+      "method": "GET",
+      "url": "/api/reports/inventory"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 784
+[21:56:07.668] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 10,
+      "method": "GET",
+      "url": "/api/reports/projects"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 28
+[21:56:07.782] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 12,
+      "method": "GET",
+      "url": "/api/dashboard/monthly-financials"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 33
+[21:56:07.803] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 11,
+      "method": "GET",
+      "url": "/api/dashboard/summary"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 75
+[21:56:07.841] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 13,
+      "method": "GET",
+      "url": "/api/dashboard/recent-activity"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 23
+[21:56:07.851] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 14,
+      "method": "GET",
+      "url": "/api/expenses/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 15
+[21:56:14.283] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 16,
+      "method": "GET",
+      "url": "/api/projects"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 16
+[21:56:14.290] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 15,
+      "method": "GET",
+      "url": "/api/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 25
+[21:56:14.867] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 17,
+      "method": "GET",
+      "url": "/api/leaves"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 19
+[21:56:15.176] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 18,
+      "method": "GET",
+      "url": "/api/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 15
+[21:56:15.596] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 19,
+      "method": "GET",
+      "url": "/api/payroll/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 19
+[21:56:15.606] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 21,
+      "method": "GET",
+      "url": "/api/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 25
+[21:56:15.617] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 20,
+      "method": "GET",
+      "url": "/api/payroll"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 38
+[21:56:15.877] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 22,
+      "method": "GET",
+      "url": "/api/attendance/monthly"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 31
+[21:56:15.955] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 23,
+      "method": "GET",
+      "url": "/api/attendance/summary"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 12
+[21:56:16.172] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 24,
+      "method": "GET",
+      "url": "/api/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 10
+[21:56:16.500] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 25,
+      "method": "GET",
+      "url": "/api/employees/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 17
+[21:56:17.421] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 28,
+      "method": "GET",
+      "url": "/api/reports/payroll"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 60
+[21:56:17.428] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 30,
+      "method": "GET",
+      "url": "/api/reports/revenue"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 63
+[21:56:17.437] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 27,
+      "method": "GET",
+      "url": "/api/reports/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 78
+[21:56:17.444] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 29,
+      "method": "GET",
+      "url": "/api/reports/expenses"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 81
+[21:56:17.448] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 26,
+      "method": "GET",
+      "url": "/api/reports/summary"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 92
+[21:56:17.591] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 31,
+      "method": "GET",
+      "url": "/api/reports/inventory"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 224
+[21:56:17.757] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 32,
+      "method": "GET",
+      "url": "/api/reports/projects"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 15
+[21:56:18.003] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 34,
+      "method": "GET",
+      "url": "/api/dashboard/monthly-financials"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 18
+[21:56:18.006] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 35,
+      "method": "GET",
+      "url": "/api/dashboard/recent-activity"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 19
+[21:56:18.042] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 36,
+      "method": "GET",
+      "url": "/api/expenses/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 25
+[21:56:18.053] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 33,
+      "method": "GET",
+      "url": "/api/dashboard/summary"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 70
+[22:20:02.679] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 38,
+      "method": "GET",
+      "url": "/api/attendance/summary"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 292
+[22:20:02.703] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 37,
+      "method": "GET",
+      "url": "/api/attendance/monthly"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 327
+[22:20:02.745] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 39,
+      "method": "GET",
+      "url": "/api/payroll/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 17
+[22:20:03.067] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 41,
+      "method": "GET",
+      "url": "/api/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 19
+[22:20:03.078] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 40,
+      "method": "GET",
+      "url": "/api/payroll"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 32
+[22:20:04.057] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 42,
+      "method": "GET",
+      "url": "/api/reports/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 65
+[22:20:04.102] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 43,
+      "method": "GET",
+      "url": "/api/reports/summary"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 107
+[22:20:04.539] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 46,
+      "method": "GET",
+      "url": "/api/reports/revenue"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 538
+[22:20:04.548] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 48,
+      "method": "GET",
+      "url": "/api/reports/projects"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 16
+[22:20:04.565] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 47,
+      "method": "GET",
+      "url": "/api/reports/inventory"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 563
+[22:20:04.598] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 45,
+      "method": "GET",
+      "url": "/api/reports/expenses"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 599
+[22:20:04.835] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 44,
+      "method": "GET",
+      "url": "/api/reports/payroll"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 838
+[22:20:06.478] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 50,
+      "method": "GET",
+      "url": "/api/projects"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 52
+[22:20:06.481] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 49,
+      "method": "GET",
+      "url": "/api/invoices/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 57
+[22:20:06.485] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 51,
+      "method": "GET",
+      "url": "/api/customers"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 56
+[22:20:06.499] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 52,
+      "method": "GET",
+      "url": "/api/invoices"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 69
+[22:20:08.846] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 53,
+      "method": "GET",
+      "url": "/api/revenue/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 12
+[22:20:09.148] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 54,
+      "method": "GET",
+      "url": "/api/revenue"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 11
+[22:20:17.017] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 55,
+      "method": "GET",
+      "url": "/api/vendors"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 23
+[22:20:18.362] [31mERROR[39m (19160): [36mFailed query: select count(*) from "purchase_orders" left join "customers" on "purchase_orders"."customer_id" = "customers"."id"
+params: [39m
+    [35mreq[39m: {
+      "id": 56,
+      "method": "GET",
+      "url": "/api/purchase-orders"
+    }
+    err: {
+      "type": "_DrizzleQueryError",
+      "message": "Failed query: select count(*) from \"purchase_orders\" left join \"customers\" on \"purchase_orders\".\"customer_id\" = \"customers\".\"id\"\nparams: : column purchase_orders.customer_id does not exist",
+      "stack":
+          Error: Failed query: select count(*) from "purchase_orders" left join "customers" on "purchase_orders"."customer_id" = "customers"."id"
+          params: 
+              at NodePgPreparedQuery.queryWithCache (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\drizzle-orm@0.45.2_@types+pg@8.18.0_pg@8.20.0\node_modules\src\pg-core\session.ts:73:11)
+              at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+              at async <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\drizzle-orm@0.45.2_@types+pg@8.18.0_pg@8.20.0\node_modules\src\node-postgres\session.ts:154:19)
+              at async <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\backend\src\routes\purchase_orders.ts:37:25)
+          caused by: error: column purchase_orders.customer_id does not exist
+              at <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\pg-pool@3.13.0_pg@8.20.0\node_modules\pg-pool\index.js:45:11)
+              at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+              at async <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\drizzle-orm@0.45.2_@types+pg@8.18.0_pg@8.20.0\node_modules\src\node-postgres\session.ts:161:13)
+              at async NodePgPreparedQuery.queryWithCache (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\drizzle-orm@0.45.2_@types+pg@8.18.0_pg@8.20.0\node_modules\src\pg-core\session.ts:71:12)
+              at async <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\drizzle-orm@0.45.2_@types+pg@8.18.0_pg@8.20.0\node_modules\src\node-postgres\session.ts:154:19)
+              at async <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\backend\src\routes\purchase_orders.ts:37:25)
+      "query": "select count(*) from \"purchase_orders\" left join \"customers\" on \"purchase_orders\".\"customer_id\" = \"customers\".\"id\"",
+      "params": []
+    }
+[22:20:18.364] [32mINFO[39m (19160): [36mrequest errored[39m
+    [35mreq[39m: {
+      "id": 56,
+      "method": "GET",
+      "url": "/api/purchase-orders"
+    }
+    [35mres[39m: {
+      "statusCode": 500
+    }
+    [35mresponseTime[39m: 26
+    err: {
+      "type": "Error",
+      "message": "failed with status code 500",
+      "stack":
+          Error: failed with status code 500
+              at onResFinished (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\pino-http@10.5.0\node_modules\pino-http\logger.js:115:39)
+              at ServerResponse.onResponseComplete (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\pino-http@10.5.0\node_modules\pino-http\logger.js:178:14)
+              at ServerResponse.emit (node:events:520:35)
+              at onFinish (node:_http_outgoing:1026:10)
+              at callback (node:internal/streams/writable:764:21)
+              at afterWrite (node:internal/streams/writable:708:5)
+              at afterWriteTick (node:internal/streams/writable:694:10)
+              at process.processTicksAndRejections (node:internal/process/task_queues:88:21)
+    }
+[22:20:18.787] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 58,
+      "method": "GET",
+      "url": "/api/projects"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 132
+[22:20:18.800] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 57,
+      "method": "GET",
+      "url": "/api/customers"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 147
+[22:20:21.667] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 59,
+      "method": "GET",
+      "url": "/api/vendors"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 10
+[22:20:54.733] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 60,
+      "method": "GET",
+      "url": "/api/customers"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 127
+[22:21:10.369] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 61,
+      "method": "GET",
+      "url": "/api/revenue/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 109
+[22:21:10.379] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 62,
+      "method": "GET",
+      "url": "/api/revenue"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 114
+[22:21:12.672] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 63,
+      "method": "GET",
+      "url": "/api/invoices/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 9
+[22:21:13.008] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 64,
+      "method": "GET",
+      "url": "/api/projects"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 31
+[22:21:13.012] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 65,
+      "method": "GET",
+      "url": "/api/customers"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 33
+[22:21:13.099] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 66,
+      "method": "GET",
+      "url": "/api/invoices"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 116
+[22:22:03.660] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 67,
+      "method": "POST",
+      "url": "/api/invoices"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 171
+[22:22:03.736] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 68,
+      "method": "GET",
+      "url": "/api/invoices"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 15
+[22:22:08.597] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 69,
+      "method": "GET",
+      "url": "/api/projects"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 10
+[22:22:11.240] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 70,
+      "method": "GET",
+      "url": "/api/ledger/projects/1"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 18
+[22:22:21.243] [31mERROR[39m (19160): [36mENOENT: no such file or directory, open 'C:\Users\USER\Downloads\LocalHelper New One\backend\dist\data\Helvetica.afm'[39m
+    [35mreq[39m: {
+      "id": 71,
+      "method": "GET",
+      "url": "/api/ledger/projects/1/pdf"
+    }
+    err: {
+      "type": "Error",
+      "message": "ENOENT: no such file or directory, open 'C:\\Users\\USER\\Downloads\\LocalHelper New One\\backend\\dist\\data\\Helvetica.afm'",
+      "stack":
+          Error: ENOENT: no such file or directory, open 'C:\Users\USER\Downloads\LocalHelper New One\backend\dist\data\Helvetica.afm'
+              at Object.readFileSync (node:fs:440:20)
+              at Object.Helvetica (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\pdfkit@0.18.0\node_modules\pdfkit\lib\font\standard.js:20:15)
+              at new constructor (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\pdfkit@0.18.0\node_modules\pdfkit\lib\font\standard.js:60:53)
+              at PDFFontFactory.open (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\pdfkit@0.18.0\node_modules\pdfkit\lib\font_factory.js:11:16)
+              at PDFDocument2.font (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\pdfkit@0.18.0\node_modules\pdfkit\lib\mixins\fonts.js:85:33)
+              at PDFDocument2.initFonts (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\pdfkit@0.18.0\node_modules\pdfkit\lib\mixins\fonts.js:49:12)
+              at new constructor (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\pdfkit@0.18.0\node_modules\pdfkit\lib\document.js:97:10)
+              at <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\backend\src\lib\pdf.ts:140:17)
+              at new Promise (<anonymous>)
+              at generateLedgerProjectPdf (C:\Users\USER\Downloads\LocalHelper New One\backend\src\lib\pdf.ts:139:10)
+      "errno": -4058,
+      "code": "ENOENT",
+      "syscall": "open",
+      "path": "C:\\Users\\USER\\Downloads\\LocalHelper New One\\backend\\dist\\data\\Helvetica.afm"
+    }
+[22:22:21.248] [32mINFO[39m (19160): [36mrequest errored[39m
+    [35mreq[39m: {
+      "id": 71,
+      "method": "GET",
+      "url": "/api/ledger/projects/1/pdf"
+    }
+    [35mres[39m: {
+      "statusCode": 500
+    }
+    [35mresponseTime[39m: 29
+    err: {
+      "type": "Error",
+      "message": "failed with status code 500",
+      "stack":
+          Error: failed with status code 500
+              at onResFinished (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\pino-http@10.5.0\node_modules\pino-http\logger.js:115:39)
+              at ServerResponse.onResponseComplete (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\pino-http@10.5.0\node_modules\pino-http\logger.js:178:14)
+              at ServerResponse.emit (node:events:520:35)
+              at onFinish (node:_http_outgoing:1026:10)
+              at callback (node:internal/streams/writable:764:21)
+              at afterWrite (node:internal/streams/writable:708:5)
+              at afterWriteTick (node:internal/streams/writable:694:10)
+              at process.processTicksAndRejections (node:internal/process/task_queues:88:21)
+    }
+[22:22:55.449] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 73,
+      "method": "GET",
+      "url": "/api/dashboard/monthly-financials"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 155
+[22:22:55.468] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 72,
+      "method": "GET",
+      "url": "/api/dashboard/summary"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 178
+[22:22:55.475] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 75,
+      "method": "GET",
+      "url": "/api/expenses/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 177
+[22:22:55.512] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 74,
+      "method": "GET",
+      "url": "/api/dashboard/recent-activity"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 215
+[22:33:38.329] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 77,
+      "method": "GET",
+      "url": "/api/auth/me"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 115
+[22:33:38.342] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 76,
+      "method": "GET",
+      "url": "/api/reminders/due-today"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 131
+[22:33:38.739] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 79,
+      "method": "GET",
+      "url": "/api/dashboard/monthly-financials"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 22
+[22:33:38.761] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 78,
+      "method": "GET",
+      "url": "/api/dashboard/summary"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 52
+[22:33:38.895] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 81,
+      "method": "GET",
+      "url": "/api/expenses/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 163
+[22:33:38.908] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 82,
+      "method": "GET",
+      "url": "/api/reminders"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 174
+[22:33:38.945] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 80,
+      "method": "GET",
+      "url": "/api/dashboard/recent-activity"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 215
+[22:33:48.239] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 84,
+      "method": "GET",
+      "url": "/api/auth/me"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 15
+[22:33:48.241] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 83,
+      "method": "GET",
+      "url": "/api/reminders/due-today"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 19
+[22:33:48.748] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 87,
+      "method": "GET",
+      "url": "/api/dashboard/recent-activity"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 21
+[22:33:48.752] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 86,
+      "method": "GET",
+      "url": "/api/dashboard/monthly-financials"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 28
+[22:33:48.758] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 88,
+      "method": "GET",
+      "url": "/api/expenses/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 21
+[22:33:48.772] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 89,
+      "method": "GET",
+      "url": "/api/reminders"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 17
+[22:33:48.852] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 85,
+      "method": "GET",
+      "url": "/api/dashboard/summary"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 140
+[22:34:24.198] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 90,
+      "method": "GET",
+      "url": "/api/customers"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 331
+[22:34:25.337] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 91,
+      "method": "GET",
+      "url": "/api/payroll/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 29
+[22:34:25.649] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 92,
+      "method": "GET",
+      "url": "/api/payroll"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 36
+[22:34:25.869] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 93,
+      "method": "GET",
+      "url": "/api/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 254
+[22:34:26.627] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 95,
+      "method": "GET",
+      "url": "/api/reports/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 33
+[22:34:26.643] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 94,
+      "method": "GET",
+      "url": "/api/reports/summary"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 52
+[22:34:27.002] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 96,
+      "method": "GET",
+      "url": "/api/reports/payroll"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 405
+[22:34:27.010] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 100,
+      "method": "GET",
+      "url": "/api/reports/projects"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 20
+[22:34:27.158] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 98,
+      "method": "GET",
+      "url": "/api/reports/expenses"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 557
+[22:34:27.329] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 97,
+      "method": "GET",
+      "url": "/api/reports/revenue"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 730
+[22:34:27.405] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 99,
+      "method": "GET",
+      "url": "/api/reports/inventory"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 800
+[22:34:27.626] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 104,
+      "method": "GET",
+      "url": "/api/expenses/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 14
+[22:34:27.627] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 103,
+      "method": "GET",
+      "url": "/api/dashboard/recent-activity"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 18
+[22:34:27.628] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 102,
+      "method": "GET",
+      "url": "/api/dashboard/monthly-financials"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 22
+[22:34:27.630] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 101,
+      "method": "GET",
+      "url": "/api/dashboard/summary"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 47
+[22:34:29.565] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 108,
+      "method": "GET",
+      "url": "/api/reports/expenses"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 34
+[22:34:29.577] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 106,
+      "method": "GET",
+      "url": "/api/reports/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 49
+[22:34:29.593] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 107,
+      "method": "GET",
+      "url": "/api/reports/payroll"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 64
+[22:34:29.597] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 105,
+      "method": "GET",
+      "url": "/api/reports/summary"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 72
+[22:34:29.728] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 109,
+      "method": "GET",
+      "url": "/api/reports/revenue"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 16
+[22:34:29.766] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 110,
+      "method": "GET",
+      "url": "/api/reports/inventory"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 12
+[22:34:30.012] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 111,
+      "method": "GET",
+      "url": "/api/reports/projects"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 15
+[22:34:30.776] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 112,
+      "method": "GET",
+      "url": "/api/attendance/monthly"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 18
+[22:34:30.777] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 113,
+      "method": "GET",
+      "url": "/api/attendance/summary"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 17
+[22:34:32.014] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 114,
+      "method": "GET",
+      "url": "/api/payroll/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 16
+[22:34:32.022] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 115,
+      "method": "GET",
+      "url": "/api/payroll"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 21
+[22:34:32.025] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 116,
+      "method": "GET",
+      "url": "/api/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 22
+[22:34:33.444] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 117,
+      "method": "GET",
+      "url": "/api/customers"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 12
+[22:34:33.941] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 118,
+      "method": "GET",
+      "url": "/api/customers"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 11
+[22:34:33.943] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 119,
+      "method": "GET",
+      "url": "/api/reminders/due-today"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 12
+[22:34:34.511] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 120,
+      "method": "GET",
+      "url": "/api/invoices/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 11
+[22:34:34.517] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 121,
+      "method": "GET",
+      "url": "/api/projects"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 15
+[22:34:34.519] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 122,
+      "method": "GET",
+      "url": "/api/customers"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 16
+[22:34:34.828] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 123,
+      "method": "GET",
+      "url": "/api/invoices"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 14
+[22:34:37.370] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 124,
+      "method": "GET",
+      "url": "/api/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 13
+[22:34:37.373] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 125,
+      "method": "GET",
+      "url": "/api/projects"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 15
+[22:34:40.524] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 126,
+      "method": "GET",
+      "url": "/api/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 12
+[22:34:40.859] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 127,
+      "method": "GET",
+      "url": "/api/employees/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 10
+[22:34:41.831] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 128,
+      "method": "GET",
+      "url": "/api/attendance/monthly"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 15
+[22:34:42.148] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 129,
+      "method": "GET",
+      "url": "/api/attendance/summary"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 7
+[22:34:46.352] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 130,
+      "method": "GET",
+      "url": "/api/payroll/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 12
+[22:34:46.354] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 131,
+      "method": "GET",
+      "url": "/api/payroll"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 12
+[22:34:46.623] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 132,
+      "method": "GET",
+      "url": "/api/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 280
+[22:35:03.720] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 133,
+      "method": "GET",
+      "url": "/api/employees/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 291
+[22:35:03.754] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 134,
+      "method": "GET",
+      "url": "/api/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 317
+[22:38:16.430] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 135,
+      "method": "GET",
+      "url": "/api/reminders"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 188
+[22:41:14.667] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 138,
+      "method": "GET",
+      "url": "/api/dashboard/recent-activity"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 294
+[22:41:14.721] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 139,
+      "method": "GET",
+      "url": "/api/expenses/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 346
+[22:41:14.755] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 137,
+      "method": "GET",
+      "url": "/api/dashboard/monthly-financials"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 385
+[22:41:14.816] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 136,
+      "method": "GET",
+      "url": "/api/dashboard/summary"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 449
+[22:41:15.764] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 140,
+      "method": "GET",
+      "url": "/api/reports/summary"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 18
+[22:41:16.091] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 141,
+      "method": "GET",
+      "url": "/api/reports/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 31
+[22:41:16.093] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 143,
+      "method": "GET",
+      "url": "/api/reports/expenses"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 28
+[22:41:16.103] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 142,
+      "method": "GET",
+      "url": "/api/reports/payroll"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 42
+[22:41:16.105] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 144,
+      "method": "GET",
+      "url": "/api/reports/revenue"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 39
+[22:41:16.126] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 146,
+      "method": "GET",
+      "url": "/api/reports/projects"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 12
+[22:41:16.214] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 145,
+      "method": "GET",
+      "url": "/api/reports/inventory"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 146
+[22:41:18.389] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 147,
+      "method": "GET",
+      "url": "/api/employees/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 13
+[22:41:18.391] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 148,
+      "method": "GET",
+      "url": "/api/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 14
+[22:41:18.878] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 149,
+      "method": "GET",
+      "url": "/api/attendance/monthly"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 14
+[22:41:19.182] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 150,
+      "method": "GET",
+      "url": "/api/attendance/summary"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 8
+[22:41:20.239] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 151,
+      "method": "GET",
+      "url": "/api/payroll/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 14
+[22:41:20.245] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 153,
+      "method": "GET",
+      "url": "/api/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 17
+[22:41:20.247] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 152,
+      "method": "GET",
+      "url": "/api/payroll"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 21
+[22:41:21.058] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 154,
+      "method": "GET",
+      "url": "/api/leaves"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 14
+[22:41:21.371] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 155,
+      "method": "GET",
+      "url": "/api/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 9
+[22:41:22.121] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 156,
+      "method": "GET",
+      "url": "/api/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 14
+[22:41:22.126] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 157,
+      "method": "GET",
+      "url": "/api/projects"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 17
+[22:41:22.933] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 158,
+      "method": "GET",
+      "url": "/api/customers"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 13
+[22:41:23.931] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 159,
+      "method": "GET",
+      "url": "/api/invoices/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 19
+[22:41:23.934] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 160,
+      "method": "GET",
+      "url": "/api/projects"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 21
+[22:41:23.937] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 161,
+      "method": "GET",
+      "url": "/api/customers"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 23
+[22:41:23.952] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 162,
+      "method": "GET",
+      "url": "/api/invoices"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 37
+[22:41:25.119] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 163,
+      "method": "GET",
+      "url": "/api/revenue/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 10
+[22:41:25.430] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 164,
+      "method": "GET",
+      "url": "/api/revenue"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 5
+[22:41:27.446] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 165,
+      "method": "GET",
+      "url": "/api/projects"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 7
+[22:41:28.256] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 166,
+      "method": "GET",
+      "url": "/api/vendors"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 11
+[22:41:29.321] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 168,
+      "method": "GET",
+      "url": "/api/customers"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 19
+[22:41:29.325] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 169,
+      "method": "GET",
+      "url": "/api/projects"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 20
+[22:41:29.332] [31mERROR[39m (19160): [36mFailed query: select count(*) from "purchase_orders" left join "customers" on "purchase_orders"."customer_id" = "customers"."id"
+params: [39m
+    [35mreq[39m: {
+      "id": 167,
+      "method": "GET",
+      "url": "/api/purchase-orders"
+    }
+    err: {
+      "type": "_DrizzleQueryError",
+      "message": "Failed query: select count(*) from \"purchase_orders\" left join \"customers\" on \"purchase_orders\".\"customer_id\" = \"customers\".\"id\"\nparams: : column purchase_orders.customer_id does not exist",
+      "stack":
+          Error: Failed query: select count(*) from "purchase_orders" left join "customers" on "purchase_orders"."customer_id" = "customers"."id"
+          params: 
+              at NodePgPreparedQuery.queryWithCache (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\drizzle-orm@0.45.2_@types+pg@8.18.0_pg@8.20.0\node_modules\src\pg-core\session.ts:73:11)
+              at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+              at async <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\drizzle-orm@0.45.2_@types+pg@8.18.0_pg@8.20.0\node_modules\src\node-postgres\session.ts:154:19)
+              at async <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\backend\src\routes\purchase_orders.ts:37:25)
+          caused by: error: column purchase_orders.customer_id does not exist
+              at <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\pg-pool@3.13.0_pg@8.20.0\node_modules\pg-pool\index.js:45:11)
+              at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+              at async <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\drizzle-orm@0.45.2_@types+pg@8.18.0_pg@8.20.0\node_modules\src\node-postgres\session.ts:161:13)
+              at async NodePgPreparedQuery.queryWithCache (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\drizzle-orm@0.45.2_@types+pg@8.18.0_pg@8.20.0\node_modules\src\pg-core\session.ts:71:12)
+              at async <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\drizzle-orm@0.45.2_@types+pg@8.18.0_pg@8.20.0\node_modules\src\node-postgres\session.ts:154:19)
+              at async <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\backend\src\routes\purchase_orders.ts:37:25)
+      "query": "select count(*) from \"purchase_orders\" left join \"customers\" on \"purchase_orders\".\"customer_id\" = \"customers\".\"id\"",
+      "params": []
+    }
+[22:41:29.338] [32mINFO[39m (19160): [36mrequest errored[39m
+    [35mreq[39m: {
+      "id": 167,
+      "method": "GET",
+      "url": "/api/purchase-orders"
+    }
+    [35mres[39m: {
+      "statusCode": 500
+    }
+    [35mresponseTime[39m: 40
+    err: {
+      "type": "Error",
+      "message": "failed with status code 500",
+      "stack":
+          Error: failed with status code 500
+              at onResFinished (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\pino-http@10.5.0\node_modules\pino-http\logger.js:115:39)
+              at ServerResponse.onResponseComplete (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\pino-http@10.5.0\node_modules\pino-http\logger.js:178:14)
+              at ServerResponse.emit (node:events:520:35)
+              at onFinish (node:_http_outgoing:1026:10)
+              at callback (node:internal/streams/writable:764:21)
+              at afterWrite (node:internal/streams/writable:708:5)
+              at afterWriteTick (node:internal/streams/writable:694:10)
+              at process.processTicksAndRejections (node:internal/process/task_queues:88:21)
+    }
+[22:41:36.875] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 170,
+      "method": "GET",
+      "url": "/api/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 13
+[22:41:37.194] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 171,
+      "method": "GET",
+      "url": "/api/projects"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 8
+[22:41:38.002] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 172,
+      "method": "GET",
+      "url": "/api/leaves"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 13
+[22:41:38.006] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 173,
+      "method": "GET",
+      "url": "/api/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 15
+[22:41:38.264] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 174,
+      "method": "GET",
+      "url": "/api/payroll/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 6
+[22:41:38.478] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 176,
+      "method": "GET",
+      "url": "/api/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 12
+[22:41:38.481] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 175,
+      "method": "GET",
+      "url": "/api/payroll"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 17
+[22:41:38.724] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 177,
+      "method": "GET",
+      "url": "/api/attendance/monthly"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 11
+[22:41:39.033] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 178,
+      "method": "GET",
+      "url": "/api/attendance/summary"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 7
+[22:46:15.470] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 180,
+      "method": "GET",
+      "url": "/api/projects"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 175
+[22:46:15.509] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 179,
+      "method": "GET",
+      "url": "/api/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 217
+[22:46:17.382] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 181,
+      "method": "GET",
+      "url": "/api/leaves"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 29
+[22:46:17.687] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 182,
+      "method": "GET",
+      "url": "/api/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 9
+[22:46:18.477] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 184,
+      "method": "GET",
+      "url": "/api/payroll"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 29
+[22:46:18.479] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 183,
+      "method": "GET",
+      "url": "/api/payroll/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 34
+[22:46:18.668] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 185,
+      "method": "GET",
+      "url": "/api/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 219
+[22:46:18.992] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 186,
+      "method": "GET",
+      "url": "/api/attendance/monthly"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 18
+[22:46:19.285] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 187,
+      "method": "GET",
+      "url": "/api/attendance/summary"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 7
+[22:46:23.668] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 188,
+      "method": "GET",
+      "url": "/api/customers"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 9
+[22:46:24.224] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 189,
+      "method": "GET",
+      "url": "/api/invoices/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 14
+[22:46:24.552] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 190,
+      "method": "GET",
+      "url": "/api/projects"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 16
+[22:46:24.555] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 191,
+      "method": "GET",
+      "url": "/api/customers"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 18
+[22:46:24.563] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 192,
+      "method": "GET",
+      "url": "/api/invoices"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 24
+[22:46:25.274] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 193,
+      "method": "GET",
+      "url": "/api/revenue"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 14
+[22:46:25.279] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 194,
+      "method": "GET",
+      "url": "/api/revenue/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 17
+[22:46:30.734] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 195,
+      "method": "GET",
+      "url": "/api/settings"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 31
+[22:46:32.400] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 196,
+      "method": "GET",
+      "url": "/api/reminders"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 10
+[22:46:33.320] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 197,
+      "method": "GET",
+      "url": "/api/settings"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 7
+[22:46:41.929] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 198,
+      "method": "GET",
+      "url": "/api/expenses/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 17
+[22:46:42.041] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 199,
+      "method": "GET",
+      "url": "/api/dashboard/monthly-financials"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 25
+[22:46:42.295] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 201,
+      "method": "GET",
+      "url": "/api/dashboard/summary"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 272
+[22:46:42.400] [32mINFO[39m (19160): [36mrequest aborted[39m
+    [35mreq[39m: {
+      "id": 200,
+      "method": "GET",
+      "url": "/api/dashboard/recent-activity"
+    }
+    [35mres[39m: {
+      "statusCode": null
+    }
+    [35mresponseTime[39m: 382
+[22:46:42.412] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 202,
+      "method": "GET",
+      "url": "/api/reports/payroll"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 56
+[22:46:42.699] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 204,
+      "method": "GET",
+      "url": "/api/reports/inventory"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 25
+[22:46:42.711] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 205,
+      "method": "GET",
+      "url": "/api/reports/projects"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 32
+[22:46:42.714] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 203,
+      "method": "GET",
+      "url": "/api/reports/revenue"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 44
+[22:46:42.923] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 207,
+      "method": "GET",
+      "url": "/api/reports/expenses"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 26
+[22:46:42.927] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 208,
+      "method": "GET",
+      "url": "/api/reports/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 29
+[22:46:42.940] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 206,
+      "method": "GET",
+      "url": "/api/reports/summary"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 45
+[22:46:43.617] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 209,
+      "method": "GET",
+      "url": "/api/employees/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 8
+[22:46:43.711] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 210,
+      "method": "GET",
+      "url": "/api/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 8
+[22:46:43.899] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 211,
+      "method": "GET",
+      "url": "/api/attendance/monthly"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 19
+[22:46:44.054] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 212,
+      "method": "GET",
+      "url": "/api/attendance/summary"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 7
+[22:46:44.710] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 213,
+      "method": "GET",
+      "url": "/api/payroll/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 6
+[22:46:45.034] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 215,
+      "method": "GET",
+      "url": "/api/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 11
+[22:46:45.036] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 214,
+      "method": "GET",
+      "url": "/api/payroll"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 14
+[22:46:46.200] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 216,
+      "method": "GET",
+      "url": "/api/attendance/monthly"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 15
+[22:46:46.204] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 217,
+      "method": "GET",
+      "url": "/api/attendance/summary"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 16
+[22:46:46.577] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 218,
+      "method": "GET",
+      "url": "/api/employees/stats"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 9
+[22:46:46.879] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 219,
+      "method": "GET",
+      "url": "/api/employees"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 8
+[22:46:51.546] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 222,
+      "method": "GET",
+      "url": "/api/projects"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 12
+[22:46:51.549] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 221,
+      "method": "GET",
+      "url": "/api/customers"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 17
+[22:46:51.558] [31mERROR[39m (19160): [36mFailed query: select count(*) from "purchase_orders" left join "customers" on "purchase_orders"."customer_id" = "customers"."id"
+params: [39m
+    [35mreq[39m: {
+      "id": 220,
+      "method": "GET",
+      "url": "/api/purchase-orders"
+    }
+    err: {
+      "type": "_DrizzleQueryError",
+      "message": "Failed query: select count(*) from \"purchase_orders\" left join \"customers\" on \"purchase_orders\".\"customer_id\" = \"customers\".\"id\"\nparams: : column purchase_orders.customer_id does not exist",
+      "stack":
+          Error: Failed query: select count(*) from "purchase_orders" left join "customers" on "purchase_orders"."customer_id" = "customers"."id"
+          params: 
+              at NodePgPreparedQuery.queryWithCache (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\drizzle-orm@0.45.2_@types+pg@8.18.0_pg@8.20.0\node_modules\src\pg-core\session.ts:73:11)
+              at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+              at async <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\drizzle-orm@0.45.2_@types+pg@8.18.0_pg@8.20.0\node_modules\src\node-postgres\session.ts:154:19)
+              at async <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\backend\src\routes\purchase_orders.ts:37:25)
+          caused by: error: column purchase_orders.customer_id does not exist
+              at <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\pg-pool@3.13.0_pg@8.20.0\node_modules\pg-pool\index.js:45:11)
+              at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+              at async <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\drizzle-orm@0.45.2_@types+pg@8.18.0_pg@8.20.0\node_modules\src\node-postgres\session.ts:161:13)
+              at async NodePgPreparedQuery.queryWithCache (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\drizzle-orm@0.45.2_@types+pg@8.18.0_pg@8.20.0\node_modules\src\pg-core\session.ts:71:12)
+              at async <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\drizzle-orm@0.45.2_@types+pg@8.18.0_pg@8.20.0\node_modules\src\node-postgres\session.ts:154:19)
+              at async <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\backend\src\routes\purchase_orders.ts:37:25)
+      "query": "select count(*) from \"purchase_orders\" left join \"customers\" on \"purchase_orders\".\"customer_id\" = \"customers\".\"id\"",
+      "params": []
+    }
+[22:46:51.559] [32mINFO[39m (19160): [36mrequest errored[39m
+    [35mreq[39m: {
+      "id": 220,
+      "method": "GET",
+      "url": "/api/purchase-orders"
+    }
+    [35mres[39m: {
+      "statusCode": 500
+    }
+    [35mresponseTime[39m: 28
+    err: {
+      "type": "Error",
+      "message": "failed with status code 500",
+      "stack":
+          Error: failed with status code 500
+              at onResFinished (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\pino-http@10.5.0\node_modules\pino-http\logger.js:115:39)
+              at ServerResponse.onResponseComplete (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\pino-http@10.5.0\node_modules\pino-http\logger.js:178:14)
+              at ServerResponse.emit (node:events:520:35)
+              at onFinish (node:_http_outgoing:1026:10)
+              at callback (node:internal/streams/writable:764:21)
+              at afterWrite (node:internal/streams/writable:708:5)
+              at afterWriteTick (node:internal/streams/writable:694:10)
+              at process.processTicksAndRejections (node:internal/process/task_queues:88:21)
+    }
+[22:50:49.291] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 223,
+      "method": "GET",
+      "url": "/api/healthz"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 16
+[22:51:19.897] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 224,
+      "method": "GET",
+      "url": "/api/healthz"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 1
+[22:51:29.391] [32mINFO[39m (19160): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 225,
+      "method": "POST",
+      "url": "/api/auth/login"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 187
+[22:51:29.664] [31mERROR[39m (19160): [36mENOENT: no such file or directory, open 'C:\Users\USER\Downloads\LocalHelper New One\backend\dist\data\Helvetica.afm'[39m
+    [35mreq[39m: {
+      "id": 226,
+      "method": "GET",
+      "url": "/api/ledger/projects/1/pdf"
+    }
+    err: {
+      "type": "Error",
+      "message": "ENOENT: no such file or directory, open 'C:\\Users\\USER\\Downloads\\LocalHelper New One\\backend\\dist\\data\\Helvetica.afm'",
+      "stack":
+          Error: ENOENT: no such file or directory, open 'C:\Users\USER\Downloads\LocalHelper New One\backend\dist\data\Helvetica.afm'
+              at Object.readFileSync (node:fs:440:20)
+              at Object.Helvetica (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\pdfkit@0.18.0\node_modules\pdfkit\lib\font\standard.js:20:15)
+              at new constructor (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\pdfkit@0.18.0\node_modules\pdfkit\lib\font\standard.js:60:53)
+              at PDFFontFactory.open (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\pdfkit@0.18.0\node_modules\pdfkit\lib\font_factory.js:11:16)
+              at PDFDocument2.font (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\pdfkit@0.18.0\node_modules\pdfkit\lib\mixins\fonts.js:85:33)
+              at PDFDocument2.initFonts (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\pdfkit@0.18.0\node_modules\pdfkit\lib\mixins\fonts.js:49:12)
+              at new constructor (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\pdfkit@0.18.0\node_modules\pdfkit\lib\document.js:97:10)
+              at <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\backend\src\lib\pdf.ts:140:17)
+              at new Promise (<anonymous>)
+              at generateLedgerProjectPdf (C:\Users\USER\Downloads\LocalHelper New One\backend\src\lib\pdf.ts:139:10)
+      "errno": -4058,
+      "code": "ENOENT",
+      "syscall": "open",
+      "path": "C:\\Users\\USER\\Downloads\\LocalHelper New One\\backend\\dist\\data\\Helvetica.afm"
+    }
+[22:51:29.669] [32mINFO[39m (19160): [36mrequest errored[39m
+    [35mreq[39m: {
+      "id": 226,
+      "method": "GET",
+      "url": "/api/ledger/projects/1/pdf"
+    }
+    [35mres[39m: {
+      "statusCode": 500
+    }
+    [35mresponseTime[39m: 32
+    err: {
+      "type": "Error",
+      "message": "failed with status code 500",
+      "stack":
+          Error: failed with status code 500
+              at onResFinished (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\pino-http@10.5.0\node_modules\pino-http\logger.js:115:39)
+              at ServerResponse.onResponseComplete (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\pino-http@10.5.0\node_modules\pino-http\logger.js:178:14)
+              at ServerResponse.emit (node:events:520:35)
+              at onFinish (node:_http_outgoing:1026:10)
+              at callback (node:internal/streams/writable:764:21)
+              at afterWrite (node:internal/streams/writable:708:5)
+              at afterWriteTick (node:internal/streams/writable:694:10)
+              at process.processTicksAndRejections (node:internal/process/task_queues:88:21)
+    }
+ ELIFECYCLE  Command failed with exit code 4294967295.
+ ELIFECYCLE  Command failed with exit code 4294967295.

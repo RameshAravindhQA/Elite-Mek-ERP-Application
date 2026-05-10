@@ -1,0 +1,15 @@
+
+========================================
+       EliteMek ERP Local Starter
+========================================
+Project: C:\Users\USER\Downloads\LocalHelper New One
+
+pnpm found.
+Node.js version is OK.
+Dependencies found.
+Ensuring backend dependencies are installed...
+Scope: all 8 workspace projects
+
+.. preinstall$ node -e "const fs = require('fs'); ['package-lock.json', 'yarn.lock'].forEach(f => fs.rmSync(f, { force: true })); const ua = process.env.npm_config_user_agent || ''; if (!ua.startsWith('pnpm/')) { console.error('Use pnpm instead'); process.exit(1);} "
+.. preinstall: Done
+Done in 6.6s using pnpm v10.33.0

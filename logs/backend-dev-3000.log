@@ -1,0 +1,105 @@
+
+> @workspace/api-server@0.0.0 dev C:\Users\USER\Downloads\LocalHelper New One\backend
+> cross-env NODE_ENV=development pnpm run build && pnpm run start
+
+
+> @workspace/api-server@0.0.0 build C:\Users\USER\Downloads\LocalHelper New One\backend
+> node ./build.mjs
+
+
+  dist\index.mjs                   6.9mb
+  dist\pino-worker.mjs           153.2kb
+  dist\pino-file.mjs             141.9kb
+  dist\pino-pretty.mjs           114.3kb
+  dist\thread-stream-worker.mjs    7.3kb
+  ...and 5 more output files...
+
+Done in 4582ms
+
+> @workspace/api-server@0.0.0 start C:\Users\USER\Downloads\LocalHelper New One\backend
+> node --enable-source-maps ./dist/index.mjs
+
+[21:48:25.581] [32mINFO[39m (14872): [36mServer listening[39m
+    [35mport[39m: 3000
+[21:48:29.683] [32mINFO[39m (14872): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 1,
+      "method": "GET",
+      "url": "/api/projects"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 151
+[21:48:29.730] [32mINFO[39m (14872): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 2,
+      "method": "GET",
+      "url": "/api/projects"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 9
+[21:48:30.091] [32mINFO[39m (14872): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 3,
+      "method": "GET",
+      "url": "/api/healthz"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 3
+[21:48:30.898] [32mINFO[39m (14872): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 4,
+      "method": "GET",
+      "url": "/api/projects"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 18
+[21:48:31.418] [32mINFO[39m (14872): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 5,
+      "method": "GET",
+      "url": "/api/projects"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 9
+[21:48:32.358] [32mINFO[39m (14872): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 6,
+      "method": "GET",
+      "url": "/api/ledger/projects/2"
+    }
+    [35mres[39m: {
+      "statusCode": 403
+    }
+    [35mresponseTime[39m: 12
+[21:48:38.144] [32mINFO[39m (14872): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 7,
+      "method": "POST",
+      "url": "/api/auth/login"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 14
+[21:48:38.500] [32mINFO[39m (14872): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 8,
+      "method": "GET",
+      "url": "/api/purchase-orders"
+    }
+    [35mres[39m: {
+      "statusCode": 403
+    }
+    [35mresponseTime[39m: 7
+ ELIFECYCLE  Command failed with exit code 4294967295.
+ ELIFECYCLE  Command failed with exit code 4294967295.

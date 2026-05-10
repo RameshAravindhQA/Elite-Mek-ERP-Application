@@ -1,0 +1,53 @@
+
+  dist\index.mjs                   4.6mb
+  dist\pino-worker.mjs           153.2kb
+  dist\pino-file.mjs             141.9kb
+  dist\pino-pretty.mjs           114.3kb
+  dist\thread-stream-worker.mjs    7.3kb
+  ...and 5 more output files...
+
+Done in 3220ms
+PayloadTooLargeError: request entity too large
+    at readStream (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\raw-body@3.0.2\node_modules\raw-body\index.js:163:17)
+    at getRawBody (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\raw-body@3.0.2\node_modules\raw-body\index.js:116:12)
+    at read (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\body-parser@2.2.2\node_modules\body-parser\lib\read.js:113:3)
+    at jsonParser (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\body-parser@2.2.2\node_modules\body-parser\lib\types\json.js:88:5)
+    at Layer.handleRequest (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\router@2.2.0\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\router@2.2.0\node_modules\router\index.js:342:13)
+    at <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\router@2.2.0\node_modules\router\index.js:297:9)
+    at processParams (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\router@2.2.0\node_modules\router\index.js:582:12)
+    at next (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\router@2.2.0\node_modules\router\index.js:291:5)
+    at cors2 (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\cors@2.8.6\node_modules\cors\lib\index.js:188:7)
+PayloadTooLargeError: request entity too large
+    at readStream (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\raw-body@3.0.2\node_modules\raw-body\index.js:163:17)
+    at getRawBody (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\raw-body@3.0.2\node_modules\raw-body\index.js:116:12)
+    at read (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\body-parser@2.2.2\node_modules\body-parser\lib\read.js:113:3)
+    at jsonParser (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\body-parser@2.2.2\node_modules\body-parser\lib\types\json.js:88:5)
+    at Layer.handleRequest (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\router@2.2.0\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\router@2.2.0\node_modules\router\index.js:342:13)
+    at <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\router@2.2.0\node_modules\router\index.js:297:9)
+    at processParams (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\router@2.2.0\node_modules\router\index.js:582:12)
+    at next (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\router@2.2.0\node_modules\router\index.js:291:5)
+    at cors2 (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\cors@2.8.6\node_modules\cors\lib\index.js:188:7)
+PayloadTooLargeError: request entity too large
+    at readStream (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\raw-body@3.0.2\node_modules\raw-body\index.js:163:17)
+    at getRawBody (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\raw-body@3.0.2\node_modules\raw-body\index.js:116:12)
+    at read (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\body-parser@2.2.2\node_modules\body-parser\lib\read.js:113:3)
+    at jsonParser (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\body-parser@2.2.2\node_modules\body-parser\lib\types\json.js:88:5)
+    at Layer.handleRequest (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\router@2.2.0\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\router@2.2.0\node_modules\router\index.js:342:13)
+    at <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\router@2.2.0\node_modules\router\index.js:297:9)
+    at processParams (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\router@2.2.0\node_modules\router\index.js:582:12)
+    at next (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\router@2.2.0\node_modules\router\index.js:291:5)
+    at cors2 (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\cors@2.8.6\node_modules\cors\lib\index.js:188:7)
+PayloadTooLargeError: request entity too large
+    at readStream (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\raw-body@3.0.2\node_modules\raw-body\index.js:163:17)
+    at getRawBody (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\raw-body@3.0.2\node_modules\raw-body\index.js:116:12)
+    at read (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\body-parser@2.2.2\node_modules\body-parser\lib\read.js:113:3)
+    at jsonParser (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\body-parser@2.2.2\node_modules\body-parser\lib\types\json.js:88:5)
+    at Layer.handleRequest (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\router@2.2.0\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\router@2.2.0\node_modules\router\index.js:342:13)
+    at <anonymous> (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\router@2.2.0\node_modules\router\index.js:297:9)
+    at processParams (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\router@2.2.0\node_modules\router\index.js:582:12)
+    at next (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\router@2.2.0\node_modules\router\index.js:291:5)
+    at cors2 (C:\Users\USER\Downloads\LocalHelper New One\node_modules\.pnpm\cors@2.8.6\node_modules\cors\lib\index.js:188:7)

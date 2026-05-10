@@ -1,0 +1,3888 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: ERP System API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: ledger
+  - name: health
+  - name: auth
+  - name: employees
+  - name: attendance
+  - name: payroll
+  - name: leaves
+  - name: customers
+  - name: vendors
+  - name: projects
+  - name: purchase-orders
+  - name: inventory
+  - name: inventory-movements
+  - name: expenses
+  - name: revenue
+  - name: invoices
+  - name: documents
+  - name: dashboard
+  - name: notifications
+  - name: audit-logs
+  - name: roles
+  - name: settings
+  - name: reminders
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # ─── AUTH ───
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginBody"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Unauthorized
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    put:
+      operationId: updateProfile
+      tags: [auth]
+      summary: Update profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileBody"
+      responses:
+        "200":
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /auth/change-password:
+    post:
+      operationId: changePassword
+      tags: [auth]
+      summary: Change password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordBody"
+      responses:
+        "200":
+          description: Password changed
+
+  # ─── EMPLOYEES ───
+  /employees:
+    get:
+      operationId: listEmployees
+      tags: [employees]
+      summary: List employees
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: department
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Employees list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmployeeListResponse"
+    post:
+      operationId: createEmployee
+      tags: [employees]
+      summary: Create employee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEmployeeBody"
+      responses:
+        "201":
+          description: Employee created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employee"
+
+  /employees/{id}:
+    get:
+      operationId: getEmployee
+      tags: [employees]
+      summary: Get employee
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Employee
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employee"
+    put:
+      operationId: updateEmployee
+      tags: [employees]
+      summary: Update employee
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEmployeeBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employee"
+    delete:
+      operationId: deleteEmployee
+      tags: [employees]
+      summary: Delete employee
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /employees/stats:
+    get:
+      operationId: getEmployeeStats
+      tags: [employees]
+      summary: Get employee statistics
+      responses:
+        "200":
+          description: Employee stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmployeeStats"
+
+  # ─── ATTENDANCE ───
+  /attendance:
+    get:
+      operationId: listAttendance
+      tags: [attendance]
+      summary: List attendance records
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: employeeId
+          in: query
+          schema:
+            type: integer
+        - name: date
+          in: query
+          schema:
+            type: string
+        - name: month
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Attendance records
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttendanceListResponse"
+    post:
+      operationId: createAttendance
+      tags: [attendance]
+      summary: Mark attendance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAttendanceBody"
+      responses:
+        "201":
+          description: Attendance marked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Attendance"
+
+  /attendance/{id}:
+    put:
+      operationId: updateAttendance
+      tags: [attendance]
+      summary: Update attendance
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAttendanceBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Attendance"
+
+  /attendance/summary:
+    get:
+      operationId: getAttendanceSummary
+      tags: [attendance]
+      summary: Attendance summary for a month
+      parameters:
+        - name: month
+          in: query
+          schema:
+            type: string
+        - name: employeeId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttendanceSummary"
+
+  # ─── PAYROLL ───
+  /payroll:
+    get:
+      operationId: listPayroll
+      tags: [payroll]
+      summary: List payroll records
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: month
+          in: query
+          schema:
+            type: string
+        - name: employeeId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Payroll records
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PayrollListResponse"
+    post:
+      operationId: createPayroll
+      tags: [payroll]
+      summary: Create payroll
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePayrollBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payroll"
+
+  /payroll/{id}:
+    get:
+      operationId: getPayroll
+      tags: [payroll]
+      summary: Get payroll record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Payroll record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payroll"
+    put:
+      operationId: updatePayroll
+      tags: [payroll]
+      summary: Update payroll
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePayrollBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payroll"
+
+  /payroll/stats:
+    get:
+      operationId: getPayrollStats
+      tags: [payroll]
+      summary: Payroll statistics
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PayrollStats"
+
+  # ─── LEAVES ───
+  /leaves:
+    get:
+      operationId: listLeaves
+      tags: [leaves]
+      summary: List leave requests
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: employeeId
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Leave requests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaveListResponse"
+    post:
+      operationId: createLeave
+      tags: [leaves]
+      summary: Create leave request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLeaveBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Leave"
+
+  /leaves/{id}:
+    get:
+      operationId: getLeave
+      tags: [leaves]
+      summary: Get leave request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Leave request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Leave"
+    put:
+      operationId: updateLeave
+      tags: [leaves]
+      summary: Update leave request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateLeaveBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Leave"
+    delete:
+      operationId: deleteLeave
+      tags: [leaves]
+      summary: Delete leave request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── CUSTOMERS ───
+  /customers:
+    get:
+      operationId: listCustomers
+      tags: [customers]
+      summary: List customers
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Customers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerListResponse"
+    post:
+      operationId: createCustomer
+      tags: [customers]
+      summary: Create customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustomerBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+
+  /customers/{id}:
+    get:
+      operationId: getCustomer
+      tags: [customers]
+      summary: Get customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+    put:
+      operationId: updateCustomer
+      tags: [customers]
+      summary: Update customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCustomerBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+    delete:
+      operationId: deleteCustomer
+      tags: [customers]
+      summary: Delete customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── VENDORS ───
+  /vendors:
+    get:
+      operationId: listVendors
+      tags: [vendors]
+      summary: List vendors
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Vendors
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VendorListResponse"
+    post:
+      operationId: createVendor
+      tags: [vendors]
+      summary: Create vendor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateVendorBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Vendor"
+
+  /vendors/{id}:
+    get:
+      operationId: getVendor
+      tags: [vendors]
+      summary: Get vendor
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Vendor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Vendor"
+    put:
+      operationId: updateVendor
+      tags: [vendors]
+      summary: Update vendor
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateVendorBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Vendor"
+    delete:
+      operationId: deleteVendor
+      tags: [vendors]
+      summary: Delete vendor
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── PROJECTS ───
+  /projects:
+    get:
+      operationId: listProjects
+      tags: [projects]
+      summary: List projects
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Projects
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectListResponse"
+    post:
+      operationId: createProject
+      tags: [projects]
+      summary: Create project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProjectBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+
+  /projects/{id}:
+    get:
+      operationId: getProject
+      tags: [projects]
+      summary: Get project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+    put:
+      operationId: updateProject
+      tags: [projects]
+      summary: Update project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProjectBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+    delete:
+      operationId: deleteProject
+      tags: [projects]
+      summary: Delete project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /projects/stats:
+    get:
+      operationId: getProjectStats
+      tags: [projects]
+      summary: Project statistics
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectStats"
+
+  # ─── PURCHASE ORDERS ───
+  /purchase-orders:
+    get:
+      operationId: listPurchaseOrders
+      tags: [purchase-orders]
+      summary: List purchase orders
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: vendorId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Purchase orders
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurchaseOrderListResponse"
+    post:
+      operationId: createPurchaseOrder
+      tags: [purchase-orders]
+      summary: Create purchase order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePurchaseOrderBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurchaseOrder"
+
+  /purchase-orders/{id}:
+    get:
+      operationId: getPurchaseOrder
+      tags: [purchase-orders]
+      summary: Get purchase order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Purchase order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurchaseOrder"
+    put:
+      operationId: updatePurchaseOrder
+      tags: [purchase-orders]
+      summary: Update purchase order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePurchaseOrderBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurchaseOrder"
+    delete:
+      operationId: deletePurchaseOrder
+      tags: [purchase-orders]
+      summary: Delete purchase order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── INVENTORY ───
+  /inventory:
+    get:
+      operationId: listInventory
+      tags: [inventory]
+      summary: List inventory items
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Inventory items
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryListResponse"
+    post:
+      operationId: createInventoryItem
+      tags: [inventory]
+      summary: Create inventory item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInventoryItemBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+
+  /inventory/{id}:
+    get:
+      operationId: getInventoryItem
+      tags: [inventory]
+      summary: Get inventory item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Inventory item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+    put:
+      operationId: updateInventoryItem
+      tags: [inventory]
+      summary: Update inventory item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateInventoryItemBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+    delete:
+      operationId: deleteInventoryItem
+      tags: [inventory]
+      summary: Delete inventory item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /inventory/stats:
+    get:
+      operationId: getInventoryStats
+      tags: [inventory]
+      summary: Inventory statistics
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryStats"
+
+  # ─── INVENTORY MOVEMENTS ───
+  /inventory-movements:
+    get:
+      operationId: listInventoryMovements
+      tags: [inventory-movements]
+      summary: List inventory movements
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: itemId
+          in: query
+          schema:
+            type: integer
+        - name: type
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Movements
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryMovementListResponse"
+    post:
+      operationId: createInventoryMovement
+      tags: [inventory-movements]
+      summary: Record inventory movement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInventoryMovementBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryMovement"
+
+  # ─── EXPENSES ───
+  /expenses:
+    get:
+      operationId: listExpenses
+      tags: [expenses]
+      summary: List expenses
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Expenses
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpenseListResponse"
+    post:
+      operationId: createExpense
+      tags: [expenses]
+      summary: Create expense
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateExpenseBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+
+  /expenses/{id}:
+    get:
+      operationId: getExpense
+      tags: [expenses]
+      summary: Get expense
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Expense
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+    put:
+      operationId: updateExpense
+      tags: [expenses]
+      summary: Update expense
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateExpenseBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+    delete:
+      operationId: deleteExpense
+      tags: [expenses]
+      summary: Delete expense
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /expenses/stats:
+    get:
+      operationId: getExpenseStats
+      tags: [expenses]
+      summary: Expense statistics
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpenseStats"
+
+  # ─── REVENUE ───
+  /revenue:
+    get:
+      operationId: listRevenue
+      tags: [revenue]
+      summary: List revenue records
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Revenue records
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevenueListResponse"
+    post:
+      operationId: createRevenue
+      tags: [revenue]
+      summary: Create revenue record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRevenueBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Revenue"
+
+  /revenue/{id}:
+    get:
+      operationId: getRevenue
+      tags: [revenue]
+      summary: Get revenue record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Revenue record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Revenue"
+    put:
+      operationId: updateRevenue
+      tags: [revenue]
+      summary: Update revenue record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRevenueBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Revenue"
+    delete:
+      operationId: deleteRevenue
+      tags: [revenue]
+      summary: Delete revenue record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /revenue/stats:
+    get:
+      operationId: getRevenueStats
+      tags: [revenue]
+      summary: Revenue statistics
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevenueStats"
+
+  # ─── INVOICES ───
+  /invoices:
+    get:
+      operationId: listInvoices
+      tags: [invoices]
+      summary: List invoices
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: customerId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Invoices
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoiceListResponse"
+    post:
+      operationId: createInvoice
+      tags: [invoices]
+      summary: Create invoice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInvoiceBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+
+  /invoices/{id}:
+    get:
+      operationId: getInvoice
+      tags: [invoices]
+      summary: Get invoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Invoice
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+    put:
+      operationId: updateInvoice
+      tags: [invoices]
+      summary: Update invoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateInvoiceBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+    delete:
+      operationId: deleteInvoice
+      tags: [invoices]
+      summary: Delete invoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /invoices/stats:
+    get:
+      operationId: getInvoiceStats
+      tags: [invoices]
+      summary: Invoice statistics
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoiceStats"
+
+  # ─── DOCUMENTS ───
+  /documents:
+    get:
+      operationId: listDocuments
+      tags: [documents]
+      summary: List documents
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: projectId
+          in: query
+          schema:
+            type: integer
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Documents
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentListResponse"
+    post:
+      operationId: createDocument
+      tags: [documents]
+      summary: Create document
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDocumentBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+
+  /documents/{id}:
+    get:
+      operationId: getDocument
+      tags: [documents]
+      summary: Get document
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Document
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+    put:
+      operationId: updateDocument
+      tags: [documents]
+      summary: Update document
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDocumentBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+    delete:
+      operationId: deleteDocument
+      tags: [documents]
+      summary: Delete document
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── DASHBOARD ───
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Dashboard summary
+      responses:
+        "200":
+          description: Summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/recent-activity:
+    get:
+      operationId: getRecentActivity
+      tags: [dashboard]
+      summary: Recent activity feed
+      responses:
+        "200":
+          description: Activity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecentActivityResponse"
+
+  /dashboard/monthly-financials:
+    get:
+      operationId: getMonthlyFinancials
+      tags: [dashboard]
+      summary: Monthly financials chart data
+      parameters:
+        - name: months
+          in: query
+          schema:
+            type: integer
+            default: 12
+      responses:
+        "200":
+          description: Monthly financials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MonthlyFinancialsResponse"
+
+  # ─── NOTIFICATIONS ───
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List notifications
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: unreadOnly
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationListResponse"
+
+  /notifications/{id}/read:
+    put:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark notification as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Marked read
+
+  /notifications/read-all:
+    put:
+      operationId: markAllNotificationsRead
+      tags: [notifications]
+      summary: Mark all notifications as read
+      responses:
+        "200":
+          description: All marked read
+
+  # ─── AUDIT LOGS ───
+  /audit-logs:
+    get:
+      operationId: listAuditLogs
+      tags: [audit-logs]
+      summary: List audit logs
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: module
+          in: query
+          schema:
+            type: string
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: userId
+          in: query
+          schema:
+            type: integer
+        - name: recordId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Audit logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLogListResponse"
+
+  # ─── ROLES ───
+  /roles:
+    get:
+      operationId: listRoles
+      tags: [roles]
+      summary: List roles
+      responses:
+        "200":
+          description: Roles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleListResponse"
+    post:
+      operationId: createRole
+      tags: [roles]
+      summary: Create role
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRoleBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Role"
+
+  /roles/{id}:
+    put:
+      operationId: updateRole
+      tags: [roles]
+      summary: Update role
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRoleBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Role"
+    delete:
+      operationId: deleteRole
+      tags: [roles]
+      summary: Delete role
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── SETTINGS ───
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [settings]
+      summary: Get settings
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+    put:
+      operationId: updateSettings
+      tags: [settings]
+      summary: Update settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSettingsBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+
+  # ─── REMINDERS ───
+  /reminders:
+    get:
+      operationId: listReminders
+      tags: [reminders]
+      summary: List reminders
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Reminders
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReminderListResponse"
+    post:
+      operationId: createReminder
+      tags: [reminders]
+      summary: Create reminder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReminderBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reminder"
+
+  /reminders/{id}:
+    put:
+      operationId: updateReminder
+      tags: [reminders]
+      summary: Update reminder
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateReminderBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reminder"
+    delete:
+      operationId: deleteReminder
+      tags: [reminders]
+      summary: Delete reminder
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /reminders/due-today:
+    get:
+      operationId: getDueReminders
+      tags: [reminders]
+      summary: Get reminders due today
+      responses:
+        "200":
+          description: Due reminders
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReminderListResponse"
+
+  # ─── LEDGER ───
+  /ledger:
+    get:
+      operationId: listLedgers
+      tags: [ledger]
+      summary: List ledger accounts
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: accountType
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of ledgers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LedgerListResponse"
+    post:
+      operationId: createLedger
+      tags: [ledger]
+      summary: Create ledger account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLedgerBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ledger"
+
+  /ledger/{id}:
+    get:
+      operationId: getLedger
+      tags: [ledger]
+      summary: Get ledger account
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Ledger details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ledger"
+        "404":
+          description: Not found
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    # AUTH
+    LoginBody:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required: [email, password]
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+      required: [token, user]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        avatar:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, name, email, role, createdAt]
+
+    UpdateProfileBody:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        avatar:
+          type: string
+
+    ChangePasswordBody:
+      type: object
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+      required: [currentPassword, newPassword]
+
+    # PAGINATION
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+      required: [page, limit, total, totalPages]
+
+    # EMPLOYEE
+    Employee:
+      type: object
+      properties:
+        id:
+          type: integer
+        employeeId:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        department:
+          type: string
+        designation:
+          type: string
+        status:
+          type: string
+        salary:
+          type: number
+        joiningDate:
+          type: string
+        avatar:
+          type: string
+          nullable: true
+        panNumber:
+          type: string
+          nullable: true
+        aadharNumber:
+          type: string
+          nullable: true
+        bankAccount:
+          type: string
+          nullable: true
+        bankName:
+          type: string
+          nullable: true
+        ifscCode:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        emergencyContact:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, employeeId, firstName, lastName, email, department, designation, status, salary, joiningDate, createdAt]
+
+    CreateEmployeeBody:
+      type: object
+      properties:
+        employeeId:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        department:
+          type: string
+        designation:
+          type: string
+        status:
+          type: string
+        salary:
+          type: number
+        joiningDate:
+          type: string
+        avatar:
+          type: string
+        panNumber:
+          type: string
+        aadharNumber:
+          type: string
+        bankAccount:
+          type: string
+        bankName:
+          type: string
+        ifscCode:
+          type: string
+        address:
+          type: string
+        emergencyContact:
+          type: string
+      required: [employeeId, firstName, lastName, email, department, designation, status, salary, joiningDate]
+
+    UpdateEmployeeBody:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        department:
+          type: string
+        designation:
+          type: string
+        status:
+          type: string
+        salary:
+          type: number
+        avatar:
+          type: string
+        panNumber:
+          type: string
+        aadharNumber:
+          type: string
+        bankAccount:
+          type: string
+        bankName:
+          type: string
+        ifscCode:
+          type: string
+        address:
+          type: string
+        emergencyContact:
+          type: string
+
+    EmployeeListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Employee"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required: [data, pagination]
+
+    EmployeeStats:
+      type: object
+      properties:
+        total:
+          type: integer
+        active:
+          type: integer
+        inactive:
+          type: integer
+        byDepartment:
+          type: array
+          items:
+            type: object
+            properties:
+              department:
+                type: string
+              count:
+                type: integer
+            required: [department, count]
+      required: [total, active, inactive, byDepartment]
+
+    # ATTENDANCE
+    Attendance:
+      type: object
+      properties:
+        id:
+          type: integer
+        employeeId:
+          type: integer
+        employeeName:
+          type: string
+        date:
+          type: string
+        checkIn:
+          type: string
+          nullable: true
+        checkOut:
+          type: string
+          nullable: true
+        status:
+          type: string
+        hoursWorked:
+          type: number
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, employeeId, employeeName, date, status, createdAt]
+
+    CreateAttendanceBody:
+      type: object
+      properties:
+        employeeId:
+          type: integer
+        date:
+          type: string
+        checkIn:
+          type: string
+        checkOut:
+          type: string
+        status:
+          type: string
+        notes:
+          type: string
+      required: [employeeId, date, status]
+
+    UpdateAttendanceBody:
+      type: object
+      properties:
+        checkIn:
+          type: string
+        checkOut:
+          type: string
+        status:
+          type: string
+        notes:
+          type: string
+
+    AttendanceListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Attendance"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required: [data, pagination]
+
+    AttendanceSummary:
+      type: object
+      properties:
+        present:
+          type: integer
+        absent:
+          type: integer
+        late:
+          type: integer
+        halfDay:
+          type: integer
+        totalWorkingDays:
+          type: integer
+      required: [present, absent, late, halfDay, totalWorkingDays]
+
+    # PAYROLL
+    Payroll:
+      type: object
+      properties:
+        id:
+          type: integer
+        employeeId:
+          type: integer
+        employeeName:
+          type: string
+        month:
+          type: string
+        basicSalary:
+          type: number
+        allowances:
+          type: number
+        deductions:
+          type: number
+        netSalary:
+          type: number
+        status:
+          type: string
+        paidAt:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, employeeId, employeeName, month, basicSalary, allowances, deductions, netSalary, status, createdAt]
+
+    CreatePayrollBody:
+      type: object
+      properties:
+        employeeId:
+          type: integer
+        month:
+          type: string
+        basicSalary:
+          type: number
+        allowances:
+          type: number
+        deductions:
+          type: number
+        status:
+          type: string
+      required: [employeeId, month, basicSalary, allowances, deductions, status]
+
+    UpdatePayrollBody:
+      type: object
+      properties:
+        allowances:
+          type: number
+        deductions:
+          type: number
+        status:
+          type: string
+        paidAt:
+          type: string
+
+    PayrollListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Payroll"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required: [data, pagination]
+
+    PayrollStats:
+      type: object
+      properties:
+        totalPaid:
+          type: number
+        totalPending:
+          type: number
+        thisMonth:
+          type: number
+      required: [totalPaid, totalPending, thisMonth]
+
+    # LEAVE
+    Leave:
+      type: object
+      properties:
+        id:
+          type: integer
+        employeeId:
+          type: integer
+        employeeName:
+          type: string
+        leaveType:
+          type: string
+        startDate:
+          type: string
+        endDate:
+          type: string
+        days:
+          type: number
+        reason:
+          type: string
+        status:
+          type: string
+        approvedBy:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, employeeId, employeeName, leaveType, startDate, endDate, days, reason, status, createdAt]
+
+    CreateLeaveBody:
+      type: object
+      properties:
+        employeeId:
+          type: integer
+        leaveType:
+          type: string
+        startDate:
+          type: string
+        endDate:
+          type: string
+        reason:
+          type: string
+      required: [employeeId, leaveType, startDate, endDate, reason]
+
+    UpdateLeaveBody:
+      type: object
+      properties:
+        status:
+          type: string
+        approvedBy:
+          type: string
+
+    LeaveListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Leave"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required: [data, pagination]
+
+    # CUSTOMER
+    Customer:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        company:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        gstNumber:
+          type: string
+          nullable: true
+        status:
+          type: string
+        totalOrders:
+          type: integer
+        totalRevenue:
+          type: number
+        createdAt:
+          type: string
+      required: [id, name, status, totalOrders, totalRevenue, createdAt]
+
+    CreateCustomerBody:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        company:
+          type: string
+        address:
+          type: string
+        gstNumber:
+          type: string
+        status:
+          type: string
+      required: [name, status]
+
+    UpdateCustomerBody:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        company:
+          type: string
+        address:
+          type: string
+        gstNumber:
+          type: string
+        status:
+          type: string
+
+    CustomerListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Customer"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required: [data, pagination]
+
+    # VENDOR
+    Vendor:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        company:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        gstNumber:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        status:
+          type: string
+        createdAt:
+          type: string
+      required: [id, name, status, createdAt]
+
+    CreateVendorBody:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        company:
+          type: string
+        address:
+          type: string
+        gstNumber:
+          type: string
+        category:
+          type: string
+        status:
+          type: string
+      required: [name, status]
+
+    UpdateVendorBody:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        company:
+          type: string
+        address:
+          type: string
+        gstNumber:
+          type: string
+        category:
+          type: string
+        status:
+          type: string
+
+    VendorListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Vendor"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required: [data, pagination]
+
+    # PROJECT
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        customerId:
+          type: integer
+          nullable: true
+        customerName:
+          type: string
+          nullable: true
+        status:
+          type: string
+        priority:
+          type: string
+        budget:
+          type: number
+          nullable: true
+        spent:
+          type: number
+        startDate:
+          type: string
+          nullable: true
+        endDate:
+          type: string
+          nullable: true
+        progress:
+          type: integer
+        managerId:
+          type: integer
+          nullable: true
+        managerName:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, name, status, priority, spent, progress, createdAt]
+
+    CreateProjectBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        customerId:
+          type: integer
+        status:
+          type: string
+        priority:
+          type: string
+        budget:
+          type: number
+        startDate:
+          type: string
+        endDate:
+          type: string
+        managerId:
+          type: integer
+      required: [name, status, priority]
+
+    UpdateProjectBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        customerId:
+          type: integer
+        status:
+          type: string
+        priority:
+          type: string
+        budget:
+          type: number
+        startDate:
+          type: string
+        endDate:
+          type: string
+        progress:
+          type: integer
+        managerId:
+          type: integer
+
+    ProjectListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Project"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required: [data, pagination]
+
+    ProjectStats:
+      type: object
+      properties:
+        total:
+          type: integer
+        active:
+          type: integer
+        completed:
+          type: integer
+        onHold:
+          type: integer
+        totalBudget:
+          type: number
+        totalSpent:
+          type: number
+      required: [total, active, completed, onHold, totalBudget, totalSpent]
+
+    # PURCHASE ORDER
+    PurchaseOrderItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        itemName:
+          type: string
+        quantity:
+          type: number
+        unitPrice:
+          type: number
+        total:
+          type: number
+      required: [id, itemName, quantity, unitPrice, total]
+
+    PurchaseOrder:
+      type: object
+      properties:
+        id:
+          type: integer
+        poNumber:
+          type: string
+        vendorId:
+          type: integer
+        vendorName:
+          type: string
+        status:
+          type: string
+        orderDate:
+          type: string
+        deliveryDate:
+          type: string
+          nullable: true
+        totalAmount:
+          type: number
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PurchaseOrderItem"
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, poNumber, vendorId, vendorName, status, orderDate, totalAmount, items, createdAt]
+
+    CreatePurchaseOrderBody:
+      type: object
+      properties:
+        vendorId:
+          type: integer
+        orderDate:
+          type: string
+        deliveryDate:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              itemName:
+                type: string
+              quantity:
+                type: number
+              unitPrice:
+                type: number
+            required: [itemName, quantity, unitPrice]
+        notes:
+          type: string
+        status:
+          type: string
+      required: [vendorId, orderDate, items, status]
+
+    UpdatePurchaseOrderBody:
+      type: object
+      properties:
+        status:
+          type: string
+        deliveryDate:
+          type: string
+        notes:
+          type: string
+
+    PurchaseOrderListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/PurchaseOrder"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required: [data, pagination]
+
+    # INVENTORY
+    InventoryItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        sku:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+        quantity:
+          type: number
+        unit:
+          type: string
+        reorderLevel:
+          type: number
+        costPrice:
+          type: number
+        sellingPrice:
+          type: number
+        location:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, sku, name, category, quantity, unit, reorderLevel, costPrice, sellingPrice, createdAt]
+
+    CreateInventoryItemBody:
+      type: object
+      properties:
+        sku:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+        quantity:
+          type: number
+        unit:
+          type: string
+        reorderLevel:
+          type: number
+        costPrice:
+          type: number
+        sellingPrice:
+          type: number
+        location:
+          type: string
+        description:
+          type: string
+      required: [sku, name, category, quantity, unit, reorderLevel, costPrice, sellingPrice]
+
+    UpdateInventoryItemBody:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        quantity:
+          type: number
+        unit:
+          type: string
+        reorderLevel:
+          type: number
+        costPrice:
+          type: number
+        sellingPrice:
+          type: number
+        location:
+          type: string
+        description:
+          type: string
+
+    InventoryListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/InventoryItem"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required: [data, pagination]
+
+    InventoryStats:
+      type: object
+      properties:
+        totalItems:
+          type: integer
+        totalValue:
+          type: number
+        lowStock:
+          type: integer
+        outOfStock:
+          type: integer
+        byCategory:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+              count:
+                type: integer
+              value:
+                type: number
+            required: [category, count, value]
+      required: [totalItems, totalValue, lowStock, outOfStock, byCategory]
+
+    # INVENTORY MOVEMENT
+    InventoryMovement:
+      type: object
+      properties:
+        id:
+          type: integer
+        itemId:
+          type: integer
+        itemName:
+          type: string
+        type:
+          type: string
+        quantity:
+          type: number
+        previousStock:
+          type: number
+        currentStock:
+          type: number
+        reference:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        createdBy:
+          type: string
+        createdAt:
+          type: string
+      required: [id, itemId, itemName, type, quantity, previousStock, currentStock, createdBy, createdAt]
+
+    CreateInventoryMovementBody:
+      type: object
+      properties:
+        itemId:
+          type: integer
+        type:
+          type: string
+        quantity:
+          type: number
+        reference:
+          type: string
+        notes:
+          type: string
+      required: [itemId, type, quantity]
+
+    InventoryMovementListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/InventoryMovement"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required: [data, pagination]
+
+    # EXPENSE
+    Expense:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        category:
+          type: string
+        amount:
+          type: number
+        date:
+          type: string
+        status:
+          type: string
+        projectId:
+          type: integer
+          nullable: true
+        projectName:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        submittedBy:
+          type: string
+        createdAt:
+          type: string
+      required: [id, title, category, amount, date, status, submittedBy, createdAt]
+
+    CreateExpenseBody:
+      type: object
+      properties:
+        title:
+          type: string
+        category:
+          type: string
+        amount:
+          type: number
+        date:
+          type: string
+        projectId:
+          type: integer
+        description:
+          type: string
+        status:
+          type: string
+      required: [title, category, amount, date, status]
+
+    UpdateExpenseBody:
+      type: object
+      properties:
+        title:
+          type: string
+        category:
+          type: string
+        amount:
+          type: number
+        status:
+          type: string
+        description:
+          type: string
+
+    ExpenseListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Expense"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required: [data, pagination]
+
+    ExpenseStats:
+      type: object
+      properties:
+        totalThisMonth:
+          type: number
+        totalThisYear:
+          type: number
+        pendingApproval:
+          type: number
+        byCategory:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+              amount:
+                type: number
+            required: [category, amount]
+      required: [totalThisMonth, totalThisYear, pendingApproval, byCategory]
+
+    # REVENUE
+    Revenue:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        source:
+          type: string
+        amount:
+          type: number
+        date:
+          type: string
+        customerId:
+          type: integer
+          nullable: true
+        customerName:
+          type: string
+          nullable: true
+        projectId:
+          type: integer
+          nullable: true
+        projectName:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, title, source, amount, date, createdAt]
+
+    CreateRevenueBody:
+      type: object
+      properties:
+        title:
+          type: string
+        source:
+          type: string
+        amount:
+          type: number
+        date:
+          type: string
+        customerId:
+          type: integer
+        projectId:
+          type: integer
+        description:
+          type: string
+      required: [title, source, amount, date]
+
+    UpdateRevenueBody:
+      type: object
+      properties:
+        title:
+          type: string
+        source:
+          type: string
+        amount:
+          type: number
+        date:
+          type: string
+        description:
+          type: string
+
+    RevenueListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Revenue"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required: [data, pagination]
+
+    RevenueStats:
+      type: object
+      properties:
+        totalThisMonth:
+          type: number
+        totalThisYear:
+          type: number
+        growth:
+          type: number
+        bySource:
+          type: array
+          items:
+            type: object
+            properties:
+              source:
+                type: string
+              amount:
+                type: number
+            required: [source, amount]
+      required: [totalThisMonth, totalThisYear, growth, bySource]
+
+    # INVOICE
+    InvoiceItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        description:
+          type: string
+        quantity:
+          type: number
+        unitPrice:
+          type: number
+        taxRate:
+          type: number
+        total:
+          type: number
+      required: [id, description, quantity, unitPrice, taxRate, total]
+
+    Invoice:
+      type: object
+      properties:
+        id:
+          type: integer
+        invoiceNumber:
+          type: string
+        customerId:
+          type: integer
+        customerName:
+          type: string
+        status:
+          type: string
+        issueDate:
+          type: string
+        dueDate:
+          type: string
+        subtotal:
+          type: number
+        taxAmount:
+          type: number
+        totalAmount:
+          type: number
+        paidAmount:
+          type: number
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/InvoiceItem"
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, invoiceNumber, customerId, customerName, status, issueDate, dueDate, subtotal, taxAmount, totalAmount, paidAmount, items, createdAt]
+
+    CreateInvoiceBody:
+      type: object
+      properties:
+        customerId:
+          type: integer
+        issueDate:
+          type: string
+        dueDate:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              description:
+                type: string
+              quantity:
+                type: number
+              unitPrice:
+                type: number
+              taxRate:
+                type: number
+            required: [description, quantity, unitPrice, taxRate]
+        notes:
+          type: string
+        status:
+          type: string
+      required: [customerId, issueDate, dueDate, items, status]
+
+    UpdateInvoiceBody:
+      type: object
+      properties:
+        status:
+          type: string
+        paidAmount:
+          type: number
+        notes:
+          type: string
+        dueDate:
+          type: string
+
+    InvoiceListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Invoice"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required: [data, pagination]
+
+    InvoiceStats:
+      type: object
+      properties:
+        totalInvoiced:
+          type: number
+        totalPaid:
+          type: number
+        totalOverdue:
+          type: number
+        totalPending:
+          type: number
+        overdueCount:
+          type: integer
+      required: [totalInvoiced, totalPaid, totalOverdue, totalPending, overdueCount]
+
+    # DOCUMENT
+    Document:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        projectId:
+          type: integer
+          nullable: true
+        projectName:
+          type: string
+          nullable: true
+        fileUrl:
+          type: string
+        fileType:
+          type: string
+        fileSize:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        uploadedBy:
+          type: string
+        createdAt:
+          type: string
+      required: [id, title, fileUrl, fileType, fileSize, tags, uploadedBy, createdAt]
+
+    CreateDocumentBody:
+      type: object
+      properties:
+        title:
+          type: string
+        projectId:
+          type: integer
+        fileUrl:
+          type: string
+        fileType:
+          type: string
+        fileSize:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+      required: [title, fileUrl, fileType, fileSize]
+
+    UpdateDocumentBody:
+      type: object
+      properties:
+        title:
+          type: string
+        projectId:
+          type: integer
+        tags:
+          type: array
+          items:
+            type: string
+
+    DocumentListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Document"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required: [data, pagination]
+
+    # DASHBOARD
+    DashboardSummary:
+      type: object
+      properties:
+        totalEmployees:
+          type: integer
+        activeProjects:
+          type: integer
+        monthlyRevenue:
+          type: number
+        monthlyExpenses:
+          type: number
+        pendingInvoices:
+          type: integer
+        pendingLeaves:
+          type: integer
+        lowStockItems:
+          type: integer
+        openPurchaseOrders:
+          type: integer
+        revenueGrowth:
+          type: number
+        expenseGrowth:
+          type: number
+      required: [totalEmployees, activeProjects, monthlyRevenue, monthlyExpenses, pendingInvoices, pendingLeaves, lowStockItems, openPurchaseOrders, revenueGrowth, expenseGrowth]
+
+    ActivityItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        module:
+          type: string
+        action:
+          type: string
+        description:
+          type: string
+        user:
+          type: string
+        createdAt:
+          type: string
+      required: [id, module, action, description, user, createdAt]
+
+    RecentActivityResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityItem"
+      required: [data]
+
+    MonthlyFinancialItem:
+      type: object
+      properties:
+        month:
+          type: string
+        revenue:
+          type: number
+        expenses:
+          type: number
+        profit:
+          type: number
+      required: [month, revenue, expenses, profit]
+
+    MonthlyFinancialsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/MonthlyFinancialItem"
+      required: [data]
+
+    # NOTIFICATION
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        message:
+          type: string
+        type:
+          type: string
+        isRead:
+          type: boolean
+        module:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, title, message, type, isRead, createdAt]
+
+    NotificationListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Notification"
+        unreadCount:
+          type: integer
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required: [data, unreadCount, pagination]
+
+    # AUDIT LOG
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: integer
+        module:
+          type: string
+        action:
+          type: string
+        recordId:
+          type: integer
+          nullable: true
+        userId:
+          type: integer
+        userName:
+          type: string
+        description:
+          type: string
+        oldValues:
+          type: object
+          nullable: true
+        newValues:
+          type: object
+          nullable: true
+        ipAddress:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, module, action, userId, userName, description, createdAt]
+
+    AuditLogListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditLog"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required: [data, pagination]
+
+    # ROLE
+    Permission:
+      type: object
+      properties:
+        module:
+          type: string
+        actions:
+          type: array
+          items:
+            type: string
+      required: [module, actions]
+
+    Role:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Permission"
+        userCount:
+          type: integer
+        createdAt:
+          type: string
+      required: [id, name, permissions, userCount, createdAt]
+
+    CreateRoleBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Permission"
+      required: [name, permissions]
+
+    UpdateRoleBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Permission"
+
+    RoleListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Role"
+      required: [data]
+
+    # SETTINGS
+    Settings:
+      type: object
+      properties:
+        id:
+          type: integer
+        companyName:
+          type: string
+        companyLogo:
+          type: string
+          nullable: true
+        companyAddress:
+          type: string
+          nullable: true
+        companyPhone:
+          type: string
+          nullable: true
+        companyEmail:
+          type: string
+          nullable: true
+        currency:
+          type: string
+        timezone:
+          type: string
+        themeColor:
+          type: string
+        themeMode:
+          type: string
+        headerFont:
+          type: string
+        bodyFont:
+          type: string
+        buttonColor:
+          type: string
+        fieldColor:
+          type: string
+        pdfHeaderContent:
+          type: string
+          nullable: true
+        pdfFooterContent:
+          type: string
+          nullable: true
+        excelHeaderContent:
+          type: string
+          nullable: true
+        excelFooterContent:
+          type: string
+          nullable: true
+        smtpHost:
+          type: string
+          nullable: true
+        smtpPort:
+          type: integer
+          nullable: true
+        smtpUser:
+          type: string
+          nullable: true
+        smtpFromEmail:
+          type: string
+          nullable: true
+        whatsappApiKey:
+          type: string
+          nullable: true
+        smsApiKey:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, companyName, currency, timezone, themeColor, themeMode, headerFont, bodyFont, buttonColor, fieldColor, createdAt]
+
+    UpdateSettingsBody:
+      type: object
+      properties:
+        companyName:
+          type: string
+        companyLogo:
+          type: string
+        companyAddress:
+          type: string
+        companyPhone:
+          type: string
+        companyEmail:
+          type: string
+        currency:
+          type: string
+        timezone:
+          type: string
+        themeColor:
+          type: string
+        themeMode:
+          type: string
+        headerFont:
+          type: string
+        bodyFont:
+          type: string
+        buttonColor:
+          type: string
+        fieldColor:
+          type: string
+        pdfHeaderContent:
+          type: string
+        pdfFooterContent:
+          type: string
+        excelHeaderContent:
+          type: string
+        excelFooterContent:
+          type: string
+        smtpHost:
+          type: string
+        smtpPort:
+          type: integer
+        smtpUser:
+          type: string
+        smtpFromEmail:
+          type: string
+        whatsappApiKey:
+          type: string
+        smsApiKey:
+          type: string
+
+    # REMINDER
+    Reminder:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        message:
+          type: string
+        remindAt:
+          type: string
+        isTriggered:
+          type: boolean
+        isDismissed:
+          type: boolean
+        createdBy:
+          type: string
+        createdAt:
+          type: string
+      required: [id, title, message, remindAt, isTriggered, isDismissed, createdBy, createdAt]
+
+    CreateReminderBody:
+      type: object
+      properties:
+        title:
+          type: string
+        message:
+          type: string
+        remindAt:
+          type: string
+      required: [title, message, remindAt]
+
+    UpdateReminderBody:
+      type: object
+      properties:
+        title:
+          type: string
+        message:
+          type: string
+        remindAt:
+          type: string
+        isDismissed:
+          type: boolean
+
+    ReminderListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Reminder"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required: [data, pagination]
+
+    # LEDGER
+    Ledger:
+      type: object
+      properties:
+        id:
+          type: integer
+        accountName:
+          type: string
+        accountCode:
+          type: string
+        accountType:
+          type: string
+        description:
+          type: string
+          nullable: true
+        openingBalance:
+          type: number
+        currentBalance:
+          type: number
+        closingBalance:
+          type: number
+        status:
+          type: string
+        startDate:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, accountName, accountCode, accountType, openingBalance, currentBalance, closingBalance, status, createdAt]
+
+    CreateLedgerBody:
+      type: object
+      properties:
+        accountName:
+          type: string
+        accountCode:
+          type: string
+        accountType:
+          type: string
+        description:
+          type: string
+        openingBalance:
+          type: number
+        status:
+          type: string
+        startDate:
+          type: string
+      required: [accountName, accountCode, accountType]
+
+    LedgerListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Ledger"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required: [data, pagination]

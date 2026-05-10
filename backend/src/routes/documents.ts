@@ -1,0 +1,70 @@
+import { Router } from "express";
+import { db, documentsTable, projectsTable } from "@workspace/db";
+import { desc, eq, count, ilike, and, isNull } from "drizzle-orm";
+import { requireAuth } from "../middlewares/auth.js";
+
+const router = Router();
+
+const fmt = (d: any) => ({ ...d, tags: Array.isArray(d.tags) ? d.tags : [] });
+
+router.get("/documents", requireAuth, async (req, res) => {
+  try {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 20;
+    const search = req.query.search as string;
+    const projectId = req.query.projectId as string;
+    const offset = (page - 1) * limit;
+
+    let conditions: any[] = [];
+    if (search) conditions.push(ilike(documentsTable.title, `%${search}%`));
+    if (projectId) {
+      if (projectId === "none") {
+        conditions.push(isNull(documentsTable.projectId));
+      } else {
+        conditions.push(eq(documentsTable.projectId, Number(projectId)));
+      }
+    }
+    const whereClause = conditions.length > 0 ? conditions.reduce((a, b) => and(a, b)) : undefined;
+
+    const [{ total }] = await db.select({ total: count() }).from(documentsTable).where(whereClause);
+    const records = await db.select({ doc: documentsTable, proj: { name: projectsTable.name } })
+      .from(documentsTable).leftJoin(projectsTable, eq(documentsTable.projectId, projectsTable.id))
+      .where(whereClause)
+      .limit(limit).offset(offset).orderBy(desc(documentsTable.createdAt), desc(documentsTable.id));
+    res.json({ data: records.map(r => ({ ...fmt(r.doc), projectName: r.proj?.name || null })), pagination: { page, limit, total: Number(total), totalPages: Math.ceil(Number(total) / limit) } });
+  } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
+});
+
+router.post("/documents", requireAuth, async (req, res) => {
+  try {
+    const body = req.body;
+    const [d] = await db.insert(documentsTable).values({ ...body, tags: body.tags || [], uploadedBy: req.user!.name }).returning();
+    res.status(201).json(fmt(d));
+  } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
+});
+
+router.get("/documents/:id", requireAuth, async (req, res) => {
+  try {
+    const records = await db.select({ doc: documentsTable, proj: { name: projectsTable.name } })
+      .from(documentsTable).leftJoin(projectsTable, eq(documentsTable.projectId, projectsTable.id))
+      .where(eq(documentsTable.id, Number(req.params.id))).limit(1);
+    if (!records.length) { res.status(404).json({ error: "Not found" }); return; }
+    res.json({ ...fmt(records[0].doc), projectName: records[0].proj?.name || null });
+  } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
+});
+
+router.put("/documents/:id", requireAuth, async (req, res) => {
+  try {
+    const [d] = await db.update(documentsTable).set({ ...req.body, updatedAt: new Date() }).where(eq(documentsTable.id, Number(req.params.id))).returning();
+    res.json(fmt(d));
+  } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
+});
+
+router.delete("/documents/:id", requireAuth, async (req, res) => {
+  try {
+    await db.delete(documentsTable).where(eq(documentsTable.id, Number(req.params.id)));
+    res.status(204).send();
+  } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
+});
+
+export default router;
