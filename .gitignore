@@ -31,11 +31,17 @@ node_modules
 /.sass-cache
 /connect.lock
 /coverage
+/logs/
+/playwright-report/
+/test-results/
+/backend/backend/data/
 /libpeerconnection.log
 npm-debug.log
 yarn-error.log
 testem.log
 /typings
+*.log
+*.pyc
 
 # System Files
 .DS_Store
