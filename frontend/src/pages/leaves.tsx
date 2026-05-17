@@ -57,8 +57,8 @@ export default function Leaves() {
     { header: "Status", value: (leave: any) => leave.status || "-" },
     { header: "Reason", value: (leave: any) => leave.reason || "-" },
   ];
-  const handleExportPDF = () => {
-    if (!openRowsPdfPrint("Leaves", filtered, exportColumns)) {
+  const handleExportPDF = async () => {
+    if (!(await openRowsPdfPrint("Leaves", filtered, exportColumns))) {
       toast({ title: "Export failed", description: "No leave data available.", variant: "destructive" });
       return;
     }

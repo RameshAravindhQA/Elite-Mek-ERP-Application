@@ -13,10 +13,11 @@ import { Clock, IndianRupee, Users } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Pagination } from "@/components/Pagination";
+import { AuditLogDialog } from "@/components/audit/AuditLogDialog";
 import { useApiClient } from "@/lib/api-client";
 import { useToast } from "@/hooks/use-toast";
 import { downloadRowsAsCsv, openRowsPdfPrint } from "@/lib/export-utils";
-import { Download, Edit, FileText, Plus, Search, Trash2 } from "lucide-react";
+import { Download, Edit, FileText, History, Plus, Search, Trash2 } from "lucide-react";
 
 const currentMonth = () => {
   const d = new Date();
@@ -36,6 +37,7 @@ export default function Overtime() {
   const [projectId, setProjectId] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
+  const [auditRecord, setAuditRecord] = useState<{ id: number; title: string } | null>(null);
   const [formEmployeeId, setFormEmployeeId] = useState("");
   const [formProjectId, setFormProjectId] = useState("");
 
@@ -96,21 +98,24 @@ export default function Overtime() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    saveMutation.mutate({
-      employeeId: Number(form.get("employeeId")),
-      projectId: formProjectId || undefined,
+    const selectedEmployeeId = Number(formEmployeeId);
+    const selectedProjectId = formProjectId ? Number(formProjectId) : undefined;
+    const payload: Record<string, unknown> = {
+      employeeId: selectedEmployeeId,
       workDate: form.get("workDate"),
       hours: Number(form.get("hours")),
-      proofUrl: form.get("proofUrl"),
-      notes: form.get("notes"),
-    });
+      proofUrl: String(form.get("proofUrl") || ""),
+      notes: String(form.get("notes") || ""),
+    };
+    if (Number.isFinite(selectedProjectId)) payload.projectId = selectedProjectId;
+    saveMutation.mutate(payload);
   };
 
   return (
     <div className="space-y-6">
       <PageHeader title="Overtime Records" description="Record project-wise overtime and add it to payroll automatically" actions={
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => openRowsPdfPrint("Overtime Records", rows, exportColumns)}><FileText className="h-4 w-4 mr-2" />PDF</Button>
+          <Button variant="outline" size="sm" onClick={() => void openRowsPdfPrint("Overtime Records", rows, exportColumns)}><FileText className="h-4 w-4 mr-2" />PDF</Button>
           <Button variant="outline" size="sm" onClick={() => downloadRowsAsCsv(`overtime-${month}.csv`, rows, exportColumns)}><Download className="h-4 w-4 mr-2" />Excel</Button>
           <Button size="sm" onClick={openNew}><Plus className="h-4 w-4 mr-2" />Add Overtime</Button>
         </div>
@@ -153,7 +158,11 @@ export default function Overtime() {
                 <TableCell className="text-right">{row.hours}</TableCell>
                 <TableCell className="text-right">{fmtMoney(row.amount)}</TableCell>
                 <TableCell>{row.proofUrl ? <a className="text-primary underline" href={row.proofUrl} target="_blank">View</a> : "-"}</TableCell>
-                <TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => { setEditing(row); setFormEmployeeId(String(row.employeeId)); setFormProjectId(row.projectId ? String(row.projectId) : ""); setDialogOpen(true); }}><Edit className="h-4 w-4" /></Button><Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(row.id)}><Trash2 className="h-4 w-4 text-red-500" /></Button></TableCell>
+                <TableCell className="text-right">
+                  <Button variant="ghost" size="icon" title="Audit history" onClick={() => setAuditRecord({ id: row.id, title: `Overtime #${row.id}` })}><History className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" title="Edit overtime" onClick={() => { setEditing(row); setFormEmployeeId(String(row.employeeId)); setFormProjectId(row.projectId ? String(row.projectId) : ""); setDialogOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" title="Delete overtime" onClick={() => deleteMutation.mutate(row.id)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
+                </TableCell>
               </TableRow>
             )) : <TableRow><TableCell colSpan={7} className="py-10 text-center text-muted-foreground">{search ? "No overtime records found for this search." : "No overtime records available."}</TableCell></TableRow>}
           </TableBody>
@@ -166,7 +175,7 @@ export default function Overtime() {
           <DialogHeader><DialogTitle>{editing ? "Edit Overtime" : "Add Overtime"}</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2"><Label>Employee</Label><input type="hidden" name="employeeId" value={formEmployeeId} /><Select value={formEmployeeId} onValueChange={setFormEmployeeId} required><SelectTrigger><SelectValue placeholder="Select employee" /></SelectTrigger><SelectContent searchable>{employees.map((e: any) => <SelectItem key={e.id} value={String(e.id)} searchText={`${e.firstName} ${e.lastName}`}>{e.firstName} {e.lastName}</SelectItem>)}</SelectContent></Select></div>
+              <div className="space-y-2"><Label>Employee</Label><Select value={formEmployeeId} onValueChange={setFormEmployeeId} required><SelectTrigger><SelectValue placeholder="Select employee" /></SelectTrigger><SelectContent searchable>{employees.map((e: any) => <SelectItem key={e.id} value={String(e.id)} searchText={`${e.firstName} ${e.lastName}`}>{e.firstName} {e.lastName}</SelectItem>)}</SelectContent></Select></div>
               <div className="space-y-2"><Label>Project</Label><Select value={formProjectId || "none"} onValueChange={v => setFormProjectId(v === "none" ? "" : v)}><SelectTrigger><SelectValue placeholder="Select project" /></SelectTrigger><SelectContent searchable><SelectItem value="none">No project</SelectItem>{projects.map((p: any) => <SelectItem key={p.id} value={String(p.id)} searchText={p.name}>{p.name}</SelectItem>)}</SelectContent></Select></div>
               <div className="space-y-2"><Label>Date</Label><Input name="workDate" type="date" defaultValue={editing?.workDate || new Date().toISOString().slice(0, 10)} required /></div>
               <div className="space-y-2"><Label>Hours</Label><Input name="hours" type="number" min="0" step="0.25" defaultValue={editing?.hours || 1} required /></div>
@@ -177,6 +186,13 @@ export default function Overtime() {
           </form>
         </DialogContent>
       </Dialog>
+      <AuditLogDialog
+        open={!!auditRecord}
+        onOpenChange={(open) => !open && setAuditRecord(null)}
+        module="overtime"
+        recordId={auditRecord?.id}
+        recordName={auditRecord?.title}
+      />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import XLSX from "xlsx";
 import { db, invoicesTable, customersTable, projectsTable, settingsTable } from "@workspace/db";
-import { desc, eq, count, sql, ilike, or, and } from "drizzle-orm";
+import { desc, eq, count, sql, ilike, or, and } from "@workspace/db/drizzle";
 import { requireAuth } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
 import { createTaxInvoicePdfFilename, generateTaxInvoicePdf } from "../lib/pdf.js";

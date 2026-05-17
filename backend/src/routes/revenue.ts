@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, revenueTable, customersTable, projectsTable } from "@workspace/db";
-import { desc, eq, count, sql, ilike, or, and } from "drizzle-orm";
+import { desc, eq, count, sql, ilike, or, and } from "@workspace/db/drizzle";
 import { requireAuth } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
 
@@ -63,17 +63,24 @@ router.get("/revenue/:id", requireAuth, async (req, res) => {
 router.put("/revenue/:id", requireAuth, async (req, res) => {
   try {
     const id = Number(req.params.id);
+    const [old] = await db.select().from(revenueTable).where(eq(revenueTable.id, id)).limit(1);
+    if (!old) { res.status(404).json({ error: "Not found" }); return; }
     const body = req.body;
     const updates: any = { ...body, updatedAt: new Date() };
     if (body.amount !== undefined) updates.amount = String(body.amount);
     const [r] = await db.update(revenueTable).set(updates).where(eq(revenueTable.id, id)).returning();
+    await createAuditLog({ module: "revenue", action: "update", recordId: id, userId: req.user!.id, userName: req.user!.name, description: `Updated revenue: ${r.title}`, oldValues: old as any, newValues: body });
     res.json(fmt(r));
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
 router.delete("/revenue/:id", requireAuth, async (req, res) => {
   try {
-    await db.delete(revenueTable).where(eq(revenueTable.id, Number(req.params.id)));
+    const id = Number(req.params.id);
+    const [r] = await db.select().from(revenueTable).where(eq(revenueTable.id, id)).limit(1);
+    if (!r) { res.status(404).json({ error: "Not found" }); return; }
+    await db.delete(revenueTable).where(eq(revenueTable.id, id));
+    await createAuditLog({ module: "revenue", action: "delete", recordId: id, userId: req.user!.id, userName: req.user!.name, description: `Deleted revenue: ${r.title}`, oldValues: r as any });
     res.status(204).send();
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });

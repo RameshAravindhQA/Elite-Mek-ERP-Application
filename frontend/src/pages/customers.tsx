@@ -21,8 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { AuditLogDialog } from "@/components/audit/AuditLogDialog";
 import { Label } from "@/components/ui/label";
-import { Search, Download, FileText, Plus, Edit, Trash, MoreVertical, Upload, History, Users, UserCheck, UserMinus } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Search, Download, FileText, Plus, Edit, Trash, Upload, History, Users, UserCheck, UserMinus } from "lucide-react";
 import { Pagination } from "@/components/Pagination";
 
 export default function Customers() {
@@ -58,9 +57,9 @@ export default function Customers() {
     { header: "GST Number", value: (customer: any) => customer.gstNumber || "-" },
     { header: "Status", value: (customer: any) => customer.status || "-" },
   ];
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     const rows = customersData?.data || [];
-    if (!openRowsPdfPrint("Customers", rows, exportColumns)) {
+    if (!(await openRowsPdfPrint("Customers", rows, exportColumns))) {
       toast({ title: "Export failed", description: "No customer data available.", variant: "destructive" });
       return;
     }
@@ -235,22 +234,11 @@ export default function Customers() {
                     </span>
                   </TableCell>
                   <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon"><MoreVertical className="w-4 h-4" /></Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => { setEditingCustomer(customer); setDialogOpen(true); }}>
-                          <Edit className="w-4 h-4 mr-2" /> Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => { setAuditRecord({ id: customer.id, module: "customers", title: customer.name || customer.company || "Customer" }); }}>
-                          <History className="w-4 h-4 mr-2" /> Audit Log
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600" onClick={() => setDeleteId(customer.id)}>
-                          <Trash className="w-4 h-4 mr-2" /> Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="icon" title="Edit customer" onClick={() => { setEditingCustomer(customer); setDialogOpen(true); }}><Edit className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="icon" title="Audit history" onClick={() => { setAuditRecord({ id: customer.id, module: "customers", title: customer.name || customer.company || "Customer" }); }}><History className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="icon" title="Delete customer" className="text-red-600" onClick={() => setDeleteId(customer.id)}><Trash className="w-4 h-4" /></Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

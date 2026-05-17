@@ -76,9 +76,9 @@ export default function Inventory() {
     { header: "Selling Price", value: (item: any) => Number(item.sellingPrice || 0) },
     { header: "Location", value: (item: any) => item.location || "-" },
   ];
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     const rows = inventoryData?.data || [];
-    if (!openRowsPdfPrint("Inventory", rows, exportColumns)) {
+    if (!(await openRowsPdfPrint("Inventory", rows, exportColumns))) {
       toast({ title: "Export failed", description: "No inventory data available.", variant: "destructive" });
       return;
     }
@@ -249,15 +249,15 @@ export default function Inventory() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => { setAuditRecord({ id: item.id, module: "inventory", title: item.name || item.sku || "Inventory Item" }); }}>
+                        <Button variant="ghost" size="icon" title="Audit history" onClick={() => { setAuditRecord({ id: item.id, module: "inventory", title: item.name || item.sku || "Inventory Item" }); }}>
                           <History className="h-4 w-4 text-muted-foreground" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => { setEditingItem(item); setDialogOpen(true); }}>
+                        <Button variant="ghost" size="icon" title="Edit item" onClick={() => { setEditingItem(item); setDialogOpen(true); }}>
                           <Edit className="h-4 w-4" />
                         </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-red-500"><Trash2 className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" title="Delete item" className="text-red-500"><Trash2 className="h-4 w-4" /></Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader><AlertDialogTitle>Delete Item?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>

@@ -76,13 +76,48 @@ export function ThemeUIProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const root = document.documentElement;
+    // On mount, immediately restore all theme colors from localStorage
+    const restoreThemeOnMount = () => {
+      const themeColor = localStorage.getItem("theme-color");
+      const buttonColor = localStorage.getItem("button-color");
+      const fieldColor = localStorage.getItem("field-color");
+      const shadeColor = localStorage.getItem("theme-light-shade-color");
+      let tableHeaderColor = localStorage.getItem("table-header-color");
+      const headerColor = localStorage.getItem("header-font-color");
+      const paragraphColor = localStorage.getItem("paragraph-font-color");
+      const savedThemeMode = (localStorage.getItem("theme-mode") as "light" | "dark" | "special-dark") || "light";
+
+      if (tableHeaderColor) {
+        const table = hexToHsl(tableHeaderColor);
+        if (table) {
+          root.style.setProperty("--table-header", hslString(table));
+          root.style.setProperty("--table-header-foreground", contrast(table));
+          const baseL = table.l;
+          const hoverColor = savedThemeMode === "light"
+            ? adjustHsl(table, baseL > 50 ? 8 : 26, baseL > 50 ? -10 : 22)
+            : adjustHsl(table, baseL > 50 ? 14 : 22, baseL > 50 ? -8 : 4);
+          root.style.setProperty("--table-row-hover", hoverColor);
+        }
+      }
+    };
+    restoreThemeOnMount();
+  }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
     const themeColor = localStorage.getItem("theme-color");
     const buttonColor = localStorage.getItem("button-color");
     const fieldColor = localStorage.getItem("field-color");
     const shadeColor = localStorage.getItem("theme-light-shade-color");
-    const tableHeaderColor = localStorage.getItem("table-header-color") || "#1D4ED8";
+    let tableHeaderColor = localStorage.getItem("table-header-color");
     const headerColor = localStorage.getItem("header-font-color");
     const paragraphColor = localStorage.getItem("paragraph-font-color");
+
+    // Avoid legacy hard-coded blue table header when no theme is explicitly selected.
+    if (!themeColor && tableHeaderColor?.toUpperCase?.() === "#1D4ED8") {
+      tableHeaderColor = null;
+      localStorage.removeItem("table-header-color");
+    }
 
     if (themeColor) {
       const theme = hexToHsl(themeColor);
@@ -97,11 +132,15 @@ export function ThemeUIProvider({ children }: { children: React.ReactNode }) {
         root.style.setProperty("--chart-1", hslString(theme));
         root.style.setProperty("--chart-2", adjustHsl(theme, theme.l > 50 ? -10 : 20, 15));
         root.style.setProperty("--chart-5", adjustHsl(theme, theme.l > 50 ? -18 : 28, -8));
-        root.style.setProperty("--table-header", hslString(theme));
-        root.style.setProperty("--table-header-foreground", foreground);
         root.style.setProperty("--sidebar-primary", hslString(theme));
         root.style.setProperty("--sidebar-ring", hslString(theme));
         root.style.setProperty("--premium-gradient-start", `hsla(${theme.h}, ${theme.s}%, ${theme.l}%, 0.18)`);
+
+        if (!tableHeaderColor) {
+          root.style.removeProperty("--table-header");
+          root.style.removeProperty("--table-header-foreground");
+          root.style.removeProperty("--table-row-hover");
+        }
       }
     }
 
@@ -131,11 +170,20 @@ export function ThemeUIProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    // Table header + row hover
+    // Keep row hover in sync with selected header color; otherwise resets can leave a stale/light default.
     if (tableHeaderColor) {
       const table = hexToHsl(tableHeaderColor);
       if (table) {
         root.style.setProperty("--table-header", hslString(table));
         root.style.setProperty("--table-header-foreground", contrast(table));
+
+        // Compute hover based on theme mode
+        const baseL = table.l;
+        const hoverColor = themeMode === "light"
+          ? adjustHsl(table, baseL > 50 ? 8 : 26, baseL > 50 ? -10 : 22)
+          : adjustHsl(table, baseL > 50 ? 14 : 22, baseL > 50 ? -8 : 4);
+        root.style.setProperty("--table-row-hover", hoverColor);
       }
     }
 
@@ -169,7 +217,7 @@ export function ThemeUIProvider({ children }: { children: React.ReactNode }) {
 
     if (headerColor) root.style.setProperty("--app-header-color", headerColor);
     if (paragraphColor) root.style.setProperty("--app-paragraph-color", paragraphColor);
-  }, [motionStyle]);
+  }, [motionStyle, themeMode]);
 
   const value = useMemo(() => ({ themeMode, typography, motionStyle, setTypography, setMotionStyle }), [themeMode, typography, motionStyle]);
 

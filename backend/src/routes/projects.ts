@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, projectsTable, projectTasksTable, customersTable, employeesTable } from "@workspace/db";
-import { desc, eq, ilike, count, sql, or, and } from "drizzle-orm";
+import { desc, eq, ilike, count, sql, or, and } from "@workspace/db/drizzle";
 import { requireAuth } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
 
@@ -114,14 +114,24 @@ router.post("/projects/:id/tasks", requireAuth, async (req, res) => {
 
 router.put("/projects/:projectId/tasks/:taskId", requireAuth, async (req, res) => {
   try {
-    const [task] = await db.update(projectTasksTable).set({ ...req.body, updatedAt: new Date() }).where(eq(projectTasksTable.id, Number(req.params.taskId))).returning();
+    const projectId = Number(req.params.projectId);
+    const taskId = Number(req.params.taskId);
+    const [old] = await db.select().from(projectTasksTable).where(eq(projectTasksTable.id, taskId)).limit(1);
+    if (!old) { res.status(404).json({ error: "Not found" }); return; }
+    const [task] = await db.update(projectTasksTable).set({ ...req.body, updatedAt: new Date() }).where(eq(projectTasksTable.id, taskId)).returning();
+    await createAuditLog({ module: "projects", action: "task_update", recordId: projectId, userId: req.user!.id, userName: req.user!.name, description: `Updated task: ${task.title}`, oldValues: old as any, newValues: req.body });
     res.json(task);
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
 router.delete("/projects/:projectId/tasks/:taskId", requireAuth, async (req, res) => {
   try {
-    await db.delete(projectTasksTable).where(eq(projectTasksTable.id, Number(req.params.taskId)));
+    const projectId = Number(req.params.projectId);
+    const taskId = Number(req.params.taskId);
+    const [task] = await db.select().from(projectTasksTable).where(eq(projectTasksTable.id, taskId)).limit(1);
+    if (!task) { res.status(404).json({ error: "Not found" }); return; }
+    await db.delete(projectTasksTable).where(eq(projectTasksTable.id, taskId));
+    await createAuditLog({ module: "projects", action: "task_delete", recordId: projectId, userId: req.user!.id, userName: req.user!.name, description: `Deleted task: ${task.title}`, oldValues: task as any });
     res.status(204).send();
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });

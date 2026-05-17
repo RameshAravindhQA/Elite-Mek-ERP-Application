@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { db, documentsTable, projectsTable } from "@workspace/db";
-import { desc, eq, count, ilike, and, isNull } from "drizzle-orm";
+import { desc, eq, count, ilike, and, isNull } from "@workspace/db/drizzle";
 import { requireAuth } from "../middlewares/auth.js";
+import { createAuditLog } from "../lib/audit.js";
 
 const router = Router();
 
@@ -39,6 +40,7 @@ router.post("/documents", requireAuth, async (req, res) => {
   try {
     const body = req.body;
     const [d] = await db.insert(documentsTable).values({ ...body, tags: body.tags || [], uploadedBy: req.user!.name }).returning();
+    await createAuditLog({ module: "documents", action: "create", recordId: d.id, userId: req.user!.id, userName: req.user!.name, description: `Created document ${d.title}`, newValues: body });
     res.status(201).json(fmt(d));
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
@@ -55,14 +57,22 @@ router.get("/documents/:id", requireAuth, async (req, res) => {
 
 router.put("/documents/:id", requireAuth, async (req, res) => {
   try {
-    const [d] = await db.update(documentsTable).set({ ...req.body, updatedAt: new Date() }).where(eq(documentsTable.id, Number(req.params.id))).returning();
+    const id = Number(req.params.id);
+    const [old] = await db.select().from(documentsTable).where(eq(documentsTable.id, id)).limit(1);
+    if (!old) { res.status(404).json({ error: "Not found" }); return; }
+    const [d] = await db.update(documentsTable).set({ ...req.body, updatedAt: new Date() }).where(eq(documentsTable.id, id)).returning();
+    await createAuditLog({ module: "documents", action: "update", recordId: id, userId: req.user!.id, userName: req.user!.name, description: `Updated document ${d.title}`, oldValues: old as any, newValues: req.body });
     res.json(fmt(d));
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
 router.delete("/documents/:id", requireAuth, async (req, res) => {
   try {
-    await db.delete(documentsTable).where(eq(documentsTable.id, Number(req.params.id)));
+    const id = Number(req.params.id);
+    const [d] = await db.select().from(documentsTable).where(eq(documentsTable.id, id)).limit(1);
+    if (!d) { res.status(404).json({ error: "Not found" }); return; }
+    await db.delete(documentsTable).where(eq(documentsTable.id, id));
+    await createAuditLog({ module: "documents", action: "delete", recordId: id, userId: req.user!.id, userName: req.user!.name, description: `Deleted document ${d.title}`, oldValues: d as any });
     res.status(204).send();
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });

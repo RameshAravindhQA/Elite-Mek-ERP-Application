@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, ledgerTable, ledgerTransactionTable, projectsTable, customersTable, invoicesTable, settingsTable } from "@workspace/db";
-import { desc, eq, count, ilike, or, and } from "drizzle-orm";
+import { db, ledgerTable, ledgerTransactionTable, projectsTable, customersTable, invoicesTable, purchaseOrdersTable, settingsTable } from "@workspace/db";
+import { desc, eq, count, ilike, or, and } from "@workspace/db/drizzle";
 import { requireAuth, requirePermission } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
 
@@ -44,7 +44,13 @@ router.get("/ledger", requireAuth, requirePermission("ledger", "view"), async (r
 router.post("/ledger", requireAuth, requirePermission("ledger", "create"), async (req, res) => {
   try {
     const body = req.body;
-    const [ledger] = await db.insert(ledgerTable).values({ ...body, openingBalance: String(body.openingBalance || 0), currentBalance: String(body.openingBalance || 0), closingBalance: String(body.openingBalance || 0) }).returning();
+    const [ledger] = await db.insert(ledgerTable).values({
+      ...body,
+      startDate: body.startDate || new Date().toISOString().slice(0, 10),
+      openingBalance: String(body.openingBalance || 0),
+      currentBalance: String(body.openingBalance || 0),
+      closingBalance: String(body.openingBalance || 0),
+    }).returning();
     await createAuditLog({ module: "ledger", action: "create", recordId: ledger.id, userId: req.user!.id, userName: req.user!.name, description: `Created ledger account ${ledger.accountName}`, newValues: body });
     res.status(201).json(fmt(ledger));
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
@@ -129,11 +135,14 @@ router.get("/ledger/projects/:projectId", requireAuth, requirePermission("ledger
     }
 
     const [projectRecord] = records;
+    const purchaseOrders = await db.select().from(purchaseOrdersTable).where(eq(purchaseOrdersTable.projectId, String(projectId))).orderBy(purchaseOrdersTable.orderDate);
     const invoices = await db.select().from(invoicesTable).where(eq(invoicesTable.projectId, String(projectId))).orderBy(invoicesTable.issueDate);
+    const projectPoNumbers = purchaseOrders.map((po: any) => po.poNumber).filter(Boolean).join(", ");
 
     const invoiceRows = invoices.map((inv: any) => ({
       id: inv.id,
       invoiceNumber: inv.invoiceNumber,
+      poNumber: inv.poNumber || projectPoNumbers || null,
       status: inv.status,
       issueDate: inv.issueDate,
       dueDate: inv.dueDate,
@@ -143,10 +152,22 @@ router.get("/ledger/projects/:projectId", requireAuth, requirePermission("ledger
       scopeDefinition: inv.scopeDefinition,
       notes: inv.notes,
     }));
+    const purchaseOrderRows = purchaseOrders.map((po: any) => ({
+      id: po.id,
+      poNumber: po.poNumber,
+      status: po.status,
+      orderDate: po.orderDate,
+      deliveryDate: po.deliveryDate,
+      totalAmount: Number(po.totalAmount),
+      items: Array.isArray(po.items) ? po.items : [],
+      scopeDefinition: po.scopeDefinition,
+      notes: po.notes,
+    }));
 
     const committedAmount = invoiceRows.reduce((sum, item) => sum + item.totalAmount, 0);
     const paidAmount = invoiceRows.reduce((sum, item) => sum + item.paidAmount, 0);
     const remainingAmount = committedAmount - paidAmount;
+    const purchaseOrderAmount = purchaseOrderRows.reduce((sum, item) => sum + item.totalAmount, 0);
 
     res.json({
       project: {
@@ -163,11 +184,14 @@ router.get("/ledger/projects/:projectId", requireAuth, requirePermission("ledger
       },
       customer: projectRecord.customer || {},
       invoices: invoiceRows,
+      purchaseOrders: purchaseOrderRows,
       summary: {
         committedAmount,
         paidAmount,
         remainingAmount,
         invoiceCount: invoiceRows.length,
+        purchaseOrderAmount,
+        purchaseOrderCount: purchaseOrderRows.length,
       },
     });
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
@@ -187,9 +211,12 @@ router.get("/ledger/projects/:projectId/pdf", requireAuth, requirePermission("le
     }
 
     const [projectRecord] = records;
+    const purchaseOrders = await db.select().from(purchaseOrdersTable).where(eq(purchaseOrdersTable.projectId, String(projectId))).orderBy(purchaseOrdersTable.orderDate);
     const invoices = await db.select().from(invoicesTable).where(eq(invoicesTable.projectId, String(projectId))).orderBy(invoicesTable.issueDate);
+    const projectPoNumbers = purchaseOrders.map((po: any) => po.poNumber).filter(Boolean).join(", ");
     const invoiceRows = invoices.map((inv: any) => ({
       invoiceNumber: inv.invoiceNumber,
+      poNumber: inv.poNumber || projectPoNumbers || null,
       status: inv.status,
       issueDate: inv.issueDate,
       dueDate: inv.dueDate,
@@ -199,10 +226,19 @@ router.get("/ledger/projects/:projectId/pdf", requireAuth, requirePermission("le
       scopeDefinition: inv.scopeDefinition,
       notes: inv.notes,
     }));
+    const purchaseOrderRows = purchaseOrders.map((po: any) => ({
+      poNumber: po.poNumber,
+      status: po.status,
+      orderDate: po.orderDate,
+      deliveryDate: po.deliveryDate,
+      totalAmount: Number(po.totalAmount),
+      scopeDefinition: po.scopeDefinition,
+      notes: po.notes,
+    }));
 
     const settings = await db.select().from(settingsTable).limit(1).then(rows => rows[0] || {});
     const { createLedgerProjectPdfFilename, generateLedgerProjectPdf } = await import("../lib/pdf.js");
-    const pdfBuffer = await generateLedgerProjectPdf(projectRecord.project, projectRecord.customer || {}, { invoices: invoiceRows, summary: { committedAmount: invoiceRows.reduce((sum, item) => sum + item.totalAmount, 0), paidAmount: invoiceRows.reduce((sum, item) => sum + item.paidAmount, 0), remainingAmount: invoiceRows.reduce((sum, item) => sum + item.balance, 0), invoiceCount: invoiceRows.length } }, settings);
+    const pdfBuffer = await generateLedgerProjectPdf(projectRecord.project, projectRecord.customer || {}, { invoices: invoiceRows, purchaseOrders: purchaseOrderRows, summary: { committedAmount: invoiceRows.reduce((sum, item) => sum + item.totalAmount, 0), paidAmount: invoiceRows.reduce((sum, item) => sum + item.paidAmount, 0), remainingAmount: invoiceRows.reduce((sum, item) => sum + item.balance, 0), invoiceCount: invoiceRows.length, purchaseOrderAmount: purchaseOrderRows.reduce((sum, item) => sum + item.totalAmount, 0), purchaseOrderCount: purchaseOrderRows.length } }, settings);
     const filename = createLedgerProjectPdfFilename(projectRecord.project);
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);

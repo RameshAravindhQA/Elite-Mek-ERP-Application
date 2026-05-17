@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, employeesTable, projectsTable, revenueTable, expensesTable, invoicesTable, leavesTable, inventoryTable, purchaseOrdersTable, auditLogsTable } from "@workspace/db";
-import { count, sql } from "drizzle-orm";
+import { count, sql } from "@workspace/db/drizzle";
 import { requireAuth } from "../middlewares/auth.js";
 
 const router = Router();

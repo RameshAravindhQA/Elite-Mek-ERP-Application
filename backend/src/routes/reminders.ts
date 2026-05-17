@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { db, remindersTable } from "@workspace/db";
-import { eq, count, sql, lte, and } from "drizzle-orm";
+import { eq, count, sql, lte, and } from "@workspace/db/drizzle";
 import { requireAuth } from "../middlewares/auth.js";
+import { createAuditLog } from "../lib/audit.js";
 
 const router = Router();
 
@@ -33,23 +34,32 @@ router.post("/reminders", requireAuth, async (req, res) => {
   try {
     const body = req.body;
     const [r] = await db.insert(remindersTable).values({ ...body, remindAt: new Date(body.remindAt), createdBy: req.user!.name }).returning();
+    await createAuditLog({ module: "reminders", action: "create", recordId: r.id, userId: req.user!.id, userName: req.user!.name, description: `Created reminder ${r.title}`, newValues: body });
     res.status(201).json(fmt(r));
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
 router.put("/reminders/:id", requireAuth, async (req, res) => {
   try {
+    const id = Number(req.params.id);
+    const [old] = await db.select().from(remindersTable).where(eq(remindersTable.id, id)).limit(1);
+    if (!old) { res.status(404).json({ error: "Not found" }); return; }
     const body = req.body;
     const updates: any = { ...body, updatedAt: new Date() };
     if (body.remindAt) updates.remindAt = new Date(body.remindAt);
-    const [r] = await db.update(remindersTable).set(updates).where(eq(remindersTable.id, Number(req.params.id))).returning();
+    const [r] = await db.update(remindersTable).set(updates).where(eq(remindersTable.id, id)).returning();
+    await createAuditLog({ module: "reminders", action: "update", recordId: id, userId: req.user!.id, userName: req.user!.name, description: `Updated reminder ${r.title}`, oldValues: old as any, newValues: body });
     res.json(fmt(r));
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
 router.delete("/reminders/:id", requireAuth, async (req, res) => {
   try {
-    await db.delete(remindersTable).where(eq(remindersTable.id, Number(req.params.id)));
+    const id = Number(req.params.id);
+    const [r] = await db.select().from(remindersTable).where(eq(remindersTable.id, id)).limit(1);
+    if (!r) { res.status(404).json({ error: "Not found" }); return; }
+    await db.delete(remindersTable).where(eq(remindersTable.id, id));
+    await createAuditLog({ module: "reminders", action: "delete", recordId: id, userId: req.user!.id, userName: req.user!.name, description: `Deleted reminder ${r.title}`, oldValues: r as any });
     res.status(204).send();
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });

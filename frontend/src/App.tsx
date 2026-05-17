@@ -1,12 +1,16 @@
 import { Switch, Route, Router as WouterRouter } from "wouter";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MutationCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeUIProvider } from "./contexts/ThemeUIContext";
 import { AppLayout } from "./components/layout/AppLayout";
+import { DebugLogs } from "./components/debug-logs";
 import NotFound from "@/pages/not-found";
 import { installGlobalClickSound } from "@/lib/sound-effects";
+import { getApiErrorMessage } from "@/lib/error-utils";
+import { installInlineValidation, showInlineValidationErrors } from "@/lib/inline-validation";
+import { toast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 
 import Login from "./pages/login";
@@ -41,6 +45,16 @@ import ImportPage from "./pages/import";
 import Ledger from "./pages/ledger";
 
 const queryClient = new QueryClient({
+  mutationCache: new MutationCache({
+    onError: (error) => {
+      showInlineValidationErrors(error);
+      toast({
+        title: "Action failed",
+        description: getApiErrorMessage(error, "Please check the highlighted fields and try again."),
+        variant: "destructive",
+      });
+    },
+  }),
   defaultOptions: {
     queries: {
       retry: false,
@@ -104,7 +118,10 @@ function AppRoutes() {
 }
 
 function App() {
-  useEffect(() => installGlobalClickSound(), []);
+  useEffect(() => {
+    installGlobalClickSound();
+    installInlineValidation();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -113,6 +130,7 @@ function App() {
           <ThemeUIProvider>
             <AuthProvider>
               <AppRoutes />
+              <DebugLogs />
             </AuthProvider>
           </ThemeUIProvider>
         </WouterRouter>

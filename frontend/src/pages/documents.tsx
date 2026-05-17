@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Plus, Download, Edit, Trash2, Loader2, FileText, Upload, Search, File, FileImage, FileSpreadsheet } from "lucide-react";
 import { Pagination } from "@/components/Pagination";
+import { showInlineFieldErrors, validateRequiredFields } from "@/lib/inline-validation";
 
 const getBadgeColor = (type: string) => {
   switch (type?.toUpperCase()) {
@@ -110,8 +111,12 @@ export default function Documents() {
   };
 
   const onSubmit = async () => {
-    if (!form.title) { toast({ title: "Title is required", variant: "destructive" }); return; }
-    if (!editingDoc && !form.fileUrl) { toast({ title: "Please select a file", variant: "destructive" }); return; }
+    if (!validateRequiredFields(form, { title: "Title" })) { toast({ title: "Title is required", variant: "destructive" }); return; }
+    if (!editingDoc && !form.fileUrl) {
+      showInlineFieldErrors([{ field: "fileUrl", message: "Please select a file." }]);
+      toast({ title: "Please select a file", variant: "destructive" });
+      return;
+    }
     setIsSubmitting(true);
     try {
       const payload = {
@@ -158,7 +163,11 @@ export default function Documents() {
       a.download = doc.title + "." + doc.fileType.toLowerCase();
       a.click();
     } else {
-      window.open(doc.fileUrl, "_blank");
+      // Download file from URL
+      const a = document.createElement("a");
+      a.href = doc.fileUrl;
+      a.download = doc.title + "." + doc.fileType.toLowerCase();
+      a.click();
     }
   };
 
@@ -230,8 +239,8 @@ export default function Documents() {
                   <div className="flex justify-end gap-1">
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setViewingDoc(doc)} title="View"><FileText className="w-4 h-4" /></Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDownload(doc)} title="Download"><Download className="w-4 h-4" /></Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(doc)}><Edit className="w-4 h-4" /></Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => setDeleteId(doc.id)}><Trash2 className="w-4 h-4" /></Button>
+                    <Button variant="ghost" size="icon" title="Edit document" className="h-8 w-8" onClick={() => openEdit(doc)}><Edit className="w-4 h-4" /></Button>
+                    <Button variant="ghost" size="icon" title="Delete document" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => setDeleteId(doc.id)}><Trash2 className="w-4 h-4" /></Button>
                   </div>
                 </TableCell>
               </TableRow>
@@ -252,7 +261,7 @@ export default function Documents() {
           <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label>Title *</Label>
-              <Input value={form.title} onChange={e => setForm((f: any) => ({ ...f, title: e.target.value }))} placeholder="Document title..." />
+              <Input name="title" value={form.title} onChange={e => setForm((f: any) => ({ ...f, title: e.target.value }))} placeholder="Document title..." />
             </div>
 
             {!editingDoc && (
@@ -283,6 +292,7 @@ export default function Documents() {
                   )}
                   <input
                     ref={fileInputRef}
+                    name="fileUrl"
                     type="file"
                     className="hidden"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.txt,.zip"

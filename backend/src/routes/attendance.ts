@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, attendanceTable, attendanceCategoriesTable, employeesTable } from "@workspace/db";
-import { eq, and, count, sql, gte, lte } from "drizzle-orm";
+import { eq, and, count, sql, gte, lte } from "@workspace/db/drizzle";
 import { requireAuth } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
 
@@ -106,9 +106,11 @@ router.post("/attendance/bulk", requireAuth, async (req, res) => {
         const [updated] = await db.update(attendanceTable).set({ status: record.status, notes: record.notes, markedBy: req.user!.name, updatedAt: new Date() })
           .where(eq(attendanceTable.id, existing[0].id)).returning();
         results.push(updated);
+        await createAuditLog({ module: "attendance", action: "update", recordId: updated.id, userId: req.user!.id, userName: req.user!.name, description: `Updated attendance for employee #${updated.employeeId} on ${updated.date}`, oldValues: existing[0] as any, newValues: record });
       } else {
         const [created] = await db.insert(attendanceTable).values({ employeeId: record.employeeId, date: record.date, status: record.status, notes: record.notes, markedBy: req.user!.name }).returning();
         results.push(created);
+        await createAuditLog({ module: "attendance", action: "create", recordId: created.id, userId: req.user!.id, userName: req.user!.name, description: `Created attendance for employee #${created.employeeId} on ${created.date}`, newValues: record });
       }
     }
     await createAuditLog({ module: "attendance", action: "bulk_mark", userId: req.user!.id, userName: req.user!.name, description: `Bulk marked attendance for ${records.length} records`, newValues: { count: records.length } });
@@ -129,15 +131,19 @@ router.post("/attendance", requireAuth, async (req, res) => {
       [att] = await db.insert(attendanceTable).values({ ...body, hoursWorked: body.hoursWorked ? String(body.hoursWorked) : null, markedBy: req.user!.name }).returning();
     }
     const [emp] = await db.select().from(employeesTable).where(eq(employeesTable.id, att.employeeId)).limit(1);
-    await createAuditLog({ module: "attendance", action: "mark", recordId: att.id, userId: req.user!.id, userName: req.user!.name, description: `Marked attendance for ${emp?.firstName} ${emp?.lastName} on ${att.date}: ${att.status}`, newValues: body });
+    await createAuditLog({ module: "attendance", action: existing.length ? "update" : "create", recordId: att.id, userId: req.user!.id, userName: req.user!.name, description: `Marked attendance for ${emp?.firstName} ${emp?.lastName} on ${att.date}: ${att.status}`, oldValues: existing[0] as any, newValues: body });
     res.status(201).json({ ...att, employeeName: emp ? `${emp.firstName} ${emp.lastName}` : "Unknown", hoursWorked: att.hoursWorked ? Number(att.hoursWorked) : null });
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
 router.put("/attendance/:id", requireAuth, async (req, res) => {
   try {
-    const [att] = await db.update(attendanceTable).set({ ...req.body, markedBy: req.user!.name, updatedAt: new Date() }).where(eq(attendanceTable.id, Number(req.params.id))).returning();
+    const id = Number(req.params.id);
+    const [old] = await db.select().from(attendanceTable).where(eq(attendanceTable.id, id)).limit(1);
+    if (!old) { res.status(404).json({ error: "Not found" }); return; }
+    const [att] = await db.update(attendanceTable).set({ ...req.body, markedBy: req.user!.name, updatedAt: new Date() }).where(eq(attendanceTable.id, id)).returning();
     const [emp] = await db.select().from(employeesTable).where(eq(employeesTable.id, att.employeeId)).limit(1);
+    await createAuditLog({ module: "attendance", action: "update", recordId: id, userId: req.user!.id, userName: req.user!.name, description: `Updated attendance for ${emp?.firstName} ${emp?.lastName} on ${att.date}`, oldValues: old as any, newValues: req.body });
     res.json({ ...att, employeeName: emp ? `${emp.firstName} ${emp.lastName}` : "Unknown", hoursWorked: att.hoursWorked ? Number(att.hoursWorked) : null });
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
@@ -153,20 +159,29 @@ router.get("/attendance-categories", requireAuth, async (req, res) => {
 router.post("/attendance-categories", requireAuth, async (req, res) => {
   try {
     const [cat] = await db.insert(attendanceCategoriesTable).values(req.body).returning();
+    await createAuditLog({ module: "attendance_categories", action: "create", recordId: cat.id, userId: req.user!.id, userName: req.user!.name, description: `Created attendance category ${cat.name}`, newValues: req.body });
     res.status(201).json(cat);
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
 router.put("/attendance-categories/:id", requireAuth, async (req, res) => {
   try {
-    const [cat] = await db.update(attendanceCategoriesTable).set(req.body).where(eq(attendanceCategoriesTable.id, Number(req.params.id))).returning();
+    const id = Number(req.params.id);
+    const [old] = await db.select().from(attendanceCategoriesTable).where(eq(attendanceCategoriesTable.id, id)).limit(1);
+    if (!old) { res.status(404).json({ error: "Not found" }); return; }
+    const [cat] = await db.update(attendanceCategoriesTable).set(req.body).where(eq(attendanceCategoriesTable.id, id)).returning();
+    await createAuditLog({ module: "attendance_categories", action: "update", recordId: id, userId: req.user!.id, userName: req.user!.name, description: `Updated attendance category ${cat.name}`, oldValues: old as any, newValues: req.body });
     res.json(cat);
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
 router.delete("/attendance-categories/:id", requireAuth, async (req, res) => {
   try {
-    await db.delete(attendanceCategoriesTable).where(eq(attendanceCategoriesTable.id, Number(req.params.id)));
+    const id = Number(req.params.id);
+    const [cat] = await db.select().from(attendanceCategoriesTable).where(eq(attendanceCategoriesTable.id, id)).limit(1);
+    if (!cat) { res.status(404).json({ error: "Not found" }); return; }
+    await db.delete(attendanceCategoriesTable).where(eq(attendanceCategoriesTable.id, id));
+    await createAuditLog({ module: "attendance_categories", action: "delete", recordId: id, userId: req.user!.id, userName: req.user!.name, description: `Deleted attendance category ${cat.name}`, oldValues: cat as any });
     res.status(204).send();
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });

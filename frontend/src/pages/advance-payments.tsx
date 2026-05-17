@@ -11,17 +11,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Pagination } from "@/components/Pagination";
+import { AuditLogDialog } from "@/components/audit/AuditLogDialog";
 import { MetricCard } from "@/components/MetricCard";
 import { useApiClient } from "@/lib/api-client";
 import { useToast } from "@/hooks/use-toast";
 import { downloadRowsAsCsv, openRowsPdfPrint } from "@/lib/export-utils";
-import { Clock, Download, Edit, FileText, Plus, Search, Trash2, Users, IndianRupee } from "lucide-react";
+import { Clock, Download, Edit, FileText, History, Plus, Search, Trash2, Users, IndianRupee } from "lucide-react";
 
 const currentMonth = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 };
 const fmtMoney = (value: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(value || 0);
+
+const statusBadgeClass = (status: string) => {
+  const normalized = String(status || "").toLowerCase();
+  if (normalized === "deducted") return "bg-emerald-100 text-emerald-700 border border-emerald-200";
+  if (normalized === "pending") return "bg-amber-100 text-amber-700 border border-amber-200";
+  if (normalized === "cancelled" || normalized === "rejected") return "bg-red-100 text-red-700 border border-red-200";
+  return "bg-slate-100 text-slate-700 border border-slate-200";
+};
 
 export default function AdvancePayments() {
   const apiClient = useApiClient();
@@ -33,6 +42,7 @@ export default function AdvancePayments() {
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
+  const [auditRecord, setAuditRecord] = useState<{ id: number; title: string } | null>(null);
   const [formEmployeeId, setFormEmployeeId] = useState("");
   const [formStatus, setFormStatus] = useState("pending");
   const { data: employeesData } = useListEmployees({ page: 1, limit: 300 });
@@ -77,15 +87,16 @@ export default function AdvancePayments() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    const selectedEmployeeId = Number(formEmployeeId);
     saveMutation.mutate({
-      employeeId: Number(form.get("employeeId")),
+      employeeId: selectedEmployeeId,
       paymentDate: form.get("paymentDate"),
       deductionMonth: form.get("deductionMonth"),
       amount: Number(form.get("amount")),
-      paymentMode: form.get("paymentMode"),
-      referenceNo: form.get("referenceNo"),
+      paymentMode: String(form.get("paymentMode") || ""),
+      referenceNo: String(form.get("referenceNo") || ""),
       status: formStatus,
-      notes: form.get("notes"),
+      notes: String(form.get("notes") || ""),
     });
   };
 
@@ -93,7 +104,7 @@ export default function AdvancePayments() {
     <div className="space-y-6">
       <PageHeader title="Advance Payments" description="Maintain employee advances and deduct them from current-month payslips" actions={
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => openRowsPdfPrint("Advance Payments", rows, exportColumns)}><FileText className="h-4 w-4 mr-2" />PDF</Button>
+          <Button variant="outline" size="sm" onClick={() => void openRowsPdfPrint("Advance Payments", rows, exportColumns)}><FileText className="h-4 w-4 mr-2" />PDF</Button>
           <Button variant="outline" size="sm" onClick={() => downloadRowsAsCsv(`advance-payments-${month}.csv`, rows, exportColumns)}><Download className="h-4 w-4 mr-2" />Excel</Button>
           <Button size="sm" onClick={() => { setEditing(null); setFormEmployeeId(""); setFormStatus("pending"); setDialogOpen(true); }}><Plus className="h-4 w-4 mr-2" />Add Advance</Button>
         </div>
@@ -124,8 +135,12 @@ export default function AdvancePayments() {
                 <TableCell className="text-right">{fmtMoney(row.amount)}</TableCell>
                 <TableCell>{row.paymentMode || "-"}</TableCell>
                 <TableCell>{row.referenceNo || "-"}</TableCell>
-                <TableCell>{row.status}</TableCell>
-                <TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => { setEditing(row); setFormEmployeeId(String(row.employeeId)); setFormStatus(row.status || "pending"); setDialogOpen(true); }}><Edit className="h-4 w-4" /></Button><Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(row.id)}><Trash2 className="h-4 w-4 text-red-500" /></Button></TableCell>
+                <TableCell><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeClass(row.status)}`}>{row.status || "-"}</span></TableCell>
+                <TableCell className="text-right">
+                  <Button variant="ghost" size="icon" title="Audit history" onClick={() => setAuditRecord({ id: row.id, title: `Advance #${row.id}` })}><History className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" title="Edit advance" onClick={() => { setEditing(row); setFormEmployeeId(String(row.employeeId || "")); setFormStatus(row.status || "pending"); setDialogOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" title="Delete advance" onClick={() => deleteMutation.mutate(row.id)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
+                </TableCell>
               </TableRow>
             )) : <TableRow><TableCell colSpan={8} className="py-10 text-center text-muted-foreground">{search ? "No advance payments found for this search." : "No advance payments available."}</TableCell></TableRow>}
           </TableBody>
@@ -137,7 +152,7 @@ export default function AdvancePayments() {
           <DialogHeader><DialogTitle>{editing ? "Edit Advance Payment" : "Add Advance Payment"}</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2"><Label>Employee</Label><input type="hidden" name="employeeId" value={formEmployeeId} /><Select value={formEmployeeId} onValueChange={setFormEmployeeId} required><SelectTrigger><SelectValue placeholder="Select employee" /></SelectTrigger><SelectContent searchable>{employees.map((e: any) => <SelectItem key={e.id} value={String(e.id)} searchText={`${e.firstName} ${e.lastName}`}>{e.firstName} {e.lastName}</SelectItem>)}</SelectContent></Select></div>
+              <div className="space-y-2"><Label>Employee</Label><Select value={formEmployeeId} onValueChange={setFormEmployeeId} required><SelectTrigger><SelectValue placeholder="Select employee" /></SelectTrigger><SelectContent searchable>{employees.map((e: any) => <SelectItem key={e.id} value={String(e.id)} searchText={`${e.firstName} ${e.lastName}`}>{e.firstName} {e.lastName}</SelectItem>)}</SelectContent></Select></div>
               <div className="space-y-2"><Label>Amount</Label><Input name="amount" type="number" min="0" step="0.01" defaultValue={editing?.amount || ""} required /></div>
               <div className="space-y-2"><Label>Payment Date</Label><Input name="paymentDate" type="date" defaultValue={editing?.paymentDate || new Date().toISOString().slice(0, 10)} required /></div>
               <div className="space-y-2"><Label>Deduction Month</Label><Input name="deductionMonth" type="month" defaultValue={editing?.deductionMonth || month} required /></div>
@@ -150,6 +165,13 @@ export default function AdvancePayments() {
           </form>
         </DialogContent>
       </Dialog>
+      <AuditLogDialog
+        open={!!auditRecord}
+        onOpenChange={(open) => !open && setAuditRecord(null)}
+        module="advance_payments"
+        recordId={auditRecord?.id}
+        recordName={auditRecord?.title}
+      />
     </div>
   );
 }

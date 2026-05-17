@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect } from "react";
 import { useGetMe, User } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
+import clientLogger from "@/lib/client-logger";
+import { playSound } from "@/lib/sound-effects";
 
 interface AuthContextType {
   user: User | null;
@@ -26,8 +28,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [isLoading, isError, location, setLocation]);
 
   const logout = () => {
-    localStorage.removeItem("token");
-    window.location.href = "/login";
+    const currentUser = user?.email || "unknown";
+    clientLogger.logUserAuth("logout", currentUser);
+    const token = localStorage.getItem("token");
+    void (async () => {
+      try {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          credentials: "include",
+        });
+      } catch (err) {
+        clientLogger.error("Logout API call failed", err);
+      }
+      await playSound("logout");
+      localStorage.removeItem("token");
+      window.setTimeout(() => {
+        window.location.href = "/login";
+      }, 900);
+    })();
   };
 
   return (

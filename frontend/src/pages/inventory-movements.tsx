@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pagination } from "@/components/Pagination";
-import { ArrowDownToLine, ArrowRightLeft, ArrowUpFromLine, Loader2, Plus, Search, FileDown, FileSpreadsheet } from "lucide-react";
+import { ArrowDownToLine, ArrowRightLeft, ArrowUpFromLine, Loader2, Plus, Search, FileDown, FileSpreadsheet, Eye, Download, FileText } from "lucide-react";
 import { downloadRowsAsCsv, openRowsPdfPrint } from "@/lib/export-utils";
 
 export default function InventoryMovements() {
@@ -45,12 +45,12 @@ export default function InventoryMovements() {
     { header: "Reference", value: (movement: any) => movement.reference || "-" },
     { header: "Created By", value: (movement: any) => movement.createdBy || "-" },
   ];
-  const handleExportPDF = () => {
-    if (!openRowsPdfPrint("Inventory Movements", movementRows, exportColumns)) {
+  const handleExportPDF = async () => {
+    if (!(await openRowsPdfPrint("Inventory Movements", movementRows, exportColumns))) {
       toast({ title: "Export failed", description: "No movement data available.", variant: "destructive" });
       return;
     }
-    toast({ title: "Success", description: "Inventory movement PDF view opened." });
+    toast({ title: "Success", description: "Inventory movement PDF downloaded." });
   };
   const handleExportExcel = () => {
     if (!downloadRowsAsCsv("inventory-movements.csv", movementRows, exportColumns)) {
@@ -58,6 +58,20 @@ export default function InventoryMovements() {
       return;
     }
     toast({ title: "Success", description: "Inventory movement Excel file downloaded." });
+  };
+
+  const handleExportSingleExcel = (movement: any) => {
+    if (downloadRowsAsCsv(`inventory-movement-${movement.id || movement.reference || Date.now()}.csv`, [movement], exportColumns)) {
+      toast({ title: "Excel exported", description: movement.reference || "Inventory movement downloaded." });
+    }
+  };
+
+  const handleExportSinglePdf = async (movement: any) => {
+    if (await openRowsPdfPrint("Inventory Movement Record", [movement], exportColumns)) {
+      toast({ title: "PDF exported", description: movement.reference || "Inventory movement downloaded." });
+    } else {
+      toast({ title: "Export failed", variant: "destructive" });
+    }
   };
 
   const getTypeClassName = (type: string) => {
@@ -134,13 +148,14 @@ export default function InventoryMovements() {
               <TableHead>Current Stock</TableHead>
               <TableHead>Reference</TableHead>
               <TableHead>Created By</TableHead>
+              <TableHead className="min-w-[150px] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loadingMovements ? (
-              <TableRow><TableCell colSpan={8} className="text-center py-8"><Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" /></TableCell></TableRow>
+              <TableRow><TableCell colSpan={9} className="text-center py-8"><Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" /></TableCell></TableRow>
             ) : movementsData?.data?.length === 0 ? (
-              <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No movements found</TableCell></TableRow>
+              <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No movements found</TableCell></TableRow>
             ) : (
               movementsData?.data?.map((movement: any) => (
                 <TableRow key={movement.id} className="hover:bg-muted/20">
@@ -152,6 +167,11 @@ export default function InventoryMovements() {
                   <TableCell>{movement.currentStock || 0}</TableCell>
                   <TableCell>{movement.reference || '-'}</TableCell>
                   <TableCell>{movement.createdBy ? `User #${movement.createdBy}` : '-'}</TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="icon" title="View movement" onClick={() => toast({ title: movement.item?.name || `Item #${movement.itemId}`, description: `${movement.type} ${movement.quantity} - ${movement.reference || "No reference"}` })}><Eye className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" title="Export this row as Excel" onClick={() => handleExportSingleExcel(movement)}><Download className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" title="Export this row as PDF" onClick={() => void handleExportSinglePdf(movement)}><FileText className="h-4 w-4" /></Button>
+                  </TableCell>
                 </TableRow>
               ))
             )}

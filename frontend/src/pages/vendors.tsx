@@ -20,8 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { AuditLogDialog } from "@/components/audit/AuditLogDialog";
 import { Label } from "@/components/ui/label";
-import { Building2, Search, Download, FileText, Plus, Edit, Trash, MoreVertical, Upload, History, Tags, UserCheck } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Building2, Search, Download, FileText, Plus, Edit, Trash, Upload, History, Tags, UserCheck } from "lucide-react";
 import { Pagination } from "@/components/Pagination";
 
 export default function Vendors() {
@@ -58,9 +57,9 @@ export default function Vendors() {
     { header: "Category", value: (vendor: any) => vendor.category || "-" },
     { header: "Status", value: (vendor: any) => vendor.status || "-" },
   ];
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     const rows = vendorsData?.data || [];
-    if (!openRowsPdfPrint("Vendors", rows, exportColumns)) {
+    if (!(await openRowsPdfPrint("Vendors", rows, exportColumns))) {
       toast({ title: "Export failed", description: "No vendor data available.", variant: "destructive" });
       return;
     }
@@ -243,22 +242,11 @@ export default function Vendors() {
                     </span>
                   </TableCell>
                   <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon"><MoreVertical className="w-4 h-4" /></Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => { setEditingVendor(vendor); setDialogOpen(true); }}>
-                          <Edit className="w-4 h-4 mr-2" /> Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => { setAuditRecord({ id: vendor.id, module: "vendors", title: vendor.name || vendor.company || "Vendor" }); }}>
-                          <History className="w-4 h-4 mr-2" /> Audit Log
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600" onClick={() => setDeleteId(vendor.id)}>
-                          <Trash className="w-4 h-4 mr-2" /> Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="icon" title="Edit vendor" onClick={() => { setEditingVendor(vendor); setDialogOpen(true); }}><Edit className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="icon" title="Audit history" onClick={() => { setAuditRecord({ id: vendor.id, module: "vendors", title: vendor.name || vendor.company || "Vendor" }); }}><History className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="icon" title="Delete vendor" className="text-red-600" onClick={() => setDeleteId(vendor.id)}><Trash className="w-4 h-4" /></Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

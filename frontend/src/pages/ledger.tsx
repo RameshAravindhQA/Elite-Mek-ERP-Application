@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -10,20 +10,35 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BookOpen, CreditCard, Download, IndianRupee, Loader2, Search, Wallet } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { BookOpen, CreditCard, Download, Eye, IndianRupee, Loader2, Search, ShoppingCart, Wallet } from "lucide-react";
 import { useApiClient } from "@/lib/api-client";
-import { useListProjects } from "@workspace/api-client-react";
+import { useListCustomers, useListProjects } from "@workspace/api-client-react";
 import { format } from "date-fns";
 
 type InvoiceRow = {
   id: number;
   invoiceNumber: string;
+  poNumber?: string | null;
   status: string;
   issueDate: string;
   dueDate: string;
   totalAmount: number;
   paidAmount: number;
   balance: number;
+  scopeDefinition?: string;
+  notes?: string;
+};
+
+type PurchaseOrderRow = {
+  id: number;
+  poNumber: string;
+  status: string;
+  orderDate: string;
+  deliveryDate?: string | null;
+  totalAmount: number;
+  items?: unknown[];
   scopeDefinition?: string;
   notes?: string;
 };
@@ -48,11 +63,14 @@ type LedgerProjectResponse = {
     address?: string;
   };
   invoices: InvoiceRow[];
+  purchaseOrders: PurchaseOrderRow[];
   summary: {
     committedAmount: number;
     paidAmount: number;
     remainingAmount: number;
     invoiceCount: number;
+    purchaseOrderAmount: number;
+    purchaseOrderCount: number;
   };
 };
 
@@ -61,11 +79,14 @@ export default function Ledger() {
   const queryClient = useQueryClient();
   const apiClient = useApiClient();
   const [projectSearch, setProjectSearch] = useState("");
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [detail, setDetail] = useState<{ type: "invoice"; row: InvoiceRow } | { type: "po"; row: PurchaseOrderRow } | null>(null);
 
   const { data: projectsData, isLoading: loadingProjects } = useListProjects({ page: 1, limit: 100, ...(projectSearch ? { search: projectSearch } : {}) });
+  const { data: customersData } = useListCustomers({ page: 1, limit: 200 });
   const projects = projectsData?.data || [];
 
   const ledgerQuery = useQuery<LedgerProjectResponse | null>({
@@ -113,7 +134,9 @@ export default function Ledger() {
     }
   };
 
-  const filteredProjects = projects;
+  const filteredProjects = useMemo(() => {
+    return projects.filter((project: any) => !selectedCustomerId || String(project.customerId || "") === selectedCustomerId);
+  }, [projects, selectedCustomerId]);
 
   return (
     <div className="space-y-6">
@@ -134,15 +157,23 @@ export default function Ledger() {
         <MetricCard label="Remaining" value={formatCurrency(ledgerData?.summary.remainingAmount || 0)} icon={Wallet} bg="bg-rose-600" />
       </div>
 
-      <Card className="bg-violet-50 border-violet-200">\r\n        <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
+      <Card className="bg-violet-50 border-violet-200">
+        <CardContent>
+            <div className="grid gap-4 md:grid-cols-3">
               <div>
-                <Label>Project</Label>
-                <Select value={selectedProjectId ? String(selectedProjectId) : ""} onValueChange={(value) => { setSelectedProjectId(value ? Number(value) : null); setPage(1); }}>
-                  <SelectTrigger><SelectValue placeholder="Select project" /></SelectTrigger>
+                <Label>Customer</Label>
+                <Select
+                  value={selectedCustomerId}
+                  onValueChange={(value) => {
+                    setSelectedCustomerId(value);
+                    setSelectedProjectId(null);
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select customer" /></SelectTrigger>
                   <SelectContent>
-                    {filteredProjects.map((project: any) => (
-                      <SelectItem key={project.id} value={String(project.id)}>{project.name}</SelectItem>
+                    {(customersData?.data || []).map((customer: any) => (
+                      <SelectItem key={customer.id} value={String(customer.id)}>{customer.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -158,6 +189,17 @@ export default function Ledger() {
                     onChange={(e) => setProjectSearch(e.target.value)}
                   />
                 </div>
+              </div>
+              <div>
+                <Label>Project</Label>
+                <Select value={selectedProjectId ? String(selectedProjectId) : ""} onValueChange={(value) => { setSelectedProjectId(value ? Number(value) : null); setPage(1); }} disabled={!selectedCustomerId || loadingProjects}>
+                  <SelectTrigger><SelectValue placeholder={selectedCustomerId ? "Select project" : "Select customer first"} /></SelectTrigger>
+                  <SelectContent>
+                    {filteredProjects.map((project: any) => (
+                      <SelectItem key={project.id} value={String(project.id)}>{project.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </CardContent>
@@ -212,24 +254,28 @@ export default function Ledger() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Invoice</TableHead>
+                      <TableHead>PO</TableHead>
                       <TableHead>Issue Date</TableHead>
                       <TableHead>Due Date</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Total</TableHead>
                       <TableHead className="text-right">Paid</TableHead>
                       <TableHead className="text-right">Balance</TableHead>
+                      <TableHead className="text-right">Details</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {ledgerData.invoices.slice((page - 1) * pageSize, page * pageSize).map((invoice: any) => (
                       <TableRow key={invoice.id} className="hover:bg-muted/20">
                         <TableCell>{invoice.invoiceNumber}</TableCell>
+                        <TableCell>{invoice.poNumber || "-"}</TableCell>
                         <TableCell>{format(new Date(invoice.issueDate), "dd MMM yyyy")}</TableCell>
                         <TableCell>{format(new Date(invoice.dueDate), "dd MMM yyyy")}</TableCell>
                         <TableCell><span className={`px-2 py-1 rounded-full text-xs ${invoice.status === "paid" ? "bg-emerald-100 text-emerald-700" : invoice.status === "overdue" ? "bg-red-100 text-red-700" : "bg-sky-100 text-sky-700"}`}>{invoice.status}</span></TableCell>
                         <TableCell className="text-right">{formatCurrency(invoice.totalAmount)}</TableCell>
                         <TableCell className="text-right">{formatCurrency(invoice.paidAmount)}</TableCell>
                         <TableCell className="text-right">{formatCurrency(invoice.balance)}</TableCell>
+                        <TableCell className="text-right"><Button variant="ghost" size="icon" title="View invoice details" onClick={() => setDetail({ type: "invoice", row: invoice })}><Eye className="h-4 w-4" /></Button></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -250,6 +296,135 @@ export default function Ledger() {
           )}
         </CardContent>
       </Card>
+
+      <Card>
+        <CardContent>
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-semibold">Purchase Orders</h2>
+              <p className="text-sm text-muted-foreground">POs linked to the selected project.</p>
+            </div>
+            <div className="text-right">
+              <div className="text-xs uppercase tracking-[0.24em] text-slate-500">PO Total</div>
+              <div className="text-2xl font-bold">{formatCurrency(ledgerData?.summary?.purchaseOrderAmount || 0)}</div>
+            </div>
+          </div>
+
+          {isLoadingLedger ? (
+            <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
+          ) : ledgerData?.purchaseOrders?.length ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>PO</TableHead>
+                    <TableHead>Order Date</TableHead>
+                    <TableHead>Delivery Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                    <TableHead className="text-right">Details</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {ledgerData.purchaseOrders.map((po) => (
+                    <TableRow key={po.id} className="hover:bg-muted/20">
+                      <TableCell className="font-medium">{po.poNumber}</TableCell>
+                      <TableCell>{po.orderDate ? format(new Date(po.orderDate), "dd MMM yyyy") : "-"}</TableCell>
+                      <TableCell>{po.deliveryDate ? format(new Date(po.deliveryDate), "dd MMM yyyy") : "-"}</TableCell>
+                      <TableCell><Badge variant="outline">{po.status}</Badge></TableCell>
+                      <TableCell className="text-right">{formatCurrency(po.totalAmount)}</TableCell>
+                      <TableCell className="text-right"><Button variant="ghost" size="icon" title="View PO details" onClick={() => setDetail({ type: "po", row: po })}><Eye className="h-4 w-4" /></Button></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : selectedProjectId ? (
+            <div className="text-center py-10 text-muted-foreground">No purchase orders found for this project.</div>
+          ) : (
+            <div className="text-center py-10 text-muted-foreground">Select a project to see purchase orders.</div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog open={!!detail} onOpenChange={(open) => !open && setDetail(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{detail?.type === "invoice" ? `Invoice ${detail.row.invoiceNumber}` : `Purchase Order ${detail?.row.poNumber}`}</DialogTitle>
+          </DialogHeader>
+          {detail?.type === "invoice" ? (
+            <div className="grid gap-4 md:grid-cols-2 text-sm">
+              <div><span className="block text-muted-foreground">Invoice</span>{detail.row.invoiceNumber}</div>
+              <div><span className="block text-muted-foreground">PO</span>{detail.row.poNumber || "-"}</div>
+              <div><span className="block text-muted-foreground">Issue Date</span>{detail.row.issueDate ? format(new Date(detail.row.issueDate), "dd MMM yyyy") : "-"}</div>
+              <div><span className="block text-muted-foreground">Due Date</span>{detail.row.dueDate ? format(new Date(detail.row.dueDate), "dd MMM yyyy") : "-"}</div>
+              <div><span className="block text-muted-foreground">Status</span>{detail.row.status}</div>
+              <div><span className="block text-muted-foreground">Total</span>{formatCurrency(detail.row.totalAmount)}</div>
+              <div><span className="block text-muted-foreground">Paid</span>{formatCurrency(detail.row.paidAmount)}</div>
+              <div><span className="block text-muted-foreground">Balance</span>{formatCurrency(detail.row.balance)}</div>
+              <div className="md:col-span-2"><span className="block text-muted-foreground">Scope</span>{detail.row.scopeDefinition || "-"}</div>
+              <div className="md:col-span-2"><span className="block text-muted-foreground">Notes</span>{detail.row.notes || "-"}</div>
+            </div>
+          ) : detail?.type === "po" ? (
+            <div className="space-y-4 text-sm">
+              <div className="grid gap-3 md:grid-cols-3">
+                {[
+                  ["PO Number", detail.row.poNumber],
+                  ["Status", detail.row.status],
+                  ["Order Date", detail.row.orderDate ? format(new Date(detail.row.orderDate), "dd MMM yyyy") : "-"],
+                  ["Delivery Date", detail.row.deliveryDate ? format(new Date(detail.row.deliveryDate), "dd MMM yyyy") : "-"],
+                  ["Total", formatCurrency(detail.row.totalAmount)],
+                  ["Items", detail.row.items?.length || 0],
+                ].map(([label, value]) => (
+                  <div key={String(label)} className="rounded-lg border bg-muted/20 p-3">
+                    <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
+                    <span className="mt-1 block font-medium">{value}</span>
+                  </div>
+                ))}
+                <div className="rounded-lg border bg-muted/20 p-3 md:col-span-3">
+                  <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">Scope</span>
+                  <p className="mt-1 whitespace-pre-wrap">{detail.row.scopeDefinition || "-"}</p>
+                </div>
+                <div className="rounded-lg border bg-muted/20 p-3 md:col-span-3">
+                  <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">Notes</span>
+                  <p className="mt-1 whitespace-pre-wrap">{detail.row.notes || "-"}</p>
+                </div>
+              </div>
+              {Array.isArray(detail.row.items) && detail.row.items.length > 0 && (
+                <div className="border rounded-lg overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs border-collapse">
+                      <thead>
+                        <tr className="bg-muted">
+                          <th className="border px-3 py-2 text-left font-medium">Item Name</th>
+                          <th className="border px-3 py-2 text-right font-medium">Qty</th>
+                          <th className="border px-3 py-2 text-right font-medium">Unit Price</th>
+                          <th className="border px-3 py-2 text-right font-medium">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(detail.row.items as any[]).map((item, i) => {
+                          const qty = item.quantity || 0;
+                          const price = item.unitPrice || 0;
+                          const amount = qty * price;
+                          return (
+                            <tr key={i} className="hover:bg-muted/50">
+                              <td className="border px-3 py-2">{item.itemName || '-'}</td>
+                              <td className="border px-3 py-2 text-right">{qty}</td>
+                              <td className="border px-3 py-2 text-right">{formatCurrency(price)}</td>
+                              <td className="border px-3 py-2 text-right font-medium">{formatCurrency(amount)}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

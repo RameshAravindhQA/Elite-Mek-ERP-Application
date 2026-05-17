@@ -1,7 +1,7 @@
 import { Router } from "express";
 import nodemailer from "nodemailer";
 import { db, purchaseOrdersTable, customersTable, projectsTable, settingsTable } from "@workspace/db";
-import { desc, eq, count, ilike, or, and } from "drizzle-orm";
+import { desc, eq, count, ilike, or, and } from "@workspace/db/drizzle";
 import { requireAuth, requirePermission } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
 import { createPurchaseOrderPdfFilename, generatePurchaseOrderPdf } from "../lib/pdf.js";

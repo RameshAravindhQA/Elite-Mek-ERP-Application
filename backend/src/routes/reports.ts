@@ -1,9 +1,179 @@
 import { Router } from "express";
-import { db, employeesTable, attendanceTable, payrollTable, expensesTable, revenueTable, invoicesTable, purchaseOrdersTable, inventoryTable, leavesTable, projectsTable, customersTable, vendorsTable, overtimeTable, advancePaymentsTable } from "@workspace/db";
-import { desc, count, sql, eq, gte, lte, and, ilike, or } from "drizzle-orm";
+import { db, employeesTable, attendanceTable, payrollTable, expensesTable, revenueTable, invoicesTable, purchaseOrdersTable, inventoryTable, leavesTable, projectsTable, customersTable, vendorsTable, overtimeTable, advancePaymentsTable, settingsTable } from "@workspace/db";
+import { desc, count, sql, eq, gte, lte, and, ilike, or } from "@workspace/db/drizzle";
+import PDFDocument from "pdfkit";
 import { requireAuth } from "../middlewares/auth.js";
 
 const router = Router();
+
+const sanitizeHexColor = (value: unknown, fallback = "#1D4ED8") => (
+  typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value) ? value : fallback
+);
+
+const normalizeLines = (...values: unknown[]) => values
+  .flatMap((value) => String(value || "").split(/\r?\n/))
+  .map((line) => line.trim())
+  .filter(Boolean);
+
+const buildCompanyDetails = (settings: any, bodyDetails?: string) => normalizeLines(
+  settings.companyAddress,
+  [settings.companyPhone, settings.companyPhone2].filter(Boolean).join(" | "),
+  [settings.companyEmail, settings.companyWebsite].filter(Boolean).join(" | "),
+  settings.gstNumber ? `GST: ${settings.gstNumber}` : "",
+  settings.panNumber ? `PAN: ${settings.panNumber}` : "",
+  bodyDetails,
+);
+
+const loadLogoImage = async (logoUrl?: string | null) => {
+  if (!logoUrl) return null;
+  const trimmed = logoUrl.trim();
+  if (!trimmed) return null;
+
+  const dataMatch = trimmed.match(/^data:image\/(png|jpe?g);base64,(.+)$/i);
+  if (dataMatch) return Buffer.from(dataMatch[2], "base64");
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    try {
+      const response = await fetch(trimmed);
+      const contentType = response.headers.get("content-type") || "";
+      if (!response.ok || !/^image\/(png|jpe?g)/i.test(contentType)) return null;
+      return Buffer.from(await response.arrayBuffer());
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+};
+
+const drawGeneratedEliteMekLogo = (doc: PDFKit.PDFDocument, x: number, y: number) => {
+  doc.roundedRect(x, y, 88, 36, 6).fill("#0F172A");
+  doc.roundedRect(x + 6, y + 6, 24, 24, 4).fill("#F97316");
+  doc.fillColor("#FFFFFF").font("Helvetica-Bold").fontSize(7).text("EM", x + 10, y + 14, { width: 16, align: "center" });
+  doc.fillColor("#FFFFFF").font("Helvetica-Bold").fontSize(12).text("Elite", x + 36, y + 7, { width: 46 });
+  doc.fillColor("#CBD5E1").font("Helvetica").fontSize(8).text("Mek", x + 36, y + 21, { width: 46 });
+};
+
+const drawReportHeader = async (doc: PDFKit.PDFDocument, title: string, settings: any, body: any, tableHeaderColor: string) => {
+  const left = doc.page.margins.left;
+  const top = doc.page.margins.top;
+  const right = doc.page.width - doc.page.margins.right;
+  const logoWidth = 96;
+  const logoX = right - logoWidth;
+
+  doc.rect(0, 0, doc.page.width, 7).fill(tableHeaderColor);
+
+  const logoSource = await loadLogoImage(settings.companyLogo || body.companyLogo);
+  if (logoSource) {
+    try {
+      doc.image(logoSource, logoX, top, { fit: [logoWidth, 42], align: "right" });
+    } catch {
+      drawGeneratedEliteMekLogo(doc, logoX + 6, top);
+    }
+  } else {
+    drawGeneratedEliteMekLogo(doc, logoX + 6, top);
+  }
+
+  const companyName = settings.companyName || body.companyName || "Elite Mek";
+  const details = buildCompanyDetails(settings, body.companyDetails);
+  doc.fillColor("#0F172A").font("Helvetica-Bold").fontSize(16).text(companyName, left, top, {
+    width: logoX - left - 16,
+    lineGap: 1,
+  });
+  if (details.length) {
+    doc.moveDown(0.18);
+    doc.fillColor("#475569").font("Helvetica").fontSize(8.5).text(details.join("\n"), {
+      width: logoX - left - 16,
+      lineGap: 1.2,
+    });
+  }
+
+  const headerBottom = Math.max(doc.y, top + 48) + 12;
+  doc.strokeColor("#E2E8F0").lineWidth(0.8).moveTo(left, headerBottom).lineTo(right, headerBottom).stroke();
+  doc.y = headerBottom + 12;
+
+  doc.fillColor("#0F172A").font("Helvetica-Bold").fontSize(15).text(title, left, doc.y, { width: right - left });
+  doc.moveDown(0.2);
+  doc.fillColor("#64748B").font("Helvetica").fontSize(8.5).text(
+    `Generated: ${new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}`,
+    left,
+    doc.y,
+  );
+  doc.moveDown(0.25);
+};
+
+const measureRowHeight = (doc: PDFKit.PDFDocument, headers: string[], row: Record<string, unknown>, widths: number[]) => {
+  const cellHeights = headers.map((header, index) => {
+    const value = String(row[header] ?? "");
+    return doc.heightOfString(value || "-", { width: widths[index] - 10, lineGap: 1.1 });
+  });
+  return Math.max(22, Math.min(72, Math.max(...cellHeights) + 10));
+};
+
+const drawTableHeader = (doc: PDFKit.PDFDocument, headers: string[], widths: number[], x: number, y: number, tableWidth: number, headerColor: string) => {
+  doc.rect(x, y, tableWidth, 24).fill(headerColor);
+  let cursorX = x;
+  headers.forEach((header, index) => {
+    doc.fillColor("#FFFFFF").font("Helvetica-Bold").fontSize(8).text(header, cursorX + 5, y + 7, {
+      width: widths[index] - 10,
+      height: 12,
+      ellipsis: true,
+    });
+    cursorX += widths[index];
+  });
+  return y + 24;
+};
+
+const buildColumnWidths = (headers: string[], tableWidth: number) => {
+  const weights = headers.map((header) => {
+    const normalized = header.toLowerCase();
+    if (/(date|time)/.test(normalized)) return 1.2;
+    if (/(description|notes|address|reference|item|customer|project|employee)/.test(normalized)) return 1.55;
+    if (/(quantity|stock|amount|total|price|status|type|code)/.test(normalized)) return 0.9;
+    return 1;
+  });
+  const total = weights.reduce((sum, weight) => sum + weight, 0);
+  return weights.map((weight) => (tableWidth * weight) / total);
+};
+
+const drawRowsTable = (doc: PDFKit.PDFDocument, headers: string[], rows: Record<string, unknown>[], headerColor: string) => {
+  const left = doc.page.margins.left;
+  const tableWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+  const widths = buildColumnWidths(headers, tableWidth);
+  const bottom = doc.page.height - doc.page.margins.bottom;
+  let y = doc.y + 8;
+
+  y = drawTableHeader(doc, headers, widths, left, y, tableWidth, headerColor);
+
+  rows.forEach((row, rowIndex) => {
+    doc.font("Helvetica").fontSize(7.2);
+    const rowHeight = measureRowHeight(doc, headers, row, widths);
+    if (y + rowHeight > bottom) {
+      doc.addPage();
+      y = doc.page.margins.top;
+      y = drawTableHeader(doc, headers, widths, left, y, tableWidth, headerColor);
+    }
+
+    doc.rect(left, y, tableWidth, rowHeight).fill(rowIndex % 2 === 0 ? "#F8FAFC" : "#FFFFFF");
+    doc.strokeColor("#E2E8F0").lineWidth(0.4).moveTo(left, y + rowHeight).lineTo(left + tableWidth, y + rowHeight).stroke();
+
+    let cursorX = left;
+    headers.forEach((header, colIndex) => {
+      const value = String(row[header] ?? "") || "-";
+      doc.fillColor("#111827").font("Helvetica").fontSize(7.2).text(value, cursorX + 5, y + 5, {
+        width: widths[colIndex] - 10,
+        height: rowHeight - 8,
+        lineGap: 1.1,
+        ellipsis: true,
+      });
+      cursorX += widths[colIndex];
+    });
+
+    y += rowHeight;
+  });
+
+  doc.y = y + 12;
+};
 
 router.get("/reports/summary", requireAuth, async (req, res) => {
   try {
@@ -148,6 +318,48 @@ router.get("/reports/advance-payments", requireAuth, async (req, res) => {
       data: data.map(row => ({ ...row.adv, employeeName: row.emp ? `${row.emp.firstName} ${row.emp.lastName}` : "Unknown", employeeCode: row.emp?.employeeId, amount: Number(row.adv.amount) })),
     });
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
+});
+
+// PDF Download endpoint for reports
+router.post("/reports/generate-pdf", requireAuth, async (req, res) => {
+  try {
+    const { title, headers, rows } = req.body;
+
+    if (!title || !headers || !Array.isArray(rows)) {
+      res.status(400).json({ error: "Missing required fields: title, headers, rows" });
+      return;
+    }
+
+    const reportHeaders = headers as string[];
+    const reportRows = rows as Record<string, unknown>[];
+    const [settings] = await db.select().from(settingsTable).limit(1);
+    const tableHeaderColor = sanitizeHexColor(req.body.tableHeaderColor || settings?.themeColor, "#1D4ED8");
+    const isWide = reportHeaders.length > 6;
+
+    const doc = new PDFDocument({
+      size: "A4",
+      layout: isWide ? "landscape" : "portrait",
+      margin: 32,
+      bufferPages: true,
+      autoFirstPage: false,
+    });
+
+    // Set response headers for PDF download
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${title.replace(/\s+/g, "-").toLowerCase()}-${Date.now()}.pdf"`);
+
+    doc.pipe(res);
+
+    doc.addPage();
+    await drawReportHeader(doc, String(title), settings || {}, req.body, tableHeaderColor);
+    doc.fillColor("#64748B").font("Helvetica").fontSize(8.5).text(`Records: ${reportRows.length} | Columns: ${reportHeaders.length}`);
+    drawRowsTable(doc, reportHeaders, reportRows, tableHeaderColor);
+
+    doc.end();
+  } catch (err) { 
+    req.log.error({ err }); 
+    res.status(500).json({ error: "Failed to generate PDF" }); 
+  }
 });
 
 export default router;

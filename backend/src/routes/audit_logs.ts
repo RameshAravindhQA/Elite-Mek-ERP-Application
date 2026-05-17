@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, auditLogsTable } from "@workspace/db";
-import { and, eq, count, sql } from "drizzle-orm";
+import { and, eq, count, sql } from "@workspace/db/drizzle";
 import { requireAuth } from "../middlewares/auth.js";
 
 const router = Router();
@@ -11,10 +11,14 @@ router.get("/audit-logs", requireAuth, async (req, res) => {
     const limit = Number(req.query.limit) || 20;
     const offset = (page - 1) * limit;
     const module = req.query.module as string;
+    const action = req.query.action as string;
+    const userId = req.query.userId ? Number(req.query.userId) : undefined;
     const recordId = req.query.recordId ? Number(req.query.recordId) : undefined;
     const conditions: any[] = [];
     if (module) conditions.push(eq(auditLogsTable.module, module));
-    if (recordId) conditions.push(eq(auditLogsTable.recordId, recordId));
+    if (action) conditions.push(eq(auditLogsTable.action, action));
+    if (userId) conditions.push(eq(auditLogsTable.userId, userId));
+    if (recordId !== undefined) conditions.push(eq(auditLogsTable.recordId, recordId));
     const whereClause = conditions.length ? and(...conditions) : undefined;
 
     const [{ total }] = await db.select({ total: count() }).from(auditLogsTable).where(whereClause);

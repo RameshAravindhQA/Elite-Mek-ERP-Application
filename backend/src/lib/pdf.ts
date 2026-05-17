@@ -2,6 +2,7 @@ import PDFDocument from "pdfkit";
 
 export interface PdfSettings {
   companyName?: string | null;
+  companyLogo?: string | null;
   companyAddress?: string | null;
   companyPhone?: string | null;
   companyPhone2?: string | null;
@@ -14,8 +15,40 @@ export interface PdfSettings {
   currency?: string | null;
 }
 
+function getLogoBuffer(settings: PdfSettings) {
+  const logo = settings.companyLogo?.trim();
+  if (!logo) return null;
+  const match = logo.match(/^data:image\/(png|jpe?g);base64,(.+)$/i);
+  if (!match) return null;
+  try {
+    return Buffer.from(match[2], "base64");
+  } catch {
+    return null;
+  }
+}
+
+function drawLogoImage(doc: PDFKit.PDFDocument, settings: PdfSettings, x: number, y: number, width = 88, height = 42) {
+  const logoBuffer = getLogoBuffer(settings);
+  if (!logoBuffer) return false;
+  try {
+    doc.image(logoBuffer, x, y, { fit: [width, height], align: "right" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function drawCompanyHeader(doc: PDFKit.PDFDocument, settings: PdfSettings) {
-  doc.fillColor("#0F172A").fontSize(20).font("Helvetica-Bold").text(settings.companyName || "EliteMek ERP");
+  const left = doc.page.margins.left;
+  const top = doc.y;
+  const right = doc.page.width - doc.page.margins.right;
+  const logoWidth = 96;
+  const logoX = right - logoWidth;
+  const logoDrawn = drawLogoImage(doc, settings, logoX, top, logoWidth, 44);
+
+  doc.fillColor("#0F172A").fontSize(20).font("Helvetica-Bold").text(settings.companyName || "EliteMek ERP", left, top, {
+    width: logoDrawn ? logoX - left - 16 : right - left,
+  });
   const details = [
     settings.companyAddress,
     [settings.companyPhone, settings.companyPhone2].filter(Boolean).join(" | "),
@@ -24,7 +57,14 @@ function drawCompanyHeader(doc: PDFKit.PDFDocument, settings: PdfSettings) {
     settings.panNumber ? `PAN: ${settings.panNumber}` : "",
   ].filter(Boolean) as string[];
   if (details.length) {
-    doc.moveDown(0.25).fontSize(10).font("Helvetica").fillColor("#475569").text(details.join("\n"), { lineGap: 2 });
+    doc.moveDown(0.25).fontSize(10).font("Helvetica").fillColor("#475569").text(details.join("\n"), {
+      width: logoDrawn ? logoX - left - 16 : right - left,
+      lineGap: 2,
+    });
+  }
+
+  if (logoDrawn) {
+    doc.y = Math.max(doc.y, top + 50);
   }
 }
 
@@ -319,8 +359,9 @@ export function generateTaxInvoicePdf(invoice: any, customer: any, project: any,
     doc.moveTo(pageLeft, topY).lineTo(pageLeft + width, topY).stroke();
 
     doc.font("Helvetica-Bold").fontSize(7).text("SELLER", pageLeft + 4, topY + 4);
-    doc.font("Helvetica-Bold").fontSize(8).text(sellerName, pageLeft + 4, topY + 15, { width: leftW - 8 });
-    doc.font("Helvetica").fontSize(7).text(sellerAddress, pageLeft + 4, topY + 27, { width: leftW - 8 });
+    drawLogoImage(doc, settings, pageLeft + leftW - 66, topY + 6, 58, 30);
+    doc.font("Helvetica-Bold").fontSize(8).text(sellerName, pageLeft + 4, topY + 15, { width: leftW - 78 });
+    doc.font("Helvetica").fontSize(7).text(sellerAddress, pageLeft + 4, topY + 27, { width: leftW - 78 });
     doc.font("Helvetica-Bold").text(`GSTIN/UIN : ${gstNumber}`, pageLeft + 4, topY + 58);
     doc.text("STATE NAME: TAMIL NADU, CODE: 33", pageLeft + 4, topY + 68);
 

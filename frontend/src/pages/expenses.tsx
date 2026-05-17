@@ -17,6 +17,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { AuditLogDialog } from "@/components/audit/AuditLogDialog";
 import { Loader2, Plus, Search, FileDown, Edit, Trash2, Receipt, TrendingDown, Clock, Upload, Download, History } from "lucide-react";
 import { Pagination } from "@/components/Pagination";
+import { showInlineFieldErrors, validateRequiredFields } from "@/lib/inline-validation";
 
 const CATEGORIES = ["Travel", "Office Supplies", "Utilities", "Maintenance", "Marketing", "Software", "Training", "Miscellaneous"];
 const fmtINR = (n: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n || 0);
@@ -113,7 +114,12 @@ export default function Expenses() {
   };
 
   const handleSubmit = async () => {
-    if (!form.title || !form.amount) { toast({ title: "Title and amount required", variant: "destructive" }); return; }
+    if (!validateRequiredFields(form, { title: "Title", amount: "Amount" })) { toast({ title: "Title and amount required", variant: "destructive" }); return; }
+    if (Number(form.amount) <= 0) {
+      showInlineFieldErrors([{ field: "amount", message: "Amount must be greater than zero." }]);
+      toast({ title: "Invalid amount", variant: "destructive" });
+      return;
+    }
     setIsSubmitting(true);
     const projectIdVal = form.projectId === "none" ? null : (form.projectId ? Number(form.projectId) : null);
     const payload = { ...form, amount: Number(form.amount), projectId: projectIdVal };
@@ -252,7 +258,7 @@ export default function Expenses() {
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>{editingExpense ? "Edit Expense" : "Add Expense"}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
-            <div className="col-span-2 space-y-2"><Label>Title *</Label><Input value={form.title} onChange={e => setForm((f: any) => ({ ...f, title: e.target.value }))} /></div>
+            <div className="col-span-2 space-y-2"><Label>Title *</Label><Input name="title" value={form.title} onChange={e => setForm((f: any) => ({ ...f, title: e.target.value }))} /></div>
             <div className="space-y-2">
               <Label>Category</Label>
               <Select value={form.category || "Miscellaneous"} onValueChange={v => setForm((f: any) => ({ ...f, category: v }))}>
@@ -261,8 +267,8 @@ export default function Expenses() {
               </Select>
             </div>
             <div className="space-y-2"><Label>Sub-Category</Label><Input value={form.subCategory} onChange={e => setForm((f: any) => ({ ...f, subCategory: e.target.value }))} /></div>
-            <div className="space-y-2"><Label>Amount (₹) *</Label><Input type="number" value={form.amount} onChange={e => setForm((f: any) => ({ ...f, amount: e.target.value }))} /></div>
-            <div className="space-y-2"><Label>Date</Label><Input type="date" value={form.date} onChange={e => setForm((f: any) => ({ ...f, date: e.target.value }))} /></div>
+            <div className="space-y-2"><Label>Amount (₹) *</Label><Input name="amount" type="number" min={0.01} step="0.01" value={form.amount} onChange={e => setForm((f: any) => ({ ...f, amount: e.target.value }))} /></div>
+            <div className="space-y-2"><Label>Date</Label><Input name="date" type="date" value={form.date} onChange={e => setForm((f: any) => ({ ...f, date: e.target.value }))} /></div>
             <div className="space-y-2">
               <Label>Status</Label>
               <Select value={form.status || "pending"} onValueChange={v => setForm((f: any) => ({ ...f, status: v }))}>

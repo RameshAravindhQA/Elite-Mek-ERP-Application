@@ -1,0 +1,124 @@
+[
+  {
+    "id": 1778860924738,
+    "name": "Codex Minimal Test Patched",
+    "description": "",
+    "version": 1,
+    "pageSize": "A4",
+    "orientation": "portrait",
+    "dataSource": "manual",
+    "headerEnabled": true,
+    "footerEnabled": true,
+    "fields": [],
+    "sections": [
+      {
+        "cells": [],
+        "id": "s1",
+        "columns": 1,
+        "rowHeights": [
+          "auto"
+        ],
+        "layout": "dynamic",
+        "name": "S1",
+        "rows": 1,
+        "columnWidths": [
+          "100%"
+        ],
+        "showTitleInReport": true,
+        "attributes": [
+          {
+            "width": "100%",
+            "borderColor": "#d1d5db",
+            "align": "left",
+            "type": "text",
+            "fontSize": 12,
+            "id": "a1",
+            "uniqueName": "a1",
+            "fontWeight": "normal",
+            "backgroundColor": "#ffffff",
+            "required": false,
+            "displayName": "A1",
+            "color": "#111827",
+            "options": "",
+            "colSpan": 1,
+            "rowSpan": 1,
+            "defaultValue": "hello",
+            "binding": "manual"
+          }
+        ]
+      }
+    ],
+    "header": "H",
+    "footer": "F",
+    "createdAt": "2026-05-15T16:02:04.738Z",
+    "updatedAt": "2026-05-15T16:02:04.738Z"
+  },
+  {
+    "id": 1778860860459,
+    "name": "Codex Minimal Test",
+    "description": "",
+    "version": 1,
+    "pageSize": "A4",
+    "orientation": "portrait",
+    "dataSource": "customers",
+    "headerEnabled": true,
+    "footerEnabled": true,
+    "fields": [],
+    "sections": [],
+    "header": "H",
+    "footer": "F",
+    "createdAt": "2026-05-15T16:01:00.459Z",
+    "updatedAt": "2026-05-15T16:01:00.459Z"
+  },
+  {
+    "id": 1778860849781,
+    "name": "Codex Save Export Test",
+    "description": "Template persistence and export smoke test",
+    "version": 1,
+    "pageSize": "A4",
+    "orientation": "portrait",
+    "dataSource": "customers",
+    "headerEnabled": true,
+    "footerEnabled": true,
+    "fields": [],
+    "sections": [],
+    "header": "{{customers.company}}",
+    "footer": "Generated test",
+    "createdAt": "2026-05-15T16:00:49.781Z",
+    "updatedAt": "2026-05-15T16:00:49.781Z"
+  },
+  {
+    "id": 1778859336805,
+    "name": "IQVIA Style Template",
+    "description": "Dynamic and table layout with ERP pull-through data",
+    "version": 1,
+    "pageSize": "A4",
+    "orientation": "portrait",
+    "dataSource": "customers",
+    "headerEnabled": true,
+    "footerEnabled": true,
+    "fields": [],
+    "sections": [],
+    "header": "{{customers.company}}\n{{customers.address}}",
+    "footer": "Generated from Template Studio",
+    "createdAt": "2026-05-15T15:35:36.805Z",
+    "updatedAt": "2026-05-15T15:35:36.805Z"
+  },
+  {
+    "id": 1778854919976,
+    "name": "Enterprise Document Template",
+    "description": "Reusable metadata-driven form and document template",
+    "version": 4,
+    "pageSize": "A4",
+    "orientation": "portrait",
+    "dataSource": "customers",
+    "headerEnabled": true,
+    "footerEnabled": true,
+    "fields": [],
+    "sections": [],
+    "header": "Elite Mek\n{{customers.company}}\n{{customers.address}}",
+    "footer": "Generated from Template Studio",
+    "createdAt": "2026-05-15T14:21:59.976Z",
+    "updatedAt": "2026-05-15T14:45:52.489Z"
+  }
+]

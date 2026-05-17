@@ -150,6 +150,7 @@ function truncate(text: string, maxLength = 300): string {
 
 function buildErrorMessage(response: Response, data: unknown): string {
   const prefix = `HTTP ${response.status} ${response.statusText}`;
+  const fieldDetails = formatValidationDetails(data);
 
   if (typeof data === "string") {
     const text = data.trim();
@@ -163,12 +164,34 @@ function buildErrorMessage(response: Response, data: unknown): string {
     getStringField(data, "error_description") ??
     getStringField(data, "error");
 
-  if (title && detail) return `${prefix}: ${title} — ${detail}`;
-  if (detail) return `${prefix}: ${detail}`;
-  if (message) return `${prefix}: ${message}`;
-  if (title) return `${prefix}: ${title}`;
+  if (title && detail) return appendDetails(`${prefix}: ${title} - ${detail}`, fieldDetails);
+  if (detail) return appendDetails(`${prefix}: ${detail}`, fieldDetails);
+  if (message) return appendDetails(`${prefix}: ${message}`, fieldDetails);
+  if (title) return appendDetails(`${prefix}: ${title}`, fieldDetails);
 
-  return prefix;
+  return appendDetails(prefix, fieldDetails);
+}
+
+function formatValidationDetails(data: unknown): string {
+  if (!data || typeof data !== "object") return "";
+
+  const details = (data as Record<string, unknown>).details;
+  if (!Array.isArray(details)) return "";
+
+  return details
+    .map((detail) => {
+      if (!detail || typeof detail !== "object") return "";
+      const record = detail as Record<string, unknown>;
+      const field = typeof record.field === "string" ? record.field : typeof record.path === "string" ? record.path : "field";
+      const message = typeof record.message === "string" ? record.message : "Invalid value";
+      return `${field}: ${message}`;
+    })
+    .filter(Boolean)
+    .join("; ");
+}
+
+function appendDetails(message: string, details: string): string {
+  return details ? `${message} - ${details}` : message;
 }
 
 export class ApiError<T = unknown> extends Error {

@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Users, CalendarCheck, CreditCard, CalendarOff, Building2, Truck,
   Briefcase, ShoppingCart, Package, ArrowRightLeft, Receipt, TrendingUp, FileText,
   Files, Bell, ShieldCheck, Settings, Clock, UserCircle, LogOut, Menu,
-  KeyRound, BarChart3, ChevronDown, ChevronRight, GitFork, BookOpen, Sparkles, Timer, HandCoins
+  KeyRound, BarChart3, ChevronDown, ChevronRight, GitFork, BookOpen, Sparkles, Timer, HandCoins, History
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -64,6 +64,7 @@ const NAV_GROUPS = [
     items: [
       { href: "/documents", label: "Documents", icon: Files },
       { href: "/notifications", label: "Notifications", icon: Bell },
+      { href: "/audit-logs", label: "Audit Logs", icon: History },
       { href: "/roles", label: "Roles", icon: ShieldCheck },
       { href: "/reminders", label: "Reminders", icon: Clock },
       { href: "/settings", label: "Settings", icon: Settings },
@@ -210,41 +211,52 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       </AlertDialog>
 
       <Dialog open={showWelcomeDialog} onOpenChange={setShowWelcomeDialog}>
-        <DialogContent className="max-w-lg overflow-hidden border border-border bg-card p-0 shadow-2xl">
-          <div className="relative">
-            <div className="absolute inset-0 bg-[linear-gradient(135deg,hsl(var(--card)),hsl(var(--muted))_62%,hsl(var(--primary)/0.12))]" />
-            <div className="relative p-6 text-card-foreground">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2 text-card-foreground">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  {greeting}, {user?.name || "User"}
-                </DialogTitle>
-            </DialogHeader>
-            <div className="mt-5 space-y-4 text-sm">
-            <div className="rounded-lg border border-border bg-muted/60 p-4 shadow-sm">
-              <p className="font-semibold text-card-foreground">Welcome to Elite Mek</p>
-              <p className="mt-1 text-muted-foreground">Excellence in Engineering Since 2020.</p>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-lg border border-border bg-card p-3">
-                <span className="block text-xs text-muted-foreground">User</span>
-                <span className="font-medium text-card-foreground">{user?.name || "-"}</span>
-              </div>
-              <div className="rounded-lg border border-border bg-card p-3">
-                <span className="block text-xs text-muted-foreground">Role</span>
-                <span className="font-medium text-card-foreground">{user?.role || "-"}</span>
-              </div>
-              <div className="col-span-2 rounded-lg border border-border bg-card p-3">
-                <span className="block text-xs text-muted-foreground">Login Time</span>
-                <span className="font-medium text-card-foreground">{loginTime.toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</span>
+        <DialogContent className="max-w-2xl overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/95 p-0 shadow-2xl shadow-slate-950/40">
+          <div className="relative overflow-hidden rounded-[2rem] bg-slate-950">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.14),transparent_20%),radial-gradient(circle_at_bottom_right,rgba(16,185,129,0.14),transparent_25%)]" />
+            <div className="relative px-8 pt-8 pb-6">
+              <div className="rounded-[2rem] border border-slate-800/70 bg-slate-950/95 p-6 shadow-[0_40px_80px_-40px_rgba(15,23,42,0.8)]">
+                <DialogHeader className="relative z-10">
+                  <DialogTitle className="flex flex-col gap-3 text-3xl font-semibold tracking-tight !text-white drop-shadow-[0_3px_18px_rgba(0,0,0,0.7)]">
+                    <span className="inline-flex h-11 w-11 items-center justify-center rounded-3xl bg-sky-400/20 text-white shadow-lg shadow-cyan-500/20">
+                      <Sparkles className="h-5 w-5" />
+                    </span>
+                    <span className="block !text-white">
+                      {greeting}, {user?.name || "User"}
+                    </span>
+                  </DialogTitle>
+                </DialogHeader>
+                <p className="mt-3 max-w-2xl text-sm text-slate-300">You’re all set to continue. Here’s a quick summary of your account and today’s sign-in details.</p>
               </div>
             </div>
-            <p className="rounded-lg border border-border bg-card/95 p-4 text-card-foreground shadow-sm">
-              Thought for the day: steady progress, clean records, and timely decisions create excellent outcomes.
-            </p>
-          </div>
-          <Button onClick={() => setShowWelcomeDialog(false)} className="mt-5 bg-primary text-primary-foreground hover:bg-primary/90">Start Work</Button>
-          </div>
+            <div className="relative px-8 pb-8">
+              <div className="rounded-[2rem] border border-white/10 bg-slate-900/90 p-6 shadow-inner shadow-slate-950/20 backdrop-blur-sm">
+                <div className="rounded-[1.5rem] border border-slate-800/70 bg-slate-950/80 p-4">
+                  <p className="text-xs uppercase tracking-[0.28em] text-sky-200/80">Welcome</p>
+                  <p className="mt-2 text-lg font-semibold text-white">Elite Mek — Excellence in Engineering Since 2020</p>
+                </div>
+                <div className="grid gap-3 pt-5 sm:grid-cols-2">
+                  <div className="rounded-3xl border border-slate-800/80 bg-slate-950/80 p-4">
+                    <span className="block text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-500">User</span>
+                    <span className="mt-2 block text-sm font-semibold text-white">{user?.name || "-"}</span>
+                  </div>
+                  <div className="rounded-3xl border border-slate-800/80 bg-slate-950/80 p-4">
+                    <span className="block text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-500">Role</span>
+                    <span className="mt-2 block text-sm font-semibold text-white">{user?.role || "-"}</span>
+                  </div>
+                  <div className="sm:col-span-2 rounded-3xl border border-slate-800/80 bg-slate-950/80 p-4">
+                    <span className="block text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-500">Login Time</span>
+                    <span className="mt-2 block text-sm font-semibold text-white">{loginTime.toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</span>
+                  </div>
+                </div>
+                <p className="mt-5 text-sm leading-relaxed text-slate-300">Steady progress, clean records, and timely decisions create excellent outcomes.</p>
+                <div className="mt-6">
+                  <Button onClick={() => setShowWelcomeDialog(false)} className="w-full rounded-2xl bg-white text-slate-950 shadow-sm shadow-slate-950/10 transition hover:bg-slate-100 font-semibold">
+                    Start Work
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -293,7 +305,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-4">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden h-9 w-9">
+                <Button variant="ghost" size="icon" title="Open navigation" className="md:hidden h-9 w-9">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
@@ -311,13 +323,13 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
           <div className="flex items-center gap-2">
             <Link href="/notifications">
-              <Button variant="ghost" size="icon" className="relative h-9 w-9">
+              <Button variant="ghost" size="icon" title="Notifications" className="relative h-9 w-9">
                 <Bell className="h-4 w-4" />
                 <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-destructive rounded-full" />
               </Button>
             </Link>
             <Link href="/profile">
-              <Button variant="ghost" size="icon" className="h-9 w-9">
+              <Button variant="ghost" size="icon" title="Profile" className="h-9 w-9">
                 <UserCircle className="h-4 w-4" />
               </Button>
             </Link>

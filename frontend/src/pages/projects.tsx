@@ -13,12 +13,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Loader2, Plus, Search, Download, Upload, Edit, Trash2, Grid, List, Briefcase, DollarSign, CheckCircle, Clock, ImageIcon, MoreVertical, History } from "lucide-react";
+import { Loader2, Plus, Search, Download, Upload, Edit, Trash2, Grid, List, Briefcase, DollarSign, CheckCircle, Clock, ImageIcon, History } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Pagination } from "@/components/Pagination";
 import { format } from "date-fns";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AuditLogDialog } from "@/components/audit/AuditLogDialog";
+import { showInlineFieldErrors, validateRequiredFields } from "@/lib/inline-validation";
 
 const fmtINR = (n: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n || 0);
 
@@ -110,7 +110,22 @@ export default function Projects() {
   };
 
   const handleSubmit = async () => {
-    if (!form.name) { toast({ title: "Project name required", variant: "destructive" }); return; }
+    if (!validateRequiredFields(form, { name: "Project name" })) { toast({ title: "Project name required", variant: "destructive" }); return; }
+    if (form.budget && Number(form.budget) < 0) {
+      showInlineFieldErrors([{ field: "budget", message: "Budget cannot be negative." }]);
+      toast({ title: "Invalid budget", variant: "destructive" });
+      return;
+    }
+    if (Number(form.progress) < 0 || Number(form.progress) > 100) {
+      showInlineFieldErrors([{ field: "progress", message: "Progress must be between 0 and 100." }]);
+      toast({ title: "Invalid progress", variant: "destructive" });
+      return;
+    }
+    if (form.startDate && form.endDate && form.endDate < form.startDate) {
+      showInlineFieldErrors([{ field: "endDate", message: "End date cannot be before start date." }]);
+      toast({ title: "Invalid date range", variant: "destructive" });
+      return;
+    }
     setIsSubmitting(true);
     const payload = {
       ...form,
@@ -224,18 +239,10 @@ export default function Projects() {
                   <StatusBadge status={p.status} />
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${priorityColor(p.priority)}`}>{p.priority}</span>
                 </div>
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="secondary" size="icon" className="h-7 w-7 bg-white/90">
-                        <MoreVertical className="w-3.5 h-3.5" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => openEdit(p)}><Edit className="w-4 h-4 mr-2" />Edit</DropdownMenuItem>
-                      <DropdownMenuItem className="text-red-600" onClick={() => setDeleteId(p.id)}><Trash2 className="w-4 h-4 mr-2" />Delete</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                <div className="absolute top-2 right-2 flex gap-1">
+                  <Button variant="secondary" size="icon" title="Audit history" className="h-7 w-7 bg-white/90" onClick={() => setAuditRecord({ id: p.id, module: "projects", title: p.name || "Project" })}><History className="w-3.5 h-3.5" /></Button>
+                  <Button variant="secondary" size="icon" title="Edit project" className="h-7 w-7 bg-white/90" onClick={() => openEdit(p)}><Edit className="w-3.5 h-3.5" /></Button>
+                  <Button variant="secondary" size="icon" title="Delete project" className="h-7 w-7 bg-white/90" onClick={() => setDeleteId(p.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
                 </div>
               </div>
               <CardContent className="p-4">
@@ -284,7 +291,7 @@ export default function Projects() {
                       {p.imageUrl ? (
                         <img src={p.imageUrl} alt="" className="w-8 h-8 rounded object-cover border shrink-0" />
                       ) : (
-                        <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center shrink-0"><Briefcase size={14} className="text-primary" /></div>
+                        <div className="w-8 h-8 rounded bg-slate-900 text-white flex items-center justify-center shrink-0 shadow-sm"><Briefcase size={14} /></div>
                       )}
                       <div>
                         <div className="font-medium text-sm">{p.name}</div>
@@ -306,9 +313,9 @@ export default function Projects() {
                   <TableCell className="text-xs text-muted-foreground">{p.startDate || "—"} → {p.endDate || "TBD"}</TableCell>
                   <TableCell>
                     <div className="flex gap-1">
-                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setAuditRecord({ id: p.id, module: "projects", title: p.name || "Project" })}><History size={13} /></Button>
-                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => openEdit(p)}><Edit size={13} /></Button>
-                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive" onClick={() => setDeleteId(p.id)}><Trash2 size={13} /></Button>
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Audit history" onClick={() => setAuditRecord({ id: p.id, module: "projects", title: p.name || "Project" })}><History size={13} /></Button>
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Edit project" onClick={() => openEdit(p)}><Edit size={13} /></Button>
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setDeleteId(p.id)}><Trash2 size={13} /></Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -351,7 +358,7 @@ export default function Projects() {
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2 space-y-2">
                 <Label>Project Name *</Label>
-                <Input value={form.name} onChange={e => setForm((f: any) => ({ ...f, name: e.target.value }))} placeholder="Project name..." />
+                <Input name="name" value={form.name} onChange={e => setForm((f: any) => ({ ...f, name: e.target.value }))} placeholder="Project name..." />
               </div>
               <div className="col-span-2 space-y-2">
                 <Label>Description</Label>
@@ -397,19 +404,19 @@ export default function Projects() {
               </div>
               <div className="space-y-2">
                 <Label>Budget (₹)</Label>
-                <Input type="number" value={form.budget} onChange={e => setForm((f: any) => ({ ...f, budget: e.target.value }))} />
+                <Input name="budget" type="number" min={0} value={form.budget} onChange={e => setForm((f: any) => ({ ...f, budget: e.target.value }))} />
               </div>
               <div className="space-y-2">
                 <Label>Progress (%)</Label>
-                <Input type="number" min={0} max={100} value={form.progress} onChange={e => setForm((f: any) => ({ ...f, progress: e.target.value }))} />
+                <Input name="progress" type="number" min={0} max={100} value={form.progress} onChange={e => setForm((f: any) => ({ ...f, progress: e.target.value }))} />
               </div>
               <div className="space-y-2">
                 <Label>Start Date</Label>
-                <Input type="date" value={form.startDate} onChange={e => setForm((f: any) => ({ ...f, startDate: e.target.value }))} />
+                <Input name="startDate" type="date" value={form.startDate} onChange={e => setForm((f: any) => ({ ...f, startDate: e.target.value }))} />
               </div>
               <div className="space-y-2">
                 <Label>End Date</Label>
-                <Input type="date" value={form.endDate} onChange={e => setForm((f: any) => ({ ...f, endDate: e.target.value }))} />
+                <Input name="endDate" type="date" value={form.endDate} onChange={e => setForm((f: any) => ({ ...f, endDate: e.target.value }))} />
               </div>
             </div>
           </div>

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, advancePaymentsTable, employeesTable, overtimeTable, payrollAdjustmentsTable, projectsTable } from "@workspace/db";
-import { and, count, desc, eq, gte, ilike, lte, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, ilike, lte, or, sql } from "@workspace/db/drizzle";
 import { requireAuth, requirePermission } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
 
@@ -178,17 +178,26 @@ router.post("/advance-payments", requireAuth, requirePermission("payroll", "crea
 router.put("/advance-payments/:id", requireAuth, requirePermission("payroll", "edit"), async (req, res) => {
   try {
     const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) { res.status(400).json({ error: "Invalid advance payment id" }); return; }
+    const [old] = await db.select().from(advancePaymentsTable).where(eq(advancePaymentsTable.id, id)).limit(1);
+    if (!old) { res.status(404).json({ error: "Not found" }); return; }
     const updates: any = { ...req.body, updatedAt: new Date() };
     if (req.body.employeeId !== undefined) updates.employeeId = Number(req.body.employeeId);
     if (req.body.amount !== undefined) updates.amount = String(Number(req.body.amount));
     const [adv] = await db.update(advancePaymentsTable).set(updates).where(eq(advancePaymentsTable.id, id)).returning();
+    await createAuditLog({ module: "advance_payments", action: "update", recordId: id, userId: req.user!.id, userName: req.user!.name, description: `Updated advance payment #${id}`, oldValues: old as any, newValues: req.body });
     res.json({ ...adv, amount: Number(adv.amount) });
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
 router.delete("/advance-payments/:id", requireAuth, requirePermission("payroll", "delete"), async (req, res) => {
   try {
-    await db.delete(advancePaymentsTable).where(eq(advancePaymentsTable.id, Number(req.params.id)));
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) { res.status(400).json({ error: "Invalid advance payment id" }); return; }
+    const [old] = await db.select().from(advancePaymentsTable).where(eq(advancePaymentsTable.id, id)).limit(1);
+    if (!old) { res.status(404).json({ error: "Not found" }); return; }
+    await db.delete(advancePaymentsTable).where(eq(advancePaymentsTable.id, id));
+    await createAuditLog({ module: "advance_payments", action: "delete", recordId: id, userId: req.user!.id, userName: req.user!.name, description: `Deleted advance payment #${id}`, oldValues: old as any });
     res.status(204).send();
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });

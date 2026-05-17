@@ -10,6 +10,34 @@ import { format } from "date-fns";
 import { Download, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { Pagination } from "@/components/Pagination";
 
+const MODULE_OPTIONS = [
+  { value: "employees", label: "Employees" },
+  { value: "attendance", label: "Attendance" },
+  { value: "attendance_categories", label: "Attendance Categories" },
+  { value: "payroll", label: "Payroll" },
+  { value: "overtime", label: "Overtime" },
+  { value: "advance_payments", label: "Advances" },
+  { value: "payroll_adjustments", label: "Payroll Adjustments" },
+  { value: "leaves", label: "Leaves" },
+  { value: "work_allocation", label: "Work Allocation" },
+  { value: "customers", label: "Customers" },
+  { value: "invoices", label: "Invoices" },
+  { value: "revenue", label: "Revenue" },
+  { value: "ledger", label: "Ledger" },
+  { value: "vendors", label: "Vendors" },
+  { value: "purchase_orders", label: "Purchase Orders" },
+  { value: "projects", label: "Projects" },
+  { value: "inventory", label: "Inventory" },
+  { value: "inventory_movements", label: "Movements" },
+  { value: "expenses", label: "Expenses" },
+  { value: "expense_categories", label: "Expense Categories" },
+  { value: "documents", label: "Documents" },
+  { value: "roles", label: "Roles" },
+  { value: "reminders", label: "Reminders" },
+  { value: "settings", label: "Settings" },
+  { value: "import", label: "Import" },
+];
+
 const getModuleColor = (module: string) => {
   switch (module?.toLowerCase()) {
     case "employees": return "bg-blue-100 text-blue-800";
@@ -19,6 +47,15 @@ const getModuleColor = (module: string) => {
     case "customers": return "bg-cyan-100 text-cyan-800";
     case "vendors": return "bg-orange-100 text-orange-800";
     case "projects": return "bg-indigo-100 text-indigo-800";
+    case "attendance": return "bg-teal-100 text-teal-800";
+    case "leaves": return "bg-lime-100 text-lime-800";
+    case "revenue": return "bg-emerald-100 text-emerald-800";
+    case "ledger": return "bg-slate-100 text-slate-800";
+    case "purchase_orders": return "bg-pink-100 text-pink-800";
+    case "overtime":
+    case "advance_payments": return "bg-violet-100 text-violet-800";
+    case "settings":
+    case "roles": return "bg-zinc-100 text-zinc-800";
     default: return "bg-gray-100 text-gray-800";
   }
 };
@@ -61,13 +98,9 @@ export default function AuditLogs() {
           <SelectTrigger className="w-48"><SelectValue placeholder="Filter by Module" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Modules</SelectItem>
-            <SelectItem value="employees">Employees</SelectItem>
-            <SelectItem value="payroll">Payroll</SelectItem>
-            <SelectItem value="invoices">Invoices</SelectItem>
-            <SelectItem value="inventory">Inventory</SelectItem>
-            <SelectItem value="customers">Customers</SelectItem>
-            <SelectItem value="vendors">Vendors</SelectItem>
-            <SelectItem value="projects">Projects</SelectItem>
+            {MODULE_OPTIONS.map((module) => (
+              <SelectItem key={module.value} value={module.value}>{module.label}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Select value={actionFilter} onValueChange={setActionFilter}>

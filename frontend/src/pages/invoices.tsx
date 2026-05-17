@@ -93,9 +93,9 @@ export default function Invoices() {
     { header: "Balance", value: (invoice: any) => Number(invoice.totalAmount || 0) - Number(invoice.paidAmount || 0) },
   ];
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     const rows = invoicesData?.data || [];
-    if (!openRowsPdfPrint("Invoices", rows, exportColumns)) {
+    if (!(await openRowsPdfPrint("Invoices", rows, exportColumns))) {
       toast({ title: "Export failed", description: "No invoice data available to export.", variant: "destructive" });
       return;
     }
@@ -112,6 +112,33 @@ export default function Invoices() {
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount || 0);
+  };
+
+  const formatAuditField = (field: string) => field.replace(/([A-Z])/g, " $1").replace(/^./, c => c.toUpperCase());
+
+  const formatAuditValue = (field: string, value: unknown) => {
+    if (value === null || value === undefined || value === "") return "-";
+    const normalizedField = field.toLowerCase();
+    const id = Number(value);
+    if (normalizedField === "customerid" && Number.isFinite(id)) {
+      const customer = customersData?.data?.find((item: any) => Number(item.id) === id);
+      return customer?.name || customer?.company || `Customer #${value}`;
+    }
+    if (normalizedField === "projectid" && Number.isFinite(id)) {
+      const project = (projectsData?.data || []).find((item: any) => Number(item.id) === id);
+      return project?.name || `Project #${value}`;
+    }
+    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return String(value);
+    return JSON.stringify(value, null, 2);
+  };
+
+  const buildAuditChanges = (log: any) => {
+    const oldValues = log.oldValues && typeof log.oldValues === "object" ? log.oldValues : {};
+    const newValues = log.newValues && typeof log.newValues === "object" ? log.newValues : {};
+    const keys = Array.from(new Set([...Object.keys(oldValues), ...Object.keys(newValues)]));
+    return keys
+      .filter((key) => JSON.stringify((oldValues as any)[key] ?? null) !== JSON.stringify((newValues as any)[key] ?? null))
+      .map((key) => ({ field: key, oldValue: (oldValues as any)[key], newValue: (newValues as any)[key] }));
   };
 
   const getInvoiceNumber = (invoice: any) => {
@@ -305,7 +332,7 @@ export default function Invoices() {
             ) : (
               invoicesData?.data?.map((invoice) => (
                 <TableRow key={invoice.id} className="hover:bg-muted/20">
-                  <TableCell className="font-medium"><button className="text-primary underline-offset-2 hover:underline" onClick={() => setDetailInvoice(invoice)}>{getInvoiceNumber(invoice)}</button></TableCell>
+                  <TableCell className="font-medium"><button className="text-foreground underline-offset-2 hover:text-foreground hover:underline" onClick={() => setDetailInvoice(invoice)}>{getInvoiceNumber(invoice)}</button></TableCell>
                   <TableCell>{(invoice as any).customerName || (invoice.customerId ? `#${invoice.customerId}` : '-')}</TableCell>
                   <TableCell>{(invoice as any).projectName || ((invoice as any).projectId ? `#${(invoice as any).projectId}` : '-')}</TableCell>
                   <TableCell><span className={getStatusClassName(invoice.status)}>{invoice.status}</span></TableCell>
@@ -316,14 +343,14 @@ export default function Invoices() {
                   <TableCell className="text-right font-medium text-red-600">{formatCurrency((invoice.totalAmount || 0) - (invoice.paidAmount || 0))}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => { setAuditInvoice(invoice); setAuditSheetOpen(true); }}><History className="h-4 w-4 text-muted-foreground" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => setDetailInvoice(invoice)}><Eye className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => downloadInvoiceFile(invoice, "pdf")}><FileDown className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => downloadInvoiceFile(invoice, "excel")}><FileSpreadsheet className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => openEditDialog(invoice)}><Edit className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" title="Audit history" onClick={() => { setAuditInvoice(invoice); setAuditSheetOpen(true); }}><History className="h-4 w-4 text-muted-foreground" /></Button>
+                      <Button variant="ghost" size="icon" title="View invoice" onClick={() => setDetailInvoice(invoice)}><Eye className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" title="Download PDF" onClick={() => downloadInvoiceFile(invoice, "pdf")}><FileDown className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" title="Download Excel" onClick={() => downloadInvoiceFile(invoice, "excel")}><FileSpreadsheet className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" title="Edit invoice" onClick={() => openEditDialog(invoice)}><Edit className="h-4 w-4" /></Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="text-red-500"><Trash2 className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" title="Delete invoice" className="text-red-500"><Trash2 className="h-4 w-4" /></Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader><AlertDialogTitle>Delete Invoice?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
@@ -480,7 +507,7 @@ export default function Invoices() {
                       const newItems = [...lineItems]; newItems[index].taxRate = e.target.value; setLineItems(newItems);
                     }} min="0" step="0.01" />
                     <div className="text-right text-sm font-medium">{formatCurrency((item.quantity * item.unitPrice) * (1 + item.taxRate / 100))}</div>
-                    <Button type="button" variant="ghost" size="icon" onClick={() => {
+                    <Button type="button" variant="ghost" size="icon" title="Remove line item" onClick={() => {
                       const newItems = lineItems.filter((_, i) => i !== index);
                       setLineItems(newItems.length ? newItems : [{ description: '', quantity: 1, unitPrice: 0, taxRate: 0 }]);
                     }}><Trash className="h-4 w-4 text-red-500" /></Button>
@@ -558,7 +585,7 @@ export default function Invoices() {
 
       {/* Audit Logs Sheet */}
       <Sheet open={auditSheetOpen} onOpenChange={setAuditSheetOpen}>
-        <SheetContent>
+        <SheetContent className="sm:max-w-2xl overflow-y-auto">
           <SheetHeader>
             <SheetTitle>Audit History</SheetTitle>
             <SheetDescription>Timeline of changes for Invoice #{auditInvoice?.id}</SheetDescription>
@@ -569,17 +596,45 @@ export default function Invoices() {
             ) : auditData?.data?.length === 0 ? (
               <div className="text-center text-muted-foreground p-8">No audit logs found</div>
             ) : (
-              auditData?.data?.map((log) => (
-                <div key={log.id} className="border-l-2 border-primary pl-4 pb-4 relative">
-                  <div className="absolute w-2 h-2 bg-primary rounded-full -left-[5px] top-1.5" />
-                  <p className="text-sm">{log.description}</p>
-                  <div className="flex gap-2 mt-1 text-xs text-muted-foreground">
-                    <span>{log.userName}</span>
-                    <span>&bull;</span>
-                    <span>{format(new Date(log.createdAt), 'dd MMM yyyy HH:mm')}</span>
+              auditData?.data?.map((log) => {
+                const changes = buildAuditChanges(log);
+                return (
+                <div key={log.id} className="border rounded-lg p-4 bg-muted/30 space-y-3">
+                  <div>
+                    <p className="font-medium text-sm">{log.description}</p>
+                    <div className="flex gap-2 mt-2 text-xs text-muted-foreground">
+                      <span>{log.userName || "System"}</span>
+                      <span>-</span>
+                      <span>{log.createdAt ? format(new Date(log.createdAt), 'dd MMM yyyy HH:mm') : "-"}</span>
+                    </div>
                   </div>
+                  {changes.length ? (
+                    <div className="overflow-hidden rounded-lg border bg-background">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-36">Field</TableHead>
+                            <TableHead>Old Value</TableHead>
+                            <TableHead>New Value</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {changes.map((change) => (
+                            <TableRow key={change.field}>
+                              <TableCell className="font-medium align-top">{formatAuditField(change.field)}</TableCell>
+                              <TableCell className="max-w-[220px] whitespace-pre-wrap break-words align-top text-red-700">{formatAuditValue(change.field, change.oldValue)}</TableCell>
+                              <TableCell className="max-w-[220px] whitespace-pre-wrap break-words align-top text-emerald-700">{formatAuditValue(change.field, change.newValue)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">No field-level values were captured for this log.</div>
+                  )}
                 </div>
-              ))
+                );
+              })
             )}
           </div>
         </SheetContent>

@@ -71,9 +71,9 @@ export default function Revenue() {
     { header: "Amount", value: (row: any) => Number(row.amount || 0) },
     { header: "Description", value: (row: any) => row.description || "-" },
   ];
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     const rows = revenueData?.data || [];
-    if (!openRowsPdfPrint("Revenue", rows, exportColumns)) {
+    if (!(await openRowsPdfPrint("Revenue", rows, exportColumns))) {
       toast({ title: "Export failed", description: "No revenue data available.", variant: "destructive" });
       return;
     }
@@ -207,10 +207,10 @@ export default function Revenue() {
                   <TableCell>{rev.projectId || '-'}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => { setEditingRevenue(rev); setDialogOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" title="Edit revenue" onClick={() => { setEditingRevenue(rev); setDialogOpen(true); }}><Edit className="h-4 w-4" /></Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="text-red-500"><Trash2 className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" title="Delete revenue" className="text-red-500"><Trash2 className="h-4 w-4" /></Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader><AlertDialogTitle>Delete Revenue?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>

@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Plus, Download, Edit, Trash2, Loader2, Bell, CheckCircle2 } from "lucide-react";
 import { Pagination } from "@/components/Pagination";
+import { validateRequiredFields } from "@/lib/inline-validation";
 
 export function ReminderModal() {
   const { data } = useGetDueReminders();
@@ -95,6 +96,10 @@ export default function Reminders() {
   };
 
   const onSubmit = async () => {
+    if (!validateRequiredFields({ title, message, remindAt }, { title: "Title", message: "Message", remindAt: "Remind at" })) {
+      toast({ title: "Please fill all reminder fields", variant: "destructive" });
+      return;
+    }
     setIsSubmitting(true);
     const payload = {
       title,
@@ -164,15 +169,15 @@ export default function Reminders() {
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Title</label>
-                  <Input value={title} onChange={(e) => setTitle(e.target.value)} required />
+                  <Input name="title" value={title} onChange={(e) => setTitle(e.target.value)} required />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Message</label>
-                  <Textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={3} required />
+                  <Textarea name="message" value={message} onChange={(e) => setMessage(e.target.value)} rows={3} required />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Remind At</label>
-                  <Input type="datetime-local" value={remindAt} onChange={(e) => setRemindAt(e.target.value)} required />
+                  <Input name="remindAt" type="datetime-local" value={remindAt} onChange={(e) => setRemindAt(e.target.value)} required />
                 </div>
               </div>
               <DialogFooter>
@@ -216,9 +221,9 @@ export default function Reminders() {
                           <CheckCircle2 className="w-4 h-4 text-green-600" />
                         </Button>
                       )}
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(r)}><Edit className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="icon" title="Edit reminder" onClick={() => openEdit(r)}><Edit className="w-4 h-4" /></Button>
                       <AlertDialog>
-                        <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-50"><Trash2 className="w-4 h-4" /></Button></AlertDialogTrigger>
+                        <AlertDialogTrigger asChild><Button variant="ghost" size="icon" title="Delete reminder" className="text-red-500 hover:text-red-700 hover:bg-red-50"><Trash2 className="w-4 h-4" /></Button></AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle>Delete Reminder</AlertDialogTitle>

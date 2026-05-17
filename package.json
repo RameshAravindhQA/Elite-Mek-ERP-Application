@@ -6,11 +6,19 @@
     "preinstall": "node -e \"const fs = require('fs'); ['package-lock.json', 'yarn.lock'].forEach(f => fs.rmSync(f, { force: true })); const ua = process.env.npm_config_user_agent || ''; if (!ua.startsWith('pnpm/')) { console.error('Use pnpm instead'); process.exit(1);} \"",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
     "typecheck:libs": "tsc --build",
-    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./frontend\" --filter \"./backend\" --filter \"./scripts\" --if-present run typecheck"
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./frontend\" --filter \"./backend\" --filter \"./scripts\" --if-present run typecheck",
+    "test:e2e": "playwright test",
+    "test:e2e:api": "playwright test --project=api",
+    "test:e2e:ui": "playwright test --project=chromium",
+    "test:frontend": "pnpm --filter \"./frontend\" test",
+    "test:backend": "pnpm --filter \"./backend\" test",
+    "test": "pnpm run test:frontend && pnpm run test:backend"
   },
   "private": true,
   "devDependencies": {
-    "@rollup/rollup-win32-x64-msvc": "^4.60.2",
+    "@esbuild/win32-x64": "0.27.3",
+    "@playwright/test": "^1.60.0",
+    "@rollup/rollup-win32-x64-msvc": "^4.59.0",
     "@tailwindcss/oxide-win32-x64-msvc": "^4.2.4",
     "lightningcss-win32-x64-msvc": "^1.32.0",
     "prettier": "^3.8.1",

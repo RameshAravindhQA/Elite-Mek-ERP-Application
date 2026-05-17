@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, customersTable } from "@workspace/db";
-import { desc, eq, ilike, count, sql, or, and } from "drizzle-orm";
+import { desc, eq, ilike, count, sql, or, and } from "@workspace/db/drizzle";
 import { requireAuth } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
 

@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { downloadImportTemplate, importModuleFile } from "@/lib/import-utils";
 import { useToast } from "@/hooks/use-toast";
+import { validateRequiredFields } from "@/lib/inline-validation";
 import { Plus, Download, Edit, Trash2, Loader2, ShieldCheck, Upload } from "lucide-react";
 
 const MODULES = ["Employees", "Attendance", "Payroll", "Leaves", "Customers", "Vendors", "Projects", "Purchase Orders", "Inventory", "Expenses", "Revenue", "Invoices", "Documents", "Reports", "Settings", "Roles"];
@@ -67,6 +68,10 @@ export default function Roles() {
   };
 
   const onSubmit = async () => {
+    if (!validateRequiredFields({ name }, { name: "Role name" })) {
+      toast({ title: "Role name is required", variant: "destructive" });
+      return;
+    }
     setIsSubmitting(true);
     
     // Formatting permissions to array
@@ -152,7 +157,7 @@ export default function Roles() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Role Name</label>
-                    <Input value={name} onChange={(e) => setName(e.target.value)} required />
+                    <Input name="name" value={name} onChange={(e) => setName(e.target.value)} required />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Description</label>
@@ -237,10 +242,10 @@ export default function Roles() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(role)}><Edit className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="icon" title="Edit role" onClick={() => openEdit(role)}><Edit className="w-4 h-4" /></Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-50" disabled={role.name.toLowerCase() === 'admin'}>
+                          <Button variant="ghost" size="icon" title="Delete role" className="text-red-500 hover:text-red-700 hover:bg-red-50" disabled={role.name.toLowerCase() === 'admin'}>
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </AlertDialogTrigger>

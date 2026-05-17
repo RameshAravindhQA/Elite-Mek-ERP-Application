@@ -332,8 +332,8 @@ export default function Attendance() {
     { header: "Paid Leave", value: (row: any) => row.paidLeaveCount },
     { header: "Unpaid Leave", value: (row: any) => row.unpaidLeaveCount },
   ];
-  const handleExportPDF = () => {
-    if (!openRowsPdfPrint(`Attendance ${month}`, attendanceRows, exportColumns)) {
+  const handleExportPDF = async () => {
+    if (!(await openRowsPdfPrint(`Attendance ${month}`, attendanceRows, exportColumns))) {
       toast({ title: "Export failed", description: "No attendance data available.", variant: "destructive" });
       return;
     }

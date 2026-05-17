@@ -1,9 +1,10 @@
 import { Router } from "express";
 import { db, payrollTable, employeesTable, attendanceTable, leavesTable, settingsTable, overtimeTable, advancePaymentsTable, payrollAdjustmentsTable } from "@workspace/db";
-import { desc, eq, ilike, count, sql, and, gte, lte, or } from "drizzle-orm";
+import { desc, eq, ilike, count, sql, and, gte, lte, or } from "@workspace/db/drizzle";
 import { requireAuth, requirePermission } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
 import { createPayslipPdfFilename, generatePayslipPdf } from "../lib/pdf.js";
+import JSZip from "jszip";
 
 const router = Router();
 
@@ -340,6 +341,108 @@ router.get("/payroll/:id/payslip", requireAuth, requirePermission("payroll", "vi
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
+router.post("/payroll/batch/download-zip", requireAuth, requirePermission("payroll", "view"), async (req, res) => {
+  try {
+    const payrollIds = Array.isArray(req.body.payrollIds)
+      ? req.body.payrollIds.map((id: any) => Number(id)).filter((id: number) => Number.isFinite(id))
+      : [];
+
+    if (!payrollIds.length) {
+      res.status(400).json({ error: "No payroll IDs provided." });
+      return;
+    }
+
+    const conditions = payrollIds.map((id: number) => eq(payrollTable.id, id));
+    if (!conditions.length) {
+      res.status(400).json({ error: "Invalid payroll IDs." });
+      return;
+    }
+
+    const filter = getPayrollFilter(req);
+    const whereClause = filter ? and(or(...conditions), filter) : or(...conditions);
+
+    const records = await db.select({ pay: payrollTable, emp: employeesTable })
+      .from(payrollTable)
+      .leftJoin(employeesTable, eq(payrollTable.employeeId, employeesTable.id))
+      .where(whereClause)
+      .orderBy(desc(payrollTable.createdAt), desc(payrollTable.id));
+
+    if (!records.length) {
+      res.status(404).json({ error: "No payroll records found for download." });
+      return;
+    }
+
+    const [settings] = await db.select().from(settingsTable).limit(1);
+    const zip = new JSZip();
+
+    const sanitizeFileName = (value: string) =>
+      String(value || "payslip")
+        .replace(/[^a-z0-9._-]+/gi, "-")
+        .replace(/-+/g, "-")
+        .replace(/(^-|-$)/g, "");
+
+    for (const record of records) {
+      const { pay, emp } = record;
+      if (!emp) continue;
+      if (isEmployeeSelfOnly(req.user!.role) && emp.email !== req.user!.email) continue;
+
+      const month = pay.month;
+      const [year, mon] = String(month).split("-").map(Number);
+      const lastDay = new Date(year, mon, 0).getDate();
+      const startDate = `${month}-01`;
+      const endDate = `${month}-${String(lastDay).padStart(2, "0")}`;
+
+      const leaves = await db.select({
+        id: leavesTable.id,
+        leaveType: leavesTable.leaveType,
+        startDate: leavesTable.startDate,
+        endDate: leavesTable.endDate,
+        days: leavesTable.days,
+        reason: leavesTable.reason,
+        status: leavesTable.status,
+      }).from(leavesTable).where(and(
+        eq(leavesTable.employeeId, emp.id),
+        lte(leavesTable.startDate, endDate),
+        gte(leavesTable.endDate, startDate),
+      )).orderBy(leavesTable.startDate);
+
+      const leaveSummary = leaves.reduce((summary, leave) => {
+        const overlapDays = getOverlapDays(leave.startDate, leave.endDate, startDate, endDate);
+        const days = Number(leave.days || 0);
+        const relevantDays = Math.min(overlapDays, days);
+        summary.totalLeaves += relevantDays;
+        if (leave.status === "approved") summary.approvedLeaves += relevantDays;
+        if (leave.status === "pending") summary.pendingLeaves += relevantDays;
+        summary.leaveRecords.push({
+          leaveType: leave.leaveType,
+          startDate: leave.startDate,
+          endDate: leave.endDate,
+          days: relevantDays,
+          status: leave.status,
+          reason: leave.reason,
+        });
+        return summary;
+      }, {
+        totalLeaves: 0,
+        approvedLeaves: 0,
+        pendingLeaves: 0,
+        leaveRecords: [] as Array<any>,
+      });
+
+      const pdfBuffer = await generatePayslipPdf(pay, emp, leaveSummary, settings || {});
+      const filename = sanitizeFileName(`payslip-${emp.firstName || emp.id}-${emp.lastName || ""}-${month}.pdf`);
+      zip.file(filename || `payslip-${pay.id}-${month}.pdf`, pdfBuffer);
+    }
+
+    const zipBuffer = await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });
+    res.setHeader("Content-Type", "application/zip");
+    res.setHeader("Content-Disposition", `attachment; filename="payslips-${Date.now()}.zip"`);
+    res.setHeader("Content-Length", String(zipBuffer.length));
+    res.setHeader("x-payslip-count", String(records.length));
+    res.send(zipBuffer);
+  } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
+});
+
 router.post("/payroll/:id/send-whatsapp", requireAuth, requirePermission("payroll", "view"), async (req, res) => {
   try {
     const payrollId = Number(req.params.id);
@@ -431,7 +534,7 @@ router.post("/payroll/:id/send-whatsapp", requireAuth, requirePermission("payrol
       .replace(/\{\{employeeName\}\}/g, `${emp.firstName} ${emp.lastName}`)
       .replace(/\{\{month\}\}/g, pay.month)
       .replace(/\{\{netSalary\}\}/g, netSalary)
-      .replace(/\{\{workingDays\}\}/g, String(pay.workingDays || ""))
+      .replace(/\{\{workingDays\}\}/g, String(pay.totalWorkingDays || ""))
       .replace(/\{\{presentDays\}\}/g, String(pay.presentDays || ""))
       .replace(/\{\{absentDays\}\}/g, String(pay.absentDays || ""))
       .replace(/\{\{payslipUrl\}\}/g, "Attached PDF");
@@ -459,14 +562,21 @@ router.post("/payroll/:id/send-whatsapp", requireAuth, requirePermission("payrol
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' })) as { error?: string };
         throw new Error(errorData.error || `OpenWA API error: ${response.status}`);
       }
 
-      const result = await response.json();
+      const result = await response.json() as { id?: string | number };
 
       // Log the action
-      await createAuditLog(req.user!.id, "payroll", "send_whatsapp", `Sent payslip via OpenWA to ${recipientNumber} for employee ${emp.firstName} ${emp.lastName} (${pay.month})`);
+      await createAuditLog({
+        module: "payroll",
+        action: "send_whatsapp",
+        recordId: pay.id,
+        userId: req.user!.id,
+        userName: req.user!.name,
+        description: `Sent payslip via OpenWA to ${recipientNumber} for employee ${emp.firstName} ${emp.lastName} (${pay.month})`,
+      });
 
       res.json({
         success: true,
@@ -512,6 +622,68 @@ router.put("/payroll/:id", requireAuth, requirePermission("payroll", "edit"), as
     await createAuditLog({ module: "payroll", action: "update", recordId: id, userId: req.user!.id, userName: req.user!.name, description: `Updated payroll status to ${body.status || "updated"}`, newValues: body });
     res.json(fmtPayroll(pay, emp ? `${emp.firstName} ${emp.lastName}` : undefined));
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
+});
+
+// Batch send WhatsApp payslips
+router.post("/payroll/batch/send-whatsapp", requireAuth, requirePermission("payroll", "view"), async (req, res) => {
+  try {
+    const { payrollIds } = req.body;
+    if (!Array.isArray(payrollIds) || payrollIds.length === 0) {
+      res.status(400).json({ error: "Please provide an array of payroll IDs" });
+      return;
+    }
+    const [settings] = await db.select().from(settingsTable).limit(1);
+    if (!settings?.openwaApiUrl || !settings?.openwaApiKey || !settings?.openwaSessionId) {
+      res.status(400).json({ error: "OpenWA integration not configured" });
+      return;
+    }
+    const results: any[] = [];
+    const errors: any[] = [];
+    for (const payrollId of payrollIds) {
+      try {
+        const records = await db.select({ pay: payrollTable, emp: employeesTable })
+          .from(payrollTable)
+          .leftJoin(employeesTable, eq(payrollTable.employeeId, employeesTable.id))
+          .where(eq(payrollTable.id, payrollId))
+          .limit(1);
+        if (!records.length) {
+          errors.push({ payrollId, error: "Payroll record not found" });
+          continue;
+        }
+        const { pay, emp } = records[0];
+        if (!emp) {
+          errors.push({ payrollId, error: "Employee not found" });
+          continue;
+        }
+        const pdfBuffer = await generatePayslipPdf(pay, emp, { totalLeaves: 0, approvedLeaves: 0, pendingLeaves: 0, leaveRecords: [] }, settings || {});
+        const filename = createPayslipPdfFilename(pay, emp);
+        const template = settings?.payslipMessageTemplate || "Hello {{employeeName}}, your payslip for {{month}} is ready.";
+        const netSalary = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(Number(pay.netSalary || 0));
+        const message = template.replace(/\{\{employeeName\}\}/g, `${emp.firstName} ${emp.lastName}`).replace(/\{\{month\}\}/g, pay.month).replace(/\{\{netSalary\}\}/g, netSalary);
+        const pdfBase64 = pdfBuffer.toString('base64');
+        const openwaUrl = `${settings.openwaApiUrl}/sessions/${settings.openwaSessionId}/messages/send-document`;
+        const recipientNumber = settings.payslipWhatsappSenderPhone || WHATSAPP_RECIPIENT_NUMBER;
+        const response = await fetch(openwaUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-API-Key': settings.openwaApiKey },
+          body: JSON.stringify({ chatId: `${recipientNumber}@c.us`, caption: message, filename, document: `data:application/pdf;base64,${pdfBase64}` }),
+        });
+        if (!response.ok) throw new Error(`OpenWA API error: ${response.status}`);
+        await createAuditLog({
+          module: "payroll",
+          action: "batch_send_whatsapp",
+          recordId: pay.id,
+          userId: req.user!.id,
+          userName: req.user!.name,
+          description: `Sent to ${emp.firstName} ${emp.lastName}`,
+        });
+        results.push({ payrollId, success: true, employeeName: `${emp.firstName} ${emp.lastName}` });
+      } catch (error: any) {
+        errors.push({ payrollId, error: error?.message || "Failed to send" });
+      }
+    }
+    res.json({ message: "Batch send completed", successful: results.length, failed: errors.length, results, errors: errors.length > 0 ? errors : undefined });
+  } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Failed to process batch send" }); }
 });
 
 export default router;

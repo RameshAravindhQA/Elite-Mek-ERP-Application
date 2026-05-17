@@ -526,8 +526,8 @@ export default function Reports() {
     value: (row: any) => getCell(row, column),
   }));
 
-  const handleExportPDF = () => {
-    if (!openRowsPdfPrint(`${activeReport.name} Report`, filteredRows, exportColumns)) {
+  const handleExportPDF = async () => {
+    if (!(await openRowsPdfPrint(`${activeReport.name} Report`, filteredRows, exportColumns))) {
       toast({ title: "Export failed", description: "No report data available.", variant: "destructive" });
       return;
     }

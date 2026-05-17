@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, leavesTable, employeesTable, attendanceTable } from "@workspace/db";
-import { desc, eq, count, and, inArray, gte, lte, ilike, or } from "drizzle-orm";
+import { desc, eq, count, and, inArray, gte, lte, ilike, or } from "@workspace/db/drizzle";
 import { requireAuth, requirePermission } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
 

@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
+@source "./**/*.{ts,tsx,js,jsx,html}";
+@source "../index.html";
+@source "../../lib/api-client-react/src/**/*.{ts,tsx,js,jsx}";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -130,8 +133,8 @@
 /* Theme & UI: light shade tint for light UI surfaces */
   --theme-light-shade: 221 83% 95%;
   --ui-surface: hsl(var(--theme-light-shade));
-  --table-header: var(--primary);
-  --table-header-foreground: var(--primary-foreground);
+  --table-header: 210 20% 94%;
+  --table-header-foreground: 215 15% 15%;
   --table-row-hover: 210 40% 96%;
   --premium-gradient-start: rgba(59,130,246,0.16);
   --premium-gradient-end: rgba(16,185,129,0.10);

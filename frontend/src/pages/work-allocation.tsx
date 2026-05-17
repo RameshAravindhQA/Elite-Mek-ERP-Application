@@ -9,9 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Search, ChevronRight, ChevronLeft, ChevronsRight, ChevronsLeft, Users, Briefcase, GitFork, UserCheck, Save, FileText, Download, Edit } from "lucide-react";
+import { Search, ChevronRight, ChevronLeft, ChevronsRight, ChevronsLeft, Users, Briefcase, History, UserCheck, Save, FileText, Download, Edit, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { useApiClient } from "@/lib/api-client";
+import { AuditLogDialog } from "@/components/audit/AuditLogDialog";
 import { downloadRowsAsCsv, openRowsPdfPrint } from "@/lib/export-utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -32,6 +33,7 @@ export default function WorkAllocation() {
   const [selectedRight, setSelectedRight] = useState<Set<number>>(new Set());
   const [allocations, setAllocations] = useState<Record<number, number[]>>({}); // projectId -> employeeIds
   const [isSaving, setIsSaving] = useState(false);
+  const [auditRecord, setAuditRecord] = useState<{ id: number; title: string } | null>(null);
 
   const { data: employeesData } = useListEmployees({ page: 1, limit: 200, status: "active" });
   const { data: projectsData } = useListProjects({ page: 1, limit: 100 });
@@ -112,11 +114,29 @@ export default function WorkAllocation() {
   const handleExportAllocationCsv = () => {
     if (!downloadRowsAsCsv(`allocation-records-${new Date().toISOString().slice(0, 10)}.csv`, filteredAllocationRecords, allocationExportColumns)) {
       toast({ title: "Export failed", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Excel exported", description: `${filteredAllocationRecords.length} allocation records downloaded.` });
+  };
+
+  const handleExportAllocationPdf = async () => {
+    if (!(await openRowsPdfPrint("Allocation Records", filteredAllocationRecords, allocationExportColumns))) {
+      toast({ title: "Export failed", variant: "destructive" });
+      return;
+    }
+    toast({ title: "PDF exported", description: `${filteredAllocationRecords.length} allocation records downloaded.` });
+  };
+
+  const exportSingleAllocationCsv = (row: any) => {
+    if (downloadRowsAsCsv(`allocation-${row.employeeCode || row.id}.csv`, [row], allocationExportColumns)) {
+      toast({ title: "Excel exported", description: row.employeeName || "Allocation record downloaded." });
     }
   };
 
-  const handleExportAllocationPdf = () => {
-    if (!openRowsPdfPrint("Allocation Records", filteredAllocationRecords, allocationExportColumns)) {
+  const exportSingleAllocationPdf = async (row: any) => {
+    if (await openRowsPdfPrint(`${row.employeeName || "Allocation"} Record`, [row], allocationExportColumns)) {
+      toast({ title: "PDF exported", description: row.employeeName || "Allocation record downloaded." });
+    } else {
       toast({ title: "Export failed", variant: "destructive" });
     }
   };
@@ -241,7 +261,7 @@ export default function WorkAllocation() {
         <TabsContent value="allocate" className="space-y-3">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-              <GitFork className="w-5 h-5 text-muted-foreground" />
+              <History className="w-5 h-5 text-muted-foreground" />
               <Select value={selectedCustomer} onValueChange={v => { setSelectedCustomer(v); setSelectedProject("none"); setSelectedLeft(new Set()); setSelectedRight(new Set()); }}>
                 <SelectTrigger className="w-72">
                   <SelectValue placeholder="Select customer..." />
@@ -393,7 +413,7 @@ export default function WorkAllocation() {
               </div>
             </div>
             <div className="flex gap-2 justify-end">
-              <Button variant="outline" size="sm" onClick={handleExportAllocationCsv}><Download className="w-4 h-4 mr-2" />Export CSV</Button>
+              <Button variant="outline" size="sm" onClick={handleExportAllocationCsv}><Download className="w-4 h-4 mr-2" />Export Excel</Button>
               <Button variant="outline" size="sm" onClick={handleExportAllocationPdf}><FileText className="w-4 h-4 mr-2" />Export PDF</Button>
             </div>
           </div>
@@ -410,7 +430,7 @@ export default function WorkAllocation() {
                     <th>Code</th>
                     <th>Status</th>
                     <th>Assigned Date</th>
-                    <th className="text-right">Actions</th>
+                    <th className="min-w-[220px] text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -423,7 +443,9 @@ export default function WorkAllocation() {
                       <td>{row.status || "-"}</td>
                       <td>{assignmentDateForRow(row) ? format(assignmentDateForRow(row) as Date, "dd MMM yyyy") : "-"}</td>
                       <td className="text-right">
-                        <Button size="icon" variant="ghost" onClick={() => {
+                        <Button size="icon" variant="ghost" title="Audit history" onClick={() => row.projectId && setAuditRecord({ id: Number(row.projectId), title: `${row.projectName || "Project"} Allocation` })}><History className="w-4 h-4" /></Button>
+                        <Button size="icon" variant="ghost" title="View allocation" onClick={() => toast({ title: row.employeeName || "Allocation", description: `${row.projectName || "-"} - ${row.customerName || "-"}` })}><Eye className="w-4 h-4" /></Button>
+                        <Button size="icon" variant="ghost" title="Edit allocation" onClick={() => {
                           if (row.projectId) {
                             setSelectedProject(String(row.projectId));
                             setSelectedCustomer(row.customerId ? String(row.customerId) : "all");
@@ -432,6 +454,8 @@ export default function WorkAllocation() {
                             setSelectedRight(new Set());
                           }
                         }}><Edit className="w-4 h-4" /></Button>
+                        <Button size="icon" variant="ghost" title="Export this row as Excel" onClick={() => exportSingleAllocationCsv(row)}><Download className="w-4 h-4" /></Button>
+                        <Button size="icon" variant="ghost" title="Export this row as PDF" onClick={() => void exportSingleAllocationPdf(row)}><FileText className="w-4 h-4" /></Button>
                       </td>
                     </tr>
                   )) : (
@@ -443,6 +467,13 @@ export default function WorkAllocation() {
           </Card>
         </TabsContent>
       </Tabs>
+      <AuditLogDialog
+        open={!!auditRecord}
+        onOpenChange={(open) => !open && setAuditRecord(null)}
+        module="work_allocation"
+        recordId={auditRecord?.id}
+        recordName={auditRecord?.title}
+      />
     </div>
   );
 }

@@ -41,6 +41,7 @@ export default function Payroll() {
   const [excuseNotes, setExcuseNotes] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isBulkGenerating, setIsBulkGenerating] = useState(false);
+  const [isZipDownloading, setIsZipDownloading] = useState(false);
   const [isSendingWhatsApp, setIsSendingWhatsApp] = useState(false);
 
   const { data: stats } = useGetPayrollStats();
@@ -61,8 +62,8 @@ export default function Payroll() {
     { header: "Net Salary", value: (row: any) => Number(row.netSalary || 0) },
     { header: "Status", value: (row: any) => row.status || "-" },
   ];
-  const handleExportPDF = () => {
-    if (!openRowsPdfPrint("Payroll", filteredData, exportColumns)) {
+  const handleExportPDF = async () => {
+    if (!(await openRowsPdfPrint("Payroll", filteredData, exportColumns))) {
       toast({ title: "Export failed", description: "No payroll data available.", variant: "destructive" });
       return;
     }
@@ -74,6 +75,70 @@ export default function Payroll() {
       return;
     }
     toast({ title: "Success", description: "Payroll Excel file downloaded." });
+  };
+
+  const handleDownloadPayslipsZip = async () => {
+    const payrollIds = (filteredData || []).map((row: any) => row.id).filter(Boolean);
+    if (!payrollIds.length) {
+      toast({ title: "No payslips to download", description: "Please generate payroll records first.", variant: "destructive" });
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast({ title: "Download failed", description: "Login is required to download ZIP.", variant: "destructive" });
+      return;
+    }
+
+    setIsZipDownloading(true);
+    try {
+      const response = await fetch("/api/payroll/batch/download-zip", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/zip",
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+        body: JSON.stringify({ payrollIds }),
+      });
+
+      if (!response.ok) {
+        let errorMessage = `Unable to download ZIP (HTTP ${response.status})`;
+        const contentType = response.headers.get("content-type") || "";
+        if (contentType.includes("application/json")) {
+          const data = await response.json().catch(() => null);
+          if (data?.error) errorMessage = data.error;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const blob = await response.blob();
+      if (blob.size === 0) {
+        throw new Error("Downloaded ZIP was empty. Please regenerate payroll and try again.");
+      }
+
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("zip")) {
+        throw new Error("Server did not return a ZIP file. Please try again.");
+      }
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `payslips-${month || "batch"}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      const downloadedCount = Number(response.headers.get("x-payslip-count")) || payrollIds.length;
+      toast({ title: "ZIP downloaded", description: `Downloaded ${downloadedCount} payslip(s).` });
+    } catch (err: any) {
+      toast({ title: "Failed to download ZIP", description: err?.message || "Please try again.", variant: "destructive" });
+    } finally {
+      setIsZipDownloading(false);
+    }
   };
 
   const handleGenerate = async () => {
@@ -246,6 +311,9 @@ export default function Payroll() {
             <div className="flex gap-2 flex-wrap">
               <Button variant="outline" size="sm" onClick={handleExportPDF}><FileText className="w-4 h-4 mr-2" />PDF</Button>
               <Button variant="outline" size="sm" onClick={handleExportExcel}><Download className="w-4 h-4 mr-2" />Excel</Button>
+              <Button variant="outline" size="sm" onClick={handleDownloadPayslipsZip} disabled={isZipDownloading || filteredData.length === 0}>
+                <Download className="w-4 h-4 mr-2" />ZIP Payslips
+              </Button>
               <Button variant="outline" size="sm" onClick={handleBulkGenerate} disabled={isBulkGenerating}>
                 <Users className="w-4 h-4 mr-2" />{isBulkGenerating ? "Syncing..." : "Sync Attendance + OT + Advances"}
               </Button>
@@ -335,7 +403,7 @@ export default function Payroll() {
                 No payroll records found. Generate payroll from attendance data.
               </TableCell></TableRow>
             ) : filteredData.map((p: any) => (
-              <TableRow key={p.id} className="hover:bg-muted/20">
+              <TableRow key={p.id}>
                 <TableCell className="font-medium">{p.employeeName}</TableCell>
                 <TableCell className="text-muted-foreground">{p.month}</TableCell>
                 <TableCell className="text-right">{fmtINR(p.basicSalary)}</TableCell>

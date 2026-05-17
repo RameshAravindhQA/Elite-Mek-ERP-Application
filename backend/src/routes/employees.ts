@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, employeesTable, salaryHikesTable } from "@workspace/db";
-import { desc, eq, ilike, count, sql, or, and } from "drizzle-orm";
+import { desc, eq, ilike, count, sql, or, and } from "@workspace/db/drizzle";
 import { requireAuth } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
 
@@ -39,10 +39,66 @@ router.get("/employees", requireAuth, async (req, res) => {
 router.post("/employees", requireAuth, async (req, res) => {
   try {
     const body = req.body;
-    const [emp] = await db.insert(employeesTable).values({ ...body, salary: String(body.salary) }).returning();
+    const salary = Number(body.salary);
+    if (!Number.isFinite(salary) || salary <= 0) {
+      res.status(400).json({
+        error: "Validation failed",
+        details: [{ field: "salary", path: "salary", message: "Salary must be greater than zero", type: "invalid_number" }],
+      });
+      return;
+    }
+
+    const duplicateConditions = [];
+    if (body.employeeId) duplicateConditions.push(eq(employeesTable.employeeId, body.employeeId));
+    if (body.email) duplicateConditions.push(eq(employeesTable.email, body.email));
+    if (duplicateConditions.length) {
+      const [existing] = await db.select({ id: employeesTable.id, employeeId: employeesTable.employeeId, email: employeesTable.email })
+        .from(employeesTable)
+        .where(or(...duplicateConditions))
+        .limit(1);
+      if (existing) {
+        const field = existing.email === body.email ? "email" : "employeeId";
+        const label = field === "email" ? "Email" : "Employee ID";
+        res.status(400).json({
+          error: "Validation failed",
+          details: [{ field, path: field, message: `${label} already exists`, type: "unique_violation" }],
+        });
+        return;
+      }
+    }
+
+    const [emp] = await db.insert(employeesTable).values({ ...body, salary: String(salary) }).returning();
     await createAuditLog({ module: "employees", action: "create", recordId: emp.id, userId: req.user!.id, userName: req.user!.name, description: `Created employee ${emp.firstName} ${emp.lastName}`, newValues: body });
     res.status(201).json(formatEmployee(emp));
-  } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
+  } catch (err: any) {
+    req.log.error({ err });
+    // Handle unique constraint violations
+    if (err.code === "23505") {
+      const field = err.detail?.includes("employee_id") ? "employeeId" : err.detail?.includes("email") ? "email" : "unknown";
+      const label = field === "employeeId" ? "Employee ID" : field === "email" ? "Email" : "Value";
+      res.status(400).json({ 
+        error: "Validation failed", 
+        details: [{ 
+          field, 
+          path: field,
+          message: `${label} already exists`, 
+          type: "unique_violation"
+        }] 
+      });
+    } else if (err.code === "22P02" || err.code === "42703") {
+      res.status(400).json({ 
+        error: "Validation failed", 
+        details: [{ 
+          field: "data", 
+          path: "data",
+          message: "Invalid data format", 
+          type: "invalid_type"
+        }] 
+      });
+    } else {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
 });
 
 router.get("/employees/:id", requireAuth, async (req, res) => {

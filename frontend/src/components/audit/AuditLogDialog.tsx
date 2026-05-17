@@ -1,5 +1,16 @@
 import { useMemo } from "react";
-import { useListAuditLogs, getListAuditLogsQueryKey } from "@workspace/api-client-react";
+import {
+  useListAuditLogs,
+  getListAuditLogsQueryKey,
+  useListCustomers,
+  getListCustomersQueryKey,
+  useListEmployees,
+  getListEmployeesQueryKey,
+  useListProjects,
+  getListProjectsQueryKey,
+  useListVendors,
+  getListVendorsQueryKey,
+} from "@workspace/api-client-react";
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -38,6 +49,28 @@ const getActionColor = (action: string) => {
   }
 };
 
+const formatAuditValue = (value: unknown) => {
+  if (value === null || value === undefined || value === "") return "-";
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return String(value);
+  return JSON.stringify(value, null, 2);
+};
+
+const formatFieldName = (field: string) => field.replace(/([A-Z])/g, " $1").replace(/^./, c => c.toUpperCase());
+
+const buildChangedFields = (log: any) => {
+  const oldValues = log.oldValues && typeof log.oldValues === "object" ? log.oldValues : {};
+  const newValues = log.newValues && typeof log.newValues === "object" ? log.newValues : {};
+  const keys = Array.from(new Set([...Object.keys(oldValues), ...Object.keys(newValues)]));
+
+  return keys
+    .filter((key) => JSON.stringify((oldValues as any)[key] ?? null) !== JSON.stringify((newValues as any)[key] ?? null))
+    .map((key) => ({
+      field: key,
+      oldValue: (oldValues as any)[key],
+      newValue: (newValues as any)[key],
+    }));
+};
+
 export function AuditLogDialog({ open, onOpenChange, module, recordId, recordName }: AuditLogDialogProps) {
   const params = useMemo(
     () => ({ module, recordId, limit: 50 }),
@@ -50,6 +83,47 @@ export function AuditLogDialog({ open, onOpenChange, module, recordId, recordNam
       queryKey: getListAuditLogsQueryKey(params),
     },
   });
+
+  const employeesParams = { page: 1, limit: 500 };
+  const projectsParams = { page: 1, limit: 500 };
+  const customersParams = { page: 1, limit: 500 };
+  const vendorsParams = { page: 1, limit: 500 };
+  const { data: employeesData } = useListEmployees(employeesParams, { query: { enabled: open, queryKey: getListEmployeesQueryKey(employeesParams) } });
+  const { data: projectsData } = useListProjects(projectsParams, { query: { enabled: open, queryKey: getListProjectsQueryKey(projectsParams) } });
+  const { data: customersData } = useListCustomers(customersParams, { query: { enabled: open, queryKey: getListCustomersQueryKey(customersParams) } });
+  const { data: vendorsData } = useListVendors(vendorsParams, { query: { enabled: open, queryKey: getListVendorsQueryKey(vendorsParams) } });
+
+  const lookup = useMemo(() => {
+    const employees = new Map<number, string>();
+    const projects = new Map<number, string>();
+    const customers = new Map<number, string>();
+    const vendors = new Map<number, string>();
+
+    (employeesData?.data || []).forEach((employee: any) => {
+      employees.set(Number(employee.id), [employee.firstName, employee.lastName].filter(Boolean).join(" ") || employee.employeeId || `Employee #${employee.id}`);
+    });
+    (projectsData?.data || []).forEach((project: any) => projects.set(Number(project.id), project.name || `Project #${project.id}`));
+    (customersData?.data || []).forEach((customer: any) => customers.set(Number(customer.id), customer.name || customer.company || `Customer #${customer.id}`));
+    (vendorsData?.data || []).forEach((vendor: any) => vendors.set(Number(vendor.id), vendor.name || `Vendor #${vendor.id}`));
+
+    return { employees, projects, customers, vendors };
+  }, [customersData?.data, employeesData?.data, projectsData?.data, vendorsData?.data]);
+
+  const formatDisplayValue = (field: string, value: unknown) => {
+    if (value === null || value === undefined || value === "") return "-";
+    const normalizedField = field.toLowerCase();
+    const id = Number(value);
+
+    if (normalizedField === "employeeids" && Array.isArray(value)) {
+      return value.map(item => lookup.employees.get(Number(item)) || `Employee #${item}`).join("\n");
+    }
+    if (normalizedField === "employeeid" && Number.isFinite(id)) return lookup.employees.get(id) || `Employee #${value}`;
+    if (normalizedField === "projectid" && Number.isFinite(id)) return lookup.projects.get(id) || `Project #${value}`;
+    if (normalizedField === "customerid" && Number.isFinite(id)) return lookup.customers.get(id) || `Customer #${value}`;
+    if (normalizedField === "vendorid" && Number.isFinite(id)) return lookup.vendors.get(id) || `Vendor #${value}`;
+
+    return formatAuditValue(value);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -70,37 +144,50 @@ export function AuditLogDialog({ open, onOpenChange, module, recordId, recordNam
             No audit logs available for this record.
           </div>
         ) : (
-          <div className="border rounded-xl overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Module</TableHead>
-                  <TableHead>Action</TableHead>
-                  <TableHead>User</TableHead>
-                  <TableHead>Field</TableHead>
-                  <TableHead>Old Value</TableHead>
-                  <TableHead>New Value</TableHead>
-                  <TableHead>Date/Time</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.data.map((log: any) => (
-                  <TableRow key={log.id} className="hover:bg-muted/20">
-                    <TableCell>
-                      <Badge className={getModuleColor(log.module)} variant="outline">{log.module}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getActionColor(log.action)} variant="outline">{log.action}</Badge>
-                    </TableCell>
-                    <TableCell>{log.userName || "System"}</TableCell>
-                    <TableCell className="font-medium">{log.field || log.description || "—"}</TableCell>
-                    <TableCell className="max-w-[180px] truncate">{typeof log.oldValues === "object" ? JSON.stringify(log.oldValues) : log.oldValues || "—"}</TableCell>
-                    <TableCell className="max-w-[180px] truncate">{typeof log.newValues === "object" ? JSON.stringify(log.newValues) : log.newValues || "—"}</TableCell>
-                    <TableCell>{log.createdAt ? format(new Date(log.createdAt), "dd MMM yyyy, HH:mm") : "—"}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <div className="space-y-4">
+            {data.data.map((log: any) => {
+              const changedFields = buildChangedFields(log);
+              return (
+                <div key={log.id} className="rounded-xl border bg-card p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap gap-2">
+                        <Badge className={getModuleColor(log.module)} variant="outline">{log.module}</Badge>
+                        <Badge className={getActionColor(log.action)} variant="outline">{log.action}</Badge>
+                      </div>
+                      <p className="font-medium">{log.description || "Audit change"}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {log.userName || "System"} - {log.createdAt ? format(new Date(log.createdAt), "dd MMM yyyy, HH:mm") : "-"}
+                      </p>
+                    </div>
+                  </div>
+                  {changedFields.length ? (
+                    <div className="mt-4 overflow-hidden rounded-lg border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[180px]">Field</TableHead>
+                            <TableHead>Old Value</TableHead>
+                            <TableHead>New Value</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {changedFields.map((change) => (
+                            <TableRow key={change.field}>
+                              <TableCell className="font-medium">{formatFieldName(change.field)}</TableCell>
+                              <TableCell className="max-w-[320px] whitespace-pre-wrap break-words align-top text-red-700">{formatDisplayValue(change.field, change.oldValue)}</TableCell>
+                              <TableCell className="max-w-[320px] whitespace-pre-wrap break-words align-top text-emerald-700">{formatDisplayValue(change.field, change.newValue)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ) : (
+                    <div className="mt-4 rounded-lg border border-dashed p-4 text-sm text-muted-foreground">No field-level values were captured for this log.</div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useGetSettings, useUpdateSettings, getGetSettingsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -10,8 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Save, Eye, EyeOff, Building2, Palette, FileOutput, Mail, Bell, CreditCard, Volume2, MessageCircle } from "lucide-react";
-import { isSoundEnabled, playSound, SOUND_PRESETS } from "@/lib/sound-effects";
+import { Loader2, Save, Eye, EyeOff, Building2, Palette, FileOutput, Mail, Bell, CreditCard, Volume2, MessageCircle, Upload, X } from "lucide-react";
+import { isSoundEnabled, playSound, SOUND_PRESETS, setSoundEventEnabled, getSoundEventPreference, setCustomSoundUrl, getCustomSoundName, clearCustomSound, loadSoundSettingsFromServer, syncSoundSettingsToServer } from "@/lib/sound-effects";
+import type { SoundEvent } from "@/lib/sound-effects";
 
 const TABLE_HEADER_PALETTE = [
   "#1D4ED8", "#0F766E", "#047857", "#4338CA", "#7C3AED",
@@ -20,6 +21,16 @@ const TABLE_HEADER_PALETTE = [
 
 const DEFAULT_PAYSLIP_MESSAGE =
   "Hello {{employeeName}}, your payslip for {{month}} is ready. Net salary: {{netSalary}}. Please find the attached PDF payslip.";
+
+const DEFAULT_ELITE_MEK_LOGO_URL = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="96" viewBox="0 0 240 96">
+  <rect width="240" height="96" rx="14" fill="#0F172A"/>
+  <rect x="18" y="18" width="60" height="60" rx="10" fill="#F97316"/>
+  <text x="48" y="56" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" fill="#FFFFFF">EM</text>
+  <text x="96" y="43" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" fill="#FFFFFF">Elite</text>
+  <text x="96" y="68" font-family="Arial, Helvetica, sans-serif" font-size="22" fill="#CBD5E1">Mek</text>
+</svg>
+`)}`;
 
 const THEME_PRESETS = [
   { name: "Special Edition Dark", themeMode: "special-dark", themeColor: "#22C55E", buttonColor: "#16A34A", tableHeaderColor: "#0F172A", fieldColor: "#111827", themeLightShadeColor: "#111827", headerFontColor: "#F8FAFC", paragraphFontColor: "#D1D5DB" },
@@ -91,10 +102,35 @@ export default function Settings() {
   const { toast } = useToast();
 
   const [formData, setFormData] = useState<any>({});
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showKeys, setShowKeys] = useState({ whatsapp: false, sms: false });
   const [soundEnabled, setSoundEnabled] = useState(() => isSoundEnabled());
   const [soundPreset, setSoundPreset] = useState(() => localStorage.getItem("sound-effects-preset") || "0");
+  const [soundEventPreferences, setSoundEventPreferences] = useState<Record<SoundEvent, boolean>>(() => ({
+    click: getSoundEventPreference("click"),
+    success: getSoundEventPreference("success"),
+    danger: getSoundEventPreference("danger"),
+    validation: getSoundEventPreference("validation"),
+    import: getSoundEventPreference("import"),
+    create: getSoundEventPreference("create"),
+    update: getSoundEventPreference("update"),
+    delete: getSoundEventPreference("delete"),
+    login: getSoundEventPreference("login"),
+    logout: getSoundEventPreference("logout"),
+  }));
+  const [customSounds, setCustomSounds] = useState<Record<SoundEvent, string | null>>(() => ({
+    click: getCustomSoundName("click"),
+    success: getCustomSoundName("success"),
+    danger: getCustomSoundName("danger"),
+    validation: getCustomSoundName("validation"),
+    import: getCustomSoundName("import"),
+    create: getCustomSoundName("create"),
+    update: getCustomSoundName("update"),
+    delete: getCustomSoundName("delete"),
+    login: getCustomSoundName("login"),
+    logout: getCustomSoundName("logout"),
+  }));
 
   const hexToHsl = (hex: string) => {
     // normalize to HSL object
@@ -217,6 +253,11 @@ export default function Settings() {
 
   const applyThemeSettings = (settingsData: any) => {
     if (!settingsData) return;
+    const syncLocal = (key: string, value: unknown) => {
+      const text = typeof value === "string" ? value : "";
+      if (text.trim()) localStorage.setItem(key, text);
+      else localStorage.removeItem(key);
+    };
 
     // Apply typography/font style preview via CSS variables (used globally across the app)
     const root = document.documentElement;
@@ -255,16 +296,26 @@ export default function Settings() {
       root.style.setProperty("--sidebar-accent-foreground", getContrastForeground(theme));
       root.style.setProperty("--primary-foreground", getContrastForeground(theme));
       root.style.setProperty("--accent-foreground", getContrastForeground(theme));
-      root.style.setProperty("--table-header", hslStringOrTheme(theme));
-      root.style.setProperty("--table-header-foreground", getContrastForeground(theme));
       root.style.setProperty("--premium-gradient-start", `hsla(${theme.h}, ${theme.s}%, ${theme.l}%, 0.18)`);
       localStorage.setItem("theme-color", settingsData.themeColor);
+
+      if (!settingsData.tableHeaderColor) {
+        root.style.removeProperty("--table-header");
+        root.style.removeProperty("--table-header-foreground");
+        root.style.removeProperty("--table-row-hover");
+      }
     }
 
     if (settingsData.tableHeaderColor) {
       const tableHeader = hexToHsl(settingsData.tableHeaderColor);
       root.style.setProperty("--table-header", hslString(tableHeader));
       root.style.setProperty("--table-header-foreground", getContrastForeground(tableHeader));
+      
+      const hoverColor = settingsData.themeMode === "light"
+        ? adjustHsl(tableHeader, tableHeader.l > 50 ? 18 : 24, -Math.min(tableHeader.s, 50))
+        : adjustHsl(tableHeader, tableHeader.l > 50 ? 14 : 22, tableHeader.l > 50 ? -8 : 4);
+      root.style.setProperty("--table-row-hover", hoverColor);
+      
       localStorage.setItem("table-header-color", settingsData.tableHeaderColor);
     }
 
@@ -338,53 +389,18 @@ export default function Settings() {
       }
     }
 
-    if (settingsData?.pdfHeaderContent) {
-      localStorage.setItem("pdf-header-content", settingsData.pdfHeaderContent);
-    }
-
-    if (settingsData?.pdfFooterContent) {
-      localStorage.setItem("pdf-footer-content", settingsData.pdfFooterContent);
-    }
-
-    if (settingsData?.excelHeaderContent) {
-      localStorage.setItem("excel-header-content", settingsData.excelHeaderContent);
-    }
-
-    if (settingsData?.excelFooterContent) {
-      localStorage.setItem("excel-footer-content", settingsData.excelFooterContent);
-    }
-
-    if (settingsData?.pdfFormatting) {
-      localStorage.setItem("pdf-formatting", settingsData.pdfFormatting);
-    }
-
-    if (settingsData?.companyName) {
-      localStorage.setItem("company-name", settingsData.companyName);
-    }
-
-    if (settingsData?.companyEmail) {
-      localStorage.setItem("company-email", settingsData.companyEmail);
-    }
-
-    if (settingsData?.companyPhone) {
-      localStorage.setItem("company-phone", settingsData.companyPhone);
-    }
-
-    if (settingsData?.companyPhone2) {
-      localStorage.setItem("company-phone2", settingsData.companyPhone2);
-    }
-
-    if (settingsData?.companyWebsite) {
-      localStorage.setItem("company-website", settingsData.companyWebsite);
-    }
-
-    if (settingsData?.companyAddress) {
-      localStorage.setItem("company-address", settingsData.companyAddress);
-    }
-
-    if (settingsData?.companyLogo) {
-      localStorage.setItem("company-logo", settingsData.companyLogo);
-    }
+    syncLocal("pdf-header-content", settingsData.pdfHeaderContent);
+    syncLocal("pdf-footer-content", settingsData.pdfFooterContent);
+    syncLocal("excel-header-content", settingsData.excelHeaderContent);
+    syncLocal("excel-footer-content", settingsData.excelFooterContent);
+    syncLocal("pdf-formatting", settingsData.pdfFormatting);
+    syncLocal("company-name", settingsData.companyName);
+    syncLocal("company-email", settingsData.companyEmail);
+    syncLocal("company-phone", settingsData.companyPhone);
+    syncLocal("company-phone2", settingsData.companyPhone2);
+    syncLocal("company-website", settingsData.companyWebsite);
+    syncLocal("company-address", settingsData.companyAddress);
+    syncLocal("company-logo", settingsData.companyLogo);
 
     if (settingsData?.themeMode) {
       localStorage.setItem("theme-mode", settingsData.themeMode);
@@ -404,7 +420,7 @@ export default function Settings() {
         headerFontColor: (settings as any).headerFontColor || localStorage.getItem("header-font-color") || "#111827",
         paragraphFontColor: (settings as any).paragraphFontColor || localStorage.getItem("paragraph-font-color") || "#374151",
         themeLightShadeColor: (settings as any).themeLightShadeColor || localStorage.getItem("theme-light-shade-color") || "#EEF2FF",
-        tableHeaderColor: (settings as any).tableHeaderColor || localStorage.getItem("table-header-color") || "#1D4ED8",
+        tableHeaderColor: (settings as any).tableHeaderColor || localStorage.getItem("table-header-color") || undefined,
         motionStyle: (settings as any).motionStyle || (localStorage.getItem("motion-style") as any) || "soft",
         excelHeaderContent: (settings as any).excelHeaderContent || localStorage.getItem("excel-header-content") || buildExportHeader(settings),
         excelFooterContent: (settings as any).excelFooterContent || localStorage.getItem("excel-footer-content") || "",
@@ -427,20 +443,85 @@ export default function Settings() {
     applyThemeSettings(formData);
   }, [formData.themeColor, formData.buttonColor, formData.fieldColor, formData.themeMode, formData.headerFont, formData.bodyFont, formData.headerFontColor, formData.paragraphFontColor, formData.themeLightShadeColor, formData.tableHeaderColor, formData.motionStyle]);
 
+  useEffect(() => {
+    void loadSoundSettingsFromServer().then(() => {
+      setSoundEnabled(isSoundEnabled());
+      setSoundPreset(localStorage.getItem("sound-effects-preset") || "0");
+      setSoundEventPreferences({
+        click: getSoundEventPreference("click"),
+        success: getSoundEventPreference("success"),
+        danger: getSoundEventPreference("danger"),
+        validation: getSoundEventPreference("validation"),
+        import: getSoundEventPreference("import"),
+        create: getSoundEventPreference("create"),
+        update: getSoundEventPreference("update"),
+        delete: getSoundEventPreference("delete"),
+        login: getSoundEventPreference("login"),
+        logout: getSoundEventPreference("logout"),
+      });
+      setCustomSounds({
+        click: getCustomSoundName("click"),
+        success: getCustomSoundName("success"),
+        danger: getCustomSoundName("danger"),
+        validation: getCustomSoundName("validation"),
+        import: getCustomSoundName("import"),
+        create: getCustomSoundName("create"),
+        update: getCustomSoundName("update"),
+        delete: getCustomSoundName("delete"),
+        login: getCustomSoundName("login"),
+        logout: getCustomSoundName("logout"),
+      });
+    });
+  }, []);
+
   const handleChange = (key: string, value: any) => {
     setFormData((prev: any) => ({ ...prev, [key]: value }));
+  };
+
+  const handleLogoUpload = (file: File | null) => {
+    if (!file) return;
+    if (!["image/png", "image/jpeg"].includes(file.type)) {
+      toast({ title: "Invalid logo", description: "Please upload a PNG or JPG logo.", variant: "destructive" });
+      return;
+    }
+    if (file.size > 1024 * 1024) {
+      toast({ title: "Logo too large", description: "Please keep the logo under 1MB for reliable PDF exports.", variant: "destructive" });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      handleChange("companyLogo", String(reader.result || ""));
+      toast({ title: "Logo ready", description: "Click Save Changes to apply it to PDF downloads." });
+    };
+    reader.onerror = () => {
+      toast({ title: "Logo upload failed", description: "Unable to read the selected image.", variant: "destructive" });
+    };
+    reader.readAsDataURL(file);
   };
 
   const updateSoundEnabled = (enabled: boolean) => {
     setSoundEnabled(enabled);
     localStorage.setItem("sound-effects-enabled", String(enabled));
+    void syncSoundSettingsToServer();
     if (enabled) window.setTimeout(() => playSound("success"), 40);
   };
 
   const updateSoundPreset = (value: string) => {
     setSoundPreset(value);
     localStorage.setItem("sound-effects-preset", value);
+    void syncSoundSettingsToServer();
     window.setTimeout(() => playSound("click"), 40);
+  };
+
+  const toggleSoundEvent = (event: SoundEvent) => {
+    const newState = !soundEventPreferences[event];
+    setSoundEventPreferences(prev => ({ ...prev, [event]: newState }));
+    setSoundEventEnabled(event, newState);
+    void syncSoundSettingsToServer();
+    if (newState) {
+      void playSound(event);
+    }
   };
 
   const previewSound = (event: Parameters<typeof playSound>[0]) => {
@@ -449,6 +530,48 @@ export default function Settings() {
       localStorage.setItem("sound-effects-enabled", "true");
     }
     void playSound(event);
+  };
+
+  const handleCustomSoundUpload = (event: SoundEvent, file: File | null) => {
+    if (!file) return;
+    
+    const validFormats = ["audio/mpeg", "audio/wav", "audio/mp4", "audio/ogg"];
+    if (!validFormats.includes(file.type)) {
+      toast({ title: "Invalid format", description: "Please upload MP3, WAV, M4A, or OGG files.", variant: "destructive" });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Sound files must be under 5MB.", variant: "destructive" });
+      return;
+    }
+
+    void setCustomSoundUrl(event, file).then(async () => {
+      setCustomSounds(prev => ({ ...prev, [event]: file.name }));
+      await syncSoundSettingsToServer();
+      toast({ title: "Success", description: `Custom sound for ${event} uploaded and saved: ${file.name}` });
+      previewSound(event);
+    }).catch((error) => {
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Unable to save the selected sound file.",
+        variant: "destructive",
+      });
+    });
+  };
+
+  const clearCustomSoundFile = (event: SoundEvent) => {
+    clearCustomSound(event);
+    setCustomSounds(prev => ({ ...prev, [event]: null }));
+    void syncSoundSettingsToServer().then(() => {
+      toast({ title: "Cleared", description: `Custom sound for ${event} removed. Using default sound.` });
+    }).catch((error) => {
+      toast({
+        title: "Clear failed",
+        description: error instanceof Error ? error.message : "Unable to save sound settings.",
+        variant: "destructive",
+      });
+    });
   };
 
   const handleSave = async () => {
@@ -477,8 +600,8 @@ export default function Settings() {
     const defaults = {
       themeColor: "#3B82F6",
       buttonColor: "#3B82F6",
-      fieldColor: "#F9FAFB",
-      themeLightShadeColor: "#EEF2FF",
+      fieldColor: "#FFFFFF",
+      themeLightShadeColor: "#F3F4F6",
       tableHeaderColor: "#3B82F6",
       themeMode: "light",
       motionStyle: "soft",
@@ -487,8 +610,9 @@ export default function Settings() {
       headerFontColor: "#111827",
       paragraphFontColor: "#374151",
       pdfHeaderContent: "Elite Mek Excellence in Engineering\nGST: 22AAAAA0000A1Z5\n123 Industrial Road, Mumbai",
-      pdfFooterContent: "Payment terms: 40% advance, balance due on completion.\nPlease send PO confirmation within 3 days.",
-      pdfFormatting: "Use a clean invoice header, bold titles, a soft shaded table header row, and a strong total summary section.",
+      companyLogo: DEFAULT_ELITE_MEK_LOGO_URL,
+      pdfFooterContent: "",
+      pdfFormatting: "Use a clean aligned company header and compact table rows.",
       payslipWhatsappEnabled: false,
       payslipWhatsappMode: "whatsapp-web",
       payslipWhatsappSenderPhone: "",
@@ -501,7 +625,7 @@ export default function Settings() {
     };
     setFormData(defaults);
     applyThemeSettings(defaults);
-    toast({ title: "Default theme restored", description: "System defaults are applied." });
+    toast({ title: "Default theme restored", description: "System defaults are applied (white theme)." });
   };
 
   const applyThemePreset = (preset: (typeof THEME_PRESETS)[number]) => {
@@ -586,13 +710,37 @@ export default function Settings() {
               <Field label="GST Number"><Input value={formData.gstNumber || ""} onChange={e => handleChange("gstNumber", e.target.value)} placeholder="22AAAAA0000A1Z5" /></Field>
               <Field label="PAN Number"><Input value={formData.panNumber || ""} onChange={e => handleChange("panNumber", e.target.value)} placeholder="AAAAA0000A" /></Field>
               <Field label="CIN Number"><Input value={formData.cinNumber || ""} onChange={e => handleChange("cinNumber", e.target.value)} placeholder="U00000MH2000PTC000000" /></Field>
-              <Field label="Company Logo URL"><Input value={formData.companyLogo || ""} onChange={e => handleChange("companyLogo", e.target.value)} placeholder="https://..." /></Field>
-              {formData.companyLogo && (
-                <div className="md:col-span-2 flex items-center gap-4">
-                  <img src={formData.companyLogo} alt="Logo preview" className="h-16 w-auto rounded border p-1" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                  <span className="text-sm text-muted-foreground">Logo preview</span>
-                </div>
-              )}
+              <div className="md:col-span-2 space-y-3">
+                <Field label="Company Logo">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <Input value={formData.companyLogo || ""} onChange={e => handleChange("companyLogo", e.target.value)} placeholder="Upload a PNG/JPG or paste an image URL/data URL" />
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg"
+                      className="hidden"
+                      onChange={(e) => {
+                        handleLogoUpload(e.target.files?.[0] || null);
+                        e.currentTarget.value = "";
+                      }}
+                    />
+                    <Button type="button" variant="outline" onClick={() => logoInputRef.current?.click()}>
+                      <Upload className="w-4 h-4 mr-2" />Upload Logo
+                    </Button>
+                    {formData.companyLogo && (
+                      <Button type="button" variant="outline" onClick={() => handleChange("companyLogo", "")}>
+                        <X className="w-4 h-4 mr-2" />Remove
+                      </Button>
+                    )}
+                  </div>
+                </Field>
+                {formData.companyLogo && (
+                  <div className="flex items-center gap-4 rounded-md border bg-muted/20 p-3">
+                    <img src={formData.companyLogo} alt="Logo preview" className="h-16 max-w-40 rounded border bg-white object-contain p-1" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                    <span className="text-sm text-muted-foreground">This logo is used in PDF downloads after saving.</span>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
           <SaveButtons isSubmitting={isSubmitting} onSave={handleSave} onReset={resetDefaults} />
@@ -813,17 +961,17 @@ export default function Settings() {
 
         <TabsContent value="sounds" className="mt-0">
           <Card>
-            <CardHeader><CardTitle className="text-base">Sound Effects</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">Sound Effects Settings</CardTitle></CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between rounded-lg border bg-card p-4">
                 <div>
                   <p className="text-sm font-semibold text-foreground">Enable system sounds</p>
-                  <p className="text-xs text-muted-foreground">Applies to clicks, import, success, danger, and validation feedback.</p>
+                  <p className="text-xs text-muted-foreground">Master control for all sound effects in the system.</p>
                 </div>
                 <Switch checked={soundEnabled} onCheckedChange={updateSoundEnabled} />
               </div>
 
-              <Field label="Default Sound Effect">
+              <Field label="Default Sound Effect Preset">
                 <Select value={soundPreset} onValueChange={updateSoundPreset}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -834,15 +982,93 @@ export default function Settings() {
                 </Select>
               </Field>
 
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-                {[
+              <div className="space-y-4">
+                <p className="text-sm font-semibold">Sound Effects By Operation</p>
+                <p className="text-xs text-muted-foreground">Upload custom sound files (MP3, WAV, OGG, M4A up to 5MB) or use default generated sounds</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {([
+                    { label: "Click", event: "click" as const },
+                    { label: "Create", event: "create" as const },
+                    { label: "Update", event: "update" as const },
+                    { label: "Delete", event: "delete" as const },
+                    { label: "Login", event: "login" as const },
+                    { label: "Logout", event: "logout" as const },
+                    { label: "Validation", event: "validation" as const },
+                    { label: "Success", event: "success" as const },
+                    { label: "Danger/Error", event: "danger" as const },
+                    { label: "Import", event: "import" as const },
+                  ] as const).map(({ label, event }) => (
+                    <div key={event} className="rounded-lg border bg-card p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium">{label}</p>
+                        <Switch
+                          checked={soundEnabled && soundEventPreferences[event as SoundEvent]}
+                          onCheckedChange={() => toggleSoundEvent(event as SoundEvent)}
+                          disabled={!soundEnabled}
+                        />
+                      </div>
+                      
+                      {customSounds[event as SoundEvent] && (
+                        <div className="bg-muted/50 p-2 rounded flex items-center justify-between">
+                          <span className="text-xs truncate">📁 {customSounds[event as SoundEvent]}</span>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="h-6 w-6 -mr-2"
+                            onClick={() => clearCustomSoundFile(event as SoundEvent)}
+                            title="Remove custom sound"
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      )}
+
+                      <div className="flex gap-2">
+                        <label className="flex-1 cursor-pointer">
+                          <input
+                            type="file"
+                            accept="audio/*"
+                            className="hidden"
+                            onChange={(e) => handleCustomSoundUpload(event as SoundEvent, e.target.files?.[0] || null)}
+                            disabled={!soundEnabled}
+                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="w-full"
+                            asChild
+                            disabled={!soundEnabled}
+                          >
+                            <span><Upload className="w-3 h-3 mr-1" />Import</span>
+                          </Button>
+                        </label>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => previewSound(event as SoundEvent)}
+                          disabled={!soundEnabled}
+                        >
+                          Preview
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-5 pt-4 border-t">
+                <p className="md:col-span-5 text-xs text-muted-foreground font-semibold">Quick Test All Sounds</p>
+                {([
                   ["Click", "click"],
                   ["Success", "success"],
                   ["Danger", "danger"],
                   ["Validation", "validation"],
                   ["Import", "import"],
-                ].map(([label, event]) => (
-                  <Button key={event} type="button" variant="outline" onClick={() => previewSound(event as any)}>
+                ] as [string, SoundEvent][]).map(([label, event]) => (
+                  <Button key={event} type="button" size="sm" variant="outline" onClick={() => previewSound(event)} disabled={!soundEnabled}>
                     {label}
                   </Button>
                 ))}
@@ -872,6 +1098,20 @@ export default function Settings() {
                 <Field label="PDF Formatting Notes">
                   <Textarea value={formData.pdfFormatting || ""} onChange={e => handleChange("pdfFormatting", e.target.value)} className="min-h-[80px]" placeholder="Custom formatting instructions..." />
                 </Field>
+              </div>
+              <div className="md:col-span-2 rounded-md border bg-muted/20 p-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-medium">PDF Logo</p>
+                    <p className="text-xs text-muted-foreground">Use the Company Info logo uploader. Saved logo appears in table PDFs, purchase orders, ledgers, invoices, and payslips.</p>
+                  </div>
+                  <Button type="button" variant="outline" onClick={() => logoInputRef.current?.click()}>
+                    <Upload className="w-4 h-4 mr-2" />Upload Logo
+                  </Button>
+                </div>
+                {formData.companyLogo && (
+                  <img src={formData.companyLogo} alt="PDF logo preview" className="mt-3 h-14 max-w-40 rounded border bg-white object-contain p-1" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                )}
               </div>
             </CardContent>
           </Card>

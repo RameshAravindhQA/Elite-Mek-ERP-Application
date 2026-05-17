@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, expensesTable, expenseCategoriesTable, projectsTable } from "@workspace/db";
-import { desc, eq, ilike, count, sql, or, and, gte, lte } from "drizzle-orm";
+import { desc, eq, ilike, count, sql, or, and, gte, lte } from "@workspace/db/drizzle";
 import { requireAuth } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
 
@@ -66,11 +66,13 @@ router.get("/expenses/:id", requireAuth, async (req, res) => {
 router.put("/expenses/:id", requireAuth, async (req, res) => {
   try {
     const id = Number(req.params.id);
+    const [old] = await db.select().from(expensesTable).where(eq(expensesTable.id, id)).limit(1);
+    if (!old) { res.status(404).json({ error: "Not found" }); return; }
     const body = req.body;
     const updates: any = { ...body, updatedAt: new Date() };
     if (body.amount !== undefined) updates.amount = String(body.amount);
     const [e] = await db.update(expensesTable).set(updates).where(eq(expensesTable.id, id)).returning();
-    await createAuditLog({ module: "expenses", action: "update", recordId: id, userId: req.user!.id, userName: req.user!.name, description: `Updated expense: ${e.title}`, newValues: body });
+    await createAuditLog({ module: "expenses", action: "update", recordId: id, userId: req.user!.id, userName: req.user!.name, description: `Updated expense: ${e.title}`, oldValues: old as any, newValues: body });
     res.json(fmt(e));
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
@@ -78,8 +80,9 @@ router.put("/expenses/:id", requireAuth, async (req, res) => {
 router.delete("/expenses/:id", requireAuth, async (req, res) => {
   try {
     const [e] = await db.select().from(expensesTable).where(eq(expensesTable.id, Number(req.params.id))).limit(1);
+    if (!e) { res.status(404).json({ error: "Not found" }); return; }
     await db.delete(expensesTable).where(eq(expensesTable.id, Number(req.params.id)));
-    await createAuditLog({ module: "expenses", action: "delete", recordId: Number(req.params.id), userId: req.user!.id, userName: req.user!.name, description: `Deleted expense: ${e?.title}` });
+    await createAuditLog({ module: "expenses", action: "delete", recordId: Number(req.params.id), userId: req.user!.id, userName: req.user!.name, description: `Deleted expense: ${e.title}`, oldValues: e as any });
     res.status(204).send();
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
@@ -98,20 +101,29 @@ router.get("/expense-categories", requireAuth, async (req, res) => {
 router.post("/expense-categories", requireAuth, async (req, res) => {
   try {
     const [cat] = await db.insert(expenseCategoriesTable).values(req.body).returning();
+    await createAuditLog({ module: "expense_categories", action: "create", recordId: cat.id, userId: req.user!.id, userName: req.user!.name, description: `Created expense category ${cat.name}`, newValues: req.body });
     res.status(201).json(cat);
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
 router.put("/expense-categories/:id", requireAuth, async (req, res) => {
   try {
-    const [cat] = await db.update(expenseCategoriesTable).set(req.body).where(eq(expenseCategoriesTable.id, Number(req.params.id))).returning();
+    const id = Number(req.params.id);
+    const [old] = await db.select().from(expenseCategoriesTable).where(eq(expenseCategoriesTable.id, id)).limit(1);
+    if (!old) { res.status(404).json({ error: "Not found" }); return; }
+    const [cat] = await db.update(expenseCategoriesTable).set(req.body).where(eq(expenseCategoriesTable.id, id)).returning();
+    await createAuditLog({ module: "expense_categories", action: "update", recordId: id, userId: req.user!.id, userName: req.user!.name, description: `Updated expense category ${cat.name}`, oldValues: old as any, newValues: req.body });
     res.json(cat);
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
 router.delete("/expense-categories/:id", requireAuth, async (req, res) => {
   try {
-    await db.delete(expenseCategoriesTable).where(eq(expenseCategoriesTable.id, Number(req.params.id)));
+    const id = Number(req.params.id);
+    const [cat] = await db.select().from(expenseCategoriesTable).where(eq(expenseCategoriesTable.id, id)).limit(1);
+    if (!cat) { res.status(404).json({ error: "Not found" }); return; }
+    await db.delete(expenseCategoriesTable).where(eq(expenseCategoriesTable.id, id));
+    await createAuditLog({ module: "expense_categories", action: "delete", recordId: id, userId: req.user!.id, userName: req.user!.name, description: `Deleted expense category ${cat.name}`, oldValues: cat as any });
     res.status(204).send();
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });

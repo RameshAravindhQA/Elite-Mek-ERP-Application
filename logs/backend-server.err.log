@@ -1,9 +1,0 @@
-
-  dist\index.mjs                   4.6mb
-  dist\pino-worker.mjs           153.2kb
-  dist\pino-file.mjs             141.9kb
-  dist\pino-pretty.mjs           114.3kb
-  dist\thread-stream-worker.mjs    7.3kb
-  ...and 5 more output files...
-
-Done in 2953ms

@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Building2, Loader2 } from "lucide-react";
+import clientLogger from "@/lib/client-logger";
+import { playSound } from "@/lib/sound-effects";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -42,7 +44,7 @@ export default function Login() {
     loginMutation.mutate(
       { data: { email, password } },
       {
-        onSuccess: (data) => {
+        onSuccess: async (data) => {
           localStorage.setItem("token", data.token);
           sessionStorage.setItem("show-welcome-after-login", "true");
           if (rememberMe) {
@@ -50,16 +52,25 @@ export default function Login() {
           } else {
             localStorage.removeItem("rememberedEmail");
           }
+          
+          // Log successful login
+          clientLogger.logUserAuth("login", email, { method: "email/password" });
+          await playSound("login");
+          
           toast({
             title: "Success",
             description: "Logged in successfully",
           });
           setTimeout(() => {
             window.location.href = "/dashboard";
-          }, 280);
+          }, 900);
         },
         onError: () => {
           setIsSimulating(false);
+          // Log failed login attempt
+          clientLogger.logUserAuth("login", email, { method: "email/password", status: "failed" });
+          void playSound("danger");
+          
           toast({
             title: "Error",
             description: "Invalid credentials",

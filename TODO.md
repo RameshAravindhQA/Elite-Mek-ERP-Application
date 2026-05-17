@@ -1,7 +1,14 @@
-- [ ] Verify Tailwind config / v4 setup for generating backdrop-blur utilities.
-- [x] Investigate Dialog/AlertDialog overlay implementation (uses backdrop-blur + fixed inset).
-- [x] Add blur fallback class (bb-blur-overlay) and ensure overlays include it.
-- [ ] Fix TS errors from AlertDialog/Dialog component typing (if any remain).
-- [ ] Re-test open dialog + alert dialog: blur visible and options clickable.
-- [ ] If still blocked, inspect stacking context (e.g., body/page-transition filters/transform) and adjust overlay z-index.
+# TODO
+
+## Completed/Planned Work
+
+- [ ] A) Fix table hover default light color after reset
+  - [ ] Update `frontend/src/contexts/ThemeUIContext.tsx` to always compute `--table-row-hover` based on current `tableHeaderColor` and `themeMode` (or apply a safe fallback).
+
+
+- [ ] B) Fix payslip ZIP download endpoint
+  - [ ] Add backend route `POST /api/payroll/batch/download-zip`
+  - [ ] Implement ZIP streaming response with generated payslip PDFs
+  - [ ] Ensure correct headers (`application/zip`, `Content-Disposition`) and error handling
+
 
