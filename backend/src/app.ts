@@ -6,8 +6,12 @@ import { logger } from "./lib/logger.js";
 
 const app = express();
 
+// pino-http's types may export a namespace object under certain resolutions.
+// Cast it to a callable middleware type so TypeScript accepts the call.
+const pinoHttpMiddleware = (pinoHttp as unknown as (opts?: any) => any);
+
 app.use(
-  pinoHttp({
+  pinoHttpMiddleware({
     logger,
     serializers: {
       req(req: any) {
