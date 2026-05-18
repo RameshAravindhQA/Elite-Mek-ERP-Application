@@ -1,4 +1,3 @@
-import { type Request, type Response, type NextFunction } from "express";
 import { z, type ZodTypeAny, type ZodError } from "zod";
 import { insertAttendanceCategorySchema, insertAttendanceSchema } from "@workspace/db/schema/attendance";
 import { insertEmployeeSchema } from "@workspace/db/schema/employees";
@@ -28,6 +27,20 @@ interface RouteSchema {
   query?: any;
   normalizeBody?: (body: any) => any;
 }
+
+type ValidationRequest = {
+  method: string;
+  path: string;
+  params: any;
+  query: any;
+  body: any;
+};
+
+type ValidationResponse = {
+  status(code: number): { json(body: unknown): unknown };
+};
+
+type ValidationNext = () => unknown;
 
 const ROUTE_SCHEMAS: RouteSchema[] = [
   { method: "post", path: "/auth/login", body: z.object({ email: z.string().email(), password: z.string().min(1) }) },
@@ -111,7 +124,7 @@ function buildPathRegex(pathPattern: string) {
   return regex;
 }
 
-function findRouteSchema(req: Request) {
+function findRouteSchema(req: ValidationRequest) {
   const method = req.method.toLowerCase();
   const path = req.path;
 
@@ -294,7 +307,7 @@ function validateStandardFormats(body: any) {
   return issues;
 }
 
-export function validateRequest(req: Request, res: Response, next: NextFunction) {
+export function validateRequest(req: ValidationRequest, res: ValidationResponse, next: ValidationNext) {
   const matched = findRouteSchema(req);
   if (!matched) return next();
   const { route, pathParams } = matched;
