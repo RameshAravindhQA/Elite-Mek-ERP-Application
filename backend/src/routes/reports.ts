@@ -1,5 +1,18 @@
 import { Router } from "express";
-import { db, employeesTable, attendanceTable, payrollTable, expensesTable, revenueTable, invoicesTable, purchaseOrdersTable, inventoryTable, leavesTable, projectsTable, customersTable, vendorsTable, overtimeTable, advancePaymentsTable, settingsTable } from "@workspace/db";
+import { db } from "@workspace/db";
+import { employeesTable } from "@workspace/db/schema/employees";
+import { attendanceTable } from "@workspace/db/schema/attendance";
+import { advancePaymentsTable, overtimeTable, payrollTable } from "@workspace/db/schema/payroll";
+import { expensesTable } from "@workspace/db/schema/expenses";
+import { revenueTable } from "@workspace/db/schema/revenue";
+import { invoicesTable } from "@workspace/db/schema/invoices";
+import { purchaseOrdersTable } from "@workspace/db/schema/purchase_orders";
+import { inventoryTable } from "@workspace/db/schema/inventory";
+import { leavesTable } from "@workspace/db/schema/leaves";
+import { projectsTable } from "@workspace/db/schema/projects";
+import { customersTable } from "@workspace/db/schema/customers";
+import { vendorsTable } from "@workspace/db/schema/vendors";
+import { settingsTable } from "@workspace/db/schema/settings";
 import { desc, count, sql, eq, gte, lte, and, ilike, or } from "@workspace/db/drizzle";
 import PDFDocument from "pdfkit";
 import { requireAuth } from "../middlewares/auth.js";
@@ -175,7 +188,7 @@ const drawRowsTable = (doc: PDFKit.PDFDocument, headers: string[], rows: Record<
   doc.y = y + 12;
 };
 
-router.get("/reports/summary", requireAuth, async (req, res) => {
+router.get("/reports/summary", requireAuth, async (req: any, res: any) => {
   try {
     const [empStats] = await db.select({ total: count(), active: sql<number>`count(*) filter (where status = 'active')` }).from(employeesTable);
     const [payStats] = await db.select({ totalPaid: sql<number>`sum(net_salary) filter (where status = 'paid')`, pending: sql<number>`sum(net_salary) filter (where status = 'pending')` }).from(payrollTable);
@@ -195,7 +208,7 @@ router.get("/reports/summary", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/reports/employees", requireAuth, async (req, res) => {
+router.get("/reports/employees", requireAuth, async (req: any, res: any) => {
   try {
     const byDept = await db.select({ department: employeesTable.department, count: count(), avgSalary: sql<number>`avg(salary::numeric)` }).from(employeesTable).groupBy(employeesTable.department);
     const byStatus = await db.select({ status: employeesTable.status, count: count() }).from(employeesTable).groupBy(employeesTable.status);
@@ -204,7 +217,7 @@ router.get("/reports/employees", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/reports/payroll", requireAuth, async (req, res) => {
+router.get("/reports/payroll", requireAuth, async (req: any, res: any) => {
   try {
     const month = req.query.month as string;
     const byMonth = await db.select({ month: payrollTable.month, total: sql<number>`sum(net_salary)`, count: count() }).from(payrollTable).groupBy(payrollTable.month).orderBy(payrollTable.month);
@@ -214,7 +227,7 @@ router.get("/reports/payroll", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/reports/attendance", requireAuth, async (req, res) => {
+router.get("/reports/attendance", requireAuth, async (req: any, res: any) => {
   try {
     const month = req.query.month as string || new Date().toISOString().slice(0, 7);
     const byStatus = await db.select({ status: attendanceTable.status, count: count() }).from(attendanceTable).groupBy(attendanceTable.status);
@@ -230,7 +243,7 @@ router.get("/reports/attendance", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/reports/expenses", requireAuth, async (req, res) => {
+router.get("/reports/expenses", requireAuth, async (req: any, res: any) => {
   try {
     const byCategory = await db.select({ category: expensesTable.category, total: sql<number>`sum(amount)`, count: count() }).from(expensesTable).groupBy(expensesTable.category);
     const byMonth = await db.select({ month: sql<string>`to_char(date::date, 'YYYY-MM')`, total: sql<number>`sum(amount)` }).from(expensesTable).groupBy(sql`to_char(date::date, 'YYYY-MM')`).orderBy(sql`to_char(date::date, 'YYYY-MM')`);
@@ -239,7 +252,7 @@ router.get("/reports/expenses", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/reports/revenue", requireAuth, async (req, res) => {
+router.get("/reports/revenue", requireAuth, async (req: any, res: any) => {
   try {
     const bySource = await db.select({ source: revenueTable.source, total: sql<number>`sum(amount)`, count: count() }).from(revenueTable).groupBy(revenueTable.source);
     const byMonth = await db.select({ month: sql<string>`to_char(date::date, 'YYYY-MM')`, total: sql<number>`sum(amount)` }).from(revenueTable).groupBy(sql`to_char(date::date, 'YYYY-MM')`).orderBy(sql`to_char(date::date, 'YYYY-MM')`);
@@ -248,7 +261,7 @@ router.get("/reports/revenue", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/reports/inventory", requireAuth, async (req, res) => {
+router.get("/reports/inventory", requireAuth, async (req: any, res: any) => {
   try {
     const byCategory = await db.select({ category: inventoryTable.category, count: count(), value: sql<number>`sum(quantity::numeric * cost_price::numeric)` }).from(inventoryTable).groupBy(inventoryTable.category);
     const lowStock = await db.select().from(inventoryTable).where(sql`quantity::numeric <= reorder_level::numeric`);
@@ -257,7 +270,7 @@ router.get("/reports/inventory", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/reports/projects", requireAuth, async (req, res) => {
+router.get("/reports/projects", requireAuth, async (req: any, res: any) => {
   try {
     const byStatus = await db.select({ status: projectsTable.status, count: count(), budget: sql<number>`sum(budget::numeric)`, spent: sql<number>`sum(spent::numeric)` }).from(projectsTable).groupBy(projectsTable.status);
     const data = await db.select().from(projectsTable).orderBy(desc(projectsTable.createdAt), desc(projectsTable.id));
@@ -265,7 +278,7 @@ router.get("/reports/projects", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/reports/invoices", requireAuth, async (req, res) => {
+router.get("/reports/invoices", requireAuth, async (req: any, res: any) => {
   try {
     const byStatus = await db.select({ status: invoicesTable.status, count: count(), total: sql<number>`sum(total_amount)` }).from(invoicesTable).groupBy(invoicesTable.status);
     const data = await db.select({ inv: invoicesTable, cust: { name: customersTable.name } }).from(invoicesTable).leftJoin(customersTable, eq(invoicesTable.customerId, customersTable.id)).orderBy(desc(invoicesTable.createdAt), desc(invoicesTable.id));
@@ -273,7 +286,7 @@ router.get("/reports/invoices", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/reports/overtime", requireAuth, async (req, res) => {
+router.get("/reports/overtime", requireAuth, async (req: any, res: any) => {
   try {
     const employeeId = req.query.employeeId ? Number(req.query.employeeId) : null;
     const projectId = req.query.projectId ? Number(req.query.projectId) : null;
@@ -301,7 +314,7 @@ router.get("/reports/overtime", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/reports/advance-payments", requireAuth, async (req, res) => {
+router.get("/reports/advance-payments", requireAuth, async (req: any, res: any) => {
   try {
     const employeeId = req.query.employeeId ? Number(req.query.employeeId) : null;
     const month = req.query.month as string;
@@ -321,7 +334,7 @@ router.get("/reports/advance-payments", requireAuth, async (req, res) => {
 });
 
 // PDF Download endpoint for reports
-router.post("/reports/generate-pdf", requireAuth, async (req, res) => {
+router.post("/reports/generate-pdf", requireAuth, async (req: any, res: any) => {
   try {
     const { title, headers, rows } = req.body;
 

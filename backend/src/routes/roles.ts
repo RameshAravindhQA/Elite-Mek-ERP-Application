@@ -1,19 +1,20 @@
 import { Router } from "express";
-import { db, rolesTable } from "@workspace/db";
+import { db } from "@workspace/db";
+import { rolesTable } from "@workspace/db/schema/roles";
 import { desc, eq } from "@workspace/db/drizzle";
 import { requireAuth } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
 
 const router = Router();
 
-router.get("/roles", requireAuth, async (req, res) => {
+router.get("/roles", requireAuth, async (req: any, res: any) => {
   try {
     const data = await db.select().from(rolesTable).orderBy(desc(rolesTable.createdAt), desc(rolesTable.id));
     res.json({ data: data.map(r => ({ ...r, permissions: Array.isArray(r.permissions) ? r.permissions : [] })) });
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.post("/roles", requireAuth, async (req, res) => {
+router.post("/roles", requireAuth, async (req: any, res: any) => {
   try {
     const [r] = await db.insert(rolesTable).values({ ...req.body, permissions: req.body.permissions || [] }).returning();
     await createAuditLog({ module: "roles", action: "create", recordId: r.id, userId: req.user!.id, userName: req.user!.name, description: `Created role ${r.name}`, newValues: req.body });
@@ -21,7 +22,7 @@ router.post("/roles", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.put("/roles/:id", requireAuth, async (req, res) => {
+router.put("/roles/:id", requireAuth, async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [old] = await db.select().from(rolesTable).where(eq(rolesTable.id, id)).limit(1);
@@ -32,7 +33,7 @@ router.put("/roles/:id", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.delete("/roles/:id", requireAuth, async (req, res) => {
+router.delete("/roles/:id", requireAuth, async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [r] = await db.select().from(rolesTable).where(eq(rolesTable.id, id)).limit(1);

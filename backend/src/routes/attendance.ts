@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { db, attendanceTable, attendanceCategoriesTable, employeesTable, leavesTable } from "@workspace/db";
+import { db } from "@workspace/db";
+import { attendanceCategoriesTable, attendanceTable } from "@workspace/db/schema/attendance";
+import { employeesTable } from "@workspace/db/schema/employees";
+import { leavesTable } from "@workspace/db/schema/leaves";
 import { eq, and, count, gte, lte } from "@workspace/db/drizzle";
 import { requireAuth } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
@@ -95,7 +98,7 @@ async function buildEffectiveAttendance(month: string) {
   return { days, grid };
 }
 
-router.get("/attendance/summary", requireAuth, async (req, res) => {
+router.get("/attendance/summary", requireAuth, async (req: any, res: any) => {
   try {
     const month = req.query.month as string || new Date().toISOString().slice(0, 7);
     const { days, grid } = await buildEffectiveAttendance(month);
@@ -114,7 +117,7 @@ router.get("/attendance/summary", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/attendance", requireAuth, async (req, res) => {
+router.get("/attendance", requireAuth, async (req: any, res: any) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 100;
@@ -134,7 +137,7 @@ router.get("/attendance", requireAuth, async (req, res) => {
 });
 
 // Get attendance for a specific month in grid format
-router.get("/attendance/monthly", requireAuth, async (req, res) => {
+router.get("/attendance/monthly", requireAuth, async (req: any, res: any) => {
   try {
     const month = req.query.month as string || new Date().toISOString().slice(0, 7);
     const { days, grid } = await buildEffectiveAttendance(month);
@@ -144,7 +147,7 @@ router.get("/attendance/monthly", requireAuth, async (req, res) => {
 });
 
 // Bulk attendance marking
-router.post("/attendance/bulk", requireAuth, async (req, res) => {
+router.post("/attendance/bulk", requireAuth, async (req: any, res: any) => {
   try {
     const { records } = req.body; // Array of { employeeId, date, status, notes }
     const results = [];
@@ -168,7 +171,7 @@ router.post("/attendance/bulk", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.post("/attendance", requireAuth, async (req, res) => {
+router.post("/attendance", requireAuth, async (req: any, res: any) => {
   try {
     const body = req.body;
     const existing = await db.select().from(attendanceTable)
@@ -186,7 +189,7 @@ router.post("/attendance", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.put("/attendance/:id", requireAuth, async (req, res) => {
+router.put("/attendance/:id", requireAuth, async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [old] = await db.select().from(attendanceTable).where(eq(attendanceTable.id, id)).limit(1);
@@ -199,14 +202,14 @@ router.put("/attendance/:id", requireAuth, async (req, res) => {
 });
 
 // Attendance categories
-router.get("/attendance-categories", requireAuth, async (req, res) => {
+router.get("/attendance-categories", requireAuth, async (req: any, res: any) => {
   try {
     const cats = await db.select().from(attendanceCategoriesTable).orderBy(attendanceCategoriesTable.name);
     res.json({ data: cats });
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.post("/attendance-categories", requireAuth, async (req, res) => {
+router.post("/attendance-categories", requireAuth, async (req: any, res: any) => {
   try {
     const [cat] = await db.insert(attendanceCategoriesTable).values(req.body).returning();
     await createAuditLog({ module: "attendance_categories", action: "create", recordId: cat.id, userId: req.user!.id, userName: req.user!.name, description: `Created attendance category ${cat.name}`, newValues: req.body });
@@ -214,7 +217,7 @@ router.post("/attendance-categories", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.put("/attendance-categories/:id", requireAuth, async (req, res) => {
+router.put("/attendance-categories/:id", requireAuth, async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [old] = await db.select().from(attendanceCategoriesTable).where(eq(attendanceCategoriesTable.id, id)).limit(1);
@@ -225,7 +228,7 @@ router.put("/attendance-categories/:id", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.delete("/attendance-categories/:id", requireAuth, async (req, res) => {
+router.delete("/attendance-categories/:id", requireAuth, async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [cat] = await db.select().from(attendanceCategoriesTable).where(eq(attendanceCategoriesTable.id, id)).limit(1);

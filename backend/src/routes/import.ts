@@ -1,10 +1,28 @@
+/// <reference path="../types/multer.d.ts" />
+
 import { Router } from "express";
 import multer from "multer";
 import XLSX from "xlsx";
 import fs from "fs/promises";
 import os from "os";
 import path from "path";
-import { db, attendanceTable, customersTable, documentsTable, employeesTable, expenseCategoriesTable, expensesTable, invoicesTable, inventoryMovementsTable, inventoryTable, leavesTable, payrollTable, projectsTable, purchaseOrdersTable, revenueTable, rolesTable, settingsTable, vendorsTable } from "@workspace/db";
+import { db } from "@workspace/db";
+import { attendanceTable } from "@workspace/db/schema/attendance";
+import { customersTable } from "@workspace/db/schema/customers";
+import { documentsTable } from "@workspace/db/schema/documents";
+import { employeesTable } from "@workspace/db/schema/employees";
+import { expenseCategoriesTable, expensesTable } from "@workspace/db/schema/expenses";
+import { invoicesTable } from "@workspace/db/schema/invoices";
+import { inventoryMovementsTable } from "@workspace/db/schema/inventory_movements";
+import { inventoryTable } from "@workspace/db/schema/inventory";
+import { leavesTable } from "@workspace/db/schema/leaves";
+import { payrollTable } from "@workspace/db/schema/payroll";
+import { projectsTable } from "@workspace/db/schema/projects";
+import { purchaseOrdersTable } from "@workspace/db/schema/purchase_orders";
+import { revenueTable } from "@workspace/db/schema/revenue";
+import { rolesTable } from "@workspace/db/schema/roles";
+import { settingsTable } from "@workspace/db/schema/settings";
+import { vendorsTable } from "@workspace/db/schema/vendors";
 import { inArray, or } from "@workspace/db/drizzle";
 
 import { requireAuth } from "../middlewares/auth.js";
@@ -516,7 +534,7 @@ router.get("/import/modules", requireAuth, (_req, res) => {
   res.json({ modules: Object.keys(tables).sort() });
 });
 
-router.get("/import/:module/template", requireAuth, async (req, res) => {
+router.get("/import/:module/template", requireAuth, async (req: any, res: any) => {
   const moduleName = String(req.params.module);
   const template = templates[moduleName];
 
@@ -556,7 +574,7 @@ router.get("/import/:module/template", requireAuth, async (req, res) => {
   res.send(buffer);
 });
 
-router.post("/import/:module", requireAuth, upload.single('file'), async (req, res) => {
+router.post("/import/:module", requireAuth, upload.single('file'), async (req: any, res: any) => {
   const moduleName = String(req.params.module);
   const table = tables[moduleName];
   const file = (req as any).file;

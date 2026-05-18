@@ -1,5 +1,7 @@
 import { Router } from "express";
-import { db, documentsTable, projectsTable } from "@workspace/db";
+import { db } from "@workspace/db";
+import { documentsTable } from "@workspace/db/schema/documents";
+import { projectsTable } from "@workspace/db/schema/projects";
 import { desc, eq, count, ilike, and, isNull } from "@workspace/db/drizzle";
 import { requireAuth } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
@@ -8,7 +10,7 @@ const router = Router();
 
 const fmt = (d: any) => ({ ...d, tags: Array.isArray(d.tags) ? d.tags : [] });
 
-router.get("/documents", requireAuth, async (req, res) => {
+router.get("/documents", requireAuth, async (req: any, res: any) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
@@ -36,7 +38,7 @@ router.get("/documents", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.post("/documents", requireAuth, async (req, res) => {
+router.post("/documents", requireAuth, async (req: any, res: any) => {
   try {
     const body = req.body;
     const [d] = await db.insert(documentsTable).values({ ...body, tags: body.tags || [], uploadedBy: req.user!.name }).returning();
@@ -45,7 +47,7 @@ router.post("/documents", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/documents/:id", requireAuth, async (req, res) => {
+router.get("/documents/:id", requireAuth, async (req: any, res: any) => {
   try {
     const records = await db.select({ doc: documentsTable, proj: { name: projectsTable.name } })
       .from(documentsTable).leftJoin(projectsTable, eq(documentsTable.projectId, projectsTable.id))
@@ -55,7 +57,7 @@ router.get("/documents/:id", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.put("/documents/:id", requireAuth, async (req, res) => {
+router.put("/documents/:id", requireAuth, async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [old] = await db.select().from(documentsTable).where(eq(documentsTable.id, id)).limit(1);
@@ -66,7 +68,7 @@ router.put("/documents/:id", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.delete("/documents/:id", requireAuth, async (req, res) => {
+router.delete("/documents/:id", requireAuth, async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [d] = await db.select().from(documentsTable).where(eq(documentsTable.id, id)).limit(1);

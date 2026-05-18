@@ -1,5 +1,7 @@
 import { Router } from "express";
-import { db, expensesTable, expenseCategoriesTable, projectsTable } from "@workspace/db";
+import { db } from "@workspace/db";
+import { expenseCategoriesTable, expensesTable } from "@workspace/db/schema/expenses";
+import { projectsTable } from "@workspace/db/schema/projects";
 import { desc, eq, ilike, count, sql, or, and, gte, lte } from "@workspace/db/drizzle";
 import { requireAuth } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
@@ -8,7 +10,7 @@ const router = Router();
 
 const fmt = (e: any) => ({ ...e, amount: Number(e.amount) });
 
-router.get("/expenses/stats", requireAuth, async (req, res) => {
+router.get("/expenses/stats", requireAuth, async (req: any, res: any) => {
   try {
     const [stats] = await db.select({
       totalThisMonth: sql<number>`sum(amount) filter (where date_trunc('month', date::date) = date_trunc('month', now()))`,
@@ -20,7 +22,7 @@ router.get("/expenses/stats", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/expenses", requireAuth, async (req, res) => {
+router.get("/expenses", requireAuth, async (req: any, res: any) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
@@ -46,7 +48,7 @@ router.get("/expenses", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.post("/expenses", requireAuth, async (req, res) => {
+router.post("/expenses", requireAuth, async (req: any, res: any) => {
   try {
     const body = req.body;
     const [e] = await db.insert(expensesTable).values({ ...body, amount: String(body.amount), submittedBy: req.user!.name }).returning();
@@ -55,7 +57,7 @@ router.post("/expenses", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/expenses/:id", requireAuth, async (req, res) => {
+router.get("/expenses/:id", requireAuth, async (req: any, res: any) => {
   try {
     const [e] = await db.select().from(expensesTable).where(eq(expensesTable.id, Number(req.params.id))).limit(1);
     if (!e) { res.status(404).json({ error: "Not found" }); return; }
@@ -63,7 +65,7 @@ router.get("/expenses/:id", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.put("/expenses/:id", requireAuth, async (req, res) => {
+router.put("/expenses/:id", requireAuth, async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [old] = await db.select().from(expensesTable).where(eq(expensesTable.id, id)).limit(1);
@@ -77,7 +79,7 @@ router.put("/expenses/:id", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.delete("/expenses/:id", requireAuth, async (req, res) => {
+router.delete("/expenses/:id", requireAuth, async (req: any, res: any) => {
   try {
     const [e] = await db.select().from(expensesTable).where(eq(expensesTable.id, Number(req.params.id))).limit(1);
     if (!e) { res.status(404).json({ error: "Not found" }); return; }
@@ -88,7 +90,7 @@ router.delete("/expenses/:id", requireAuth, async (req, res) => {
 });
 
 // Expense categories
-router.get("/expense-categories", requireAuth, async (req, res) => {
+router.get("/expense-categories", requireAuth, async (req: any, res: any) => {
   try {
     const all = await db.select().from(expenseCategoriesTable).orderBy(expenseCategoriesTable.name);
     const parents = all.filter(c => !c.parentId);
@@ -98,7 +100,7 @@ router.get("/expense-categories", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.post("/expense-categories", requireAuth, async (req, res) => {
+router.post("/expense-categories", requireAuth, async (req: any, res: any) => {
   try {
     const [cat] = await db.insert(expenseCategoriesTable).values(req.body).returning();
     await createAuditLog({ module: "expense_categories", action: "create", recordId: cat.id, userId: req.user!.id, userName: req.user!.name, description: `Created expense category ${cat.name}`, newValues: req.body });
@@ -106,7 +108,7 @@ router.post("/expense-categories", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.put("/expense-categories/:id", requireAuth, async (req, res) => {
+router.put("/expense-categories/:id", requireAuth, async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [old] = await db.select().from(expenseCategoriesTable).where(eq(expenseCategoriesTable.id, id)).limit(1);
@@ -117,7 +119,7 @@ router.put("/expense-categories/:id", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.delete("/expense-categories/:id", requireAuth, async (req, res) => {
+router.delete("/expense-categories/:id", requireAuth, async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [cat] = await db.select().from(expenseCategoriesTable).where(eq(expenseCategoriesTable.id, id)).limit(1);

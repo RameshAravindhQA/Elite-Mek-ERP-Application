@@ -1,5 +1,7 @@
 import { Router } from "express";
-import { db, inventoryTable, inventoryMovementsTable } from "@workspace/db";
+import { db } from "@workspace/db";
+import { inventoryTable } from "@workspace/db/schema/inventory";
+import { inventoryMovementsTable } from "@workspace/db/schema/inventory_movements";
 import { desc, eq, ilike, count, sql, or, and } from "@workspace/db/drizzle";
 import { requireAuth } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
@@ -8,7 +10,7 @@ const router = Router();
 
 const fmt = (i: any) => ({ ...i, quantity: Number(i.quantity), reorderLevel: Number(i.reorderLevel), costPrice: Number(i.costPrice), sellingPrice: Number(i.sellingPrice) });
 
-router.get("/inventory/stats", requireAuth, async (req, res) => {
+router.get("/inventory/stats", requireAuth, async (req: any, res: any) => {
   try {
     const [stats] = await db.select({
       totalItems: count(),
@@ -21,7 +23,7 @@ router.get("/inventory/stats", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/inventory", requireAuth, async (req, res) => {
+router.get("/inventory", requireAuth, async (req: any, res: any) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
@@ -41,7 +43,7 @@ router.get("/inventory", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.post("/inventory", requireAuth, async (req, res) => {
+router.post("/inventory", requireAuth, async (req: any, res: any) => {
   try {
     const body = req.body;
     const [item] = await db.insert(inventoryTable).values({ ...body, quantity: String(body.quantity), reorderLevel: String(body.reorderLevel), costPrice: String(body.costPrice), sellingPrice: String(body.sellingPrice) }).returning();
@@ -50,7 +52,7 @@ router.post("/inventory", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/inventory/:id", requireAuth, async (req, res) => {
+router.get("/inventory/:id", requireAuth, async (req: any, res: any) => {
   try {
     const [item] = await db.select().from(inventoryTable).where(eq(inventoryTable.id, Number(req.params.id))).limit(1);
     if (!item) { res.status(404).json({ error: "Not found" }); return; }
@@ -58,7 +60,7 @@ router.get("/inventory/:id", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.put("/inventory/:id", requireAuth, async (req, res) => {
+router.put("/inventory/:id", requireAuth, async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [old] = await db.select().from(inventoryTable).where(eq(inventoryTable.id, id)).limit(1);
@@ -74,7 +76,7 @@ router.put("/inventory/:id", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.delete("/inventory/:id", requireAuth, async (req, res) => {
+router.delete("/inventory/:id", requireAuth, async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [item] = await db.select().from(inventoryTable).where(eq(inventoryTable.id, id)).limit(1);
@@ -85,7 +87,7 @@ router.delete("/inventory/:id", requireAuth, async (req, res) => {
 });
 
 // Inventory movements
-router.get("/inventory-movements", requireAuth, async (req, res) => {
+router.get("/inventory-movements", requireAuth, async (req: any, res: any) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
@@ -98,7 +100,7 @@ router.get("/inventory-movements", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.post("/inventory-movements", requireAuth, async (req, res) => {
+router.post("/inventory-movements", requireAuth, async (req: any, res: any) => {
   try {
     const body = req.body;
     const [item] = await db.select().from(inventoryTable).where(eq(inventoryTable.id, body.itemId)).limit(1);

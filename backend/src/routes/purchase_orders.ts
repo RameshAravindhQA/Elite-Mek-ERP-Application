@@ -1,6 +1,10 @@
 import { Router } from "express";
 import nodemailer from "nodemailer";
-import { db, purchaseOrdersTable, customersTable, projectsTable, settingsTable } from "@workspace/db";
+import { db } from "@workspace/db";
+import { purchaseOrdersTable } from "@workspace/db/schema/purchase_orders";
+import { customersTable } from "@workspace/db/schema/customers";
+import { projectsTable } from "@workspace/db/schema/projects";
+import { settingsTable } from "@workspace/db/schema/settings";
 import { desc, eq, count, ilike, or, and } from "@workspace/db/drizzle";
 import { requireAuth, requirePermission } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
@@ -59,7 +63,7 @@ function statusChangeDescription(oldRecord: any, newStatus: string, poNumber: st
   return `Updated PO ${poNumber}`;
 }
 
-router.get("/purchase-orders", requireAuth, requirePermission("purchase_orders", "view"), async (req, res) => {
+router.get("/purchase-orders", requireAuth, requirePermission("purchase_orders", "view"), async (req: any, res: any) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
@@ -94,7 +98,7 @@ router.get("/purchase-orders", requireAuth, requirePermission("purchase_orders",
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.post("/purchase-orders", requireAuth, requirePermission("purchase_orders", "create"), async (req, res) => {
+router.post("/purchase-orders", requireAuth, requirePermission("purchase_orders", "create"), async (req: any, res: any) => {
   try {
     const body = req.body;
     const customerId = parseRequiredPositiveInt(body.customerId, "customerId");
@@ -132,7 +136,7 @@ router.post("/purchase-orders", requireAuth, requirePermission("purchase_orders"
   }
 });
 
-router.get("/purchase-orders/:id", requireAuth, requirePermission("purchase_orders", "view"), async (req, res) => {
+router.get("/purchase-orders/:id", requireAuth, requirePermission("purchase_orders", "view"), async (req: any, res: any) => {
   try {
     const records = await db.select({ po: purchaseOrdersTable, customer: { name: customersTable.name, email: customersTable.email, phone: customersTable.phone, address: customersTable.address } })
       .from(purchaseOrdersTable).leftJoin(customersTable, eq(purchaseOrdersTable.customerId, customersTable.id))
@@ -148,7 +152,7 @@ const loadSettings = async () => {
   return settings || {};
 };
 
-router.get("/purchase-orders/:id/pdf", requireAuth, requirePermission("purchase_orders", "view"), async (req, res) => {
+router.get("/purchase-orders/:id/pdf", requireAuth, requirePermission("purchase_orders", "view"), async (req: any, res: any) => {
   try {
     const records = await db.select({ po: purchaseOrdersTable, customer: customersTable })
       .from(purchaseOrdersTable).leftJoin(customersTable, eq(purchaseOrdersTable.customerId, customersTable.id))
@@ -171,7 +175,7 @@ router.get("/purchase-orders/:id/pdf", requireAuth, requirePermission("purchase_
   }
 });
 
-router.post("/purchase-orders/:id/email", requireAuth, requirePermission("purchase_orders", "view"), async (req, res) => {
+router.post("/purchase-orders/:id/email", requireAuth, requirePermission("purchase_orders", "view"), async (req: any, res: any) => {
   try {
     const { to, subject, message } = req.body;
     if (!to) {
@@ -220,7 +224,7 @@ router.post("/purchase-orders/:id/email", requireAuth, requirePermission("purcha
   }
 });
 
-router.put("/purchase-orders/:id", requireAuth, requirePermission("purchase_orders", "edit"), async (req, res) => {
+router.put("/purchase-orders/:id", requireAuth, requirePermission("purchase_orders", "edit"), async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [old] = await db.select().from(purchaseOrdersTable).where(eq(purchaseOrdersTable.id, id)).limit(1);
@@ -253,7 +257,7 @@ router.put("/purchase-orders/:id", requireAuth, requirePermission("purchase_orde
   }
 });
 
-router.delete("/purchase-orders/:id", requireAuth, requirePermission("purchase_orders", "delete"), async (req, res) => {
+router.delete("/purchase-orders/:id", requireAuth, requirePermission("purchase_orders", "delete"), async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [po] = await db.select().from(purchaseOrdersTable).where(eq(purchaseOrdersTable.id, id)).limit(1);

@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { db, customersTable } from "@workspace/db";
+import { db } from "@workspace/db";
+import { customersTable } from "@workspace/db/schema/customers";
 import { desc, eq, ilike, count, sql, or, and } from "@workspace/db/drizzle";
 import { requireAuth } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
@@ -8,7 +9,7 @@ const router = Router();
 
 const fmt = (c: any) => ({ ...c, totalOrders: Number(c.totalOrders), totalRevenue: Number(c.totalRevenue) });
 
-router.get("/customers", requireAuth, async (req, res) => {
+router.get("/customers", requireAuth, async (req: any, res: any) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
@@ -28,7 +29,7 @@ router.get("/customers", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.post("/customers", requireAuth, async (req, res) => {
+router.post("/customers", requireAuth, async (req: any, res: any) => {
   try {
     const [c] = await db.insert(customersTable).values(req.body).returning();
     await createAuditLog({ module: "customers", action: "create", recordId: c.id, userId: req.user!.id, userName: req.user!.name, description: `Created customer ${c.name}`, newValues: req.body });
@@ -36,7 +37,7 @@ router.post("/customers", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/customers/:id", requireAuth, async (req, res) => {
+router.get("/customers/:id", requireAuth, async (req: any, res: any) => {
   try {
     const [c] = await db.select().from(customersTable).where(eq(customersTable.id, Number(req.params.id))).limit(1);
     if (!c) { res.status(404).json({ error: "Not found" }); return; }
@@ -44,7 +45,7 @@ router.get("/customers/:id", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.put("/customers/:id", requireAuth, async (req, res) => {
+router.put("/customers/:id", requireAuth, async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [old] = await db.select().from(customersTable).where(eq(customersTable.id, id)).limit(1);
@@ -54,7 +55,7 @@ router.put("/customers/:id", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.delete("/customers/:id", requireAuth, async (req, res) => {
+router.delete("/customers/:id", requireAuth, async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [c] = await db.select().from(customersTable).where(eq(customersTable.id, id)).limit(1);

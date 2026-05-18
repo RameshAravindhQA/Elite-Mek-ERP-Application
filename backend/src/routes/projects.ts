@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { db, projectsTable, projectTasksTable, customersTable, employeesTable } from "@workspace/db";
+import { db } from "@workspace/db";
+import { projectsTable, projectTasksTable } from "@workspace/db/schema/projects";
+import { customersTable } from "@workspace/db/schema/customers";
+import { employeesTable } from "@workspace/db/schema/employees";
 import { desc, eq, ilike, count, sql, or, and } from "@workspace/db/drizzle";
 import { requireAuth } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
@@ -15,7 +18,7 @@ const fmt = (p: any, customerName?: string, managerName?: string) => ({
   tags: Array.isArray(p.tags) ? p.tags : [],
 });
 
-router.get("/projects/stats", requireAuth, async (req, res) => {
+router.get("/projects/stats", requireAuth, async (req: any, res: any) => {
   try {
     const [stats] = await db.select({
       total: count(),
@@ -29,7 +32,7 @@ router.get("/projects/stats", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/projects", requireAuth, async (req, res) => {
+router.get("/projects", requireAuth, async (req: any, res: any) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
@@ -53,7 +56,7 @@ router.get("/projects", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.post("/projects", requireAuth, async (req, res) => {
+router.post("/projects", requireAuth, async (req: any, res: any) => {
   try {
     const body = req.body;
     const [p] = await db.insert(projectsTable).values({ ...body, budget: body.budget ? String(body.budget) : null, spent: "0" }).returning();
@@ -62,7 +65,7 @@ router.post("/projects", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/projects/:id", requireAuth, async (req, res) => {
+router.get("/projects/:id", requireAuth, async (req: any, res: any) => {
   try {
     const [p] = await db.select().from(projectsTable).where(eq(projectsTable.id, Number(req.params.id))).limit(1);
     if (!p) { res.status(404).json({ error: "Not found" }); return; }
@@ -71,7 +74,7 @@ router.get("/projects/:id", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.put("/projects/:id", requireAuth, async (req, res) => {
+router.put("/projects/:id", requireAuth, async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [old] = await db.select().from(projectsTable).where(eq(projectsTable.id, id)).limit(1);
@@ -85,7 +88,7 @@ router.put("/projects/:id", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.delete("/projects/:id", requireAuth, async (req, res) => {
+router.delete("/projects/:id", requireAuth, async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [p] = await db.select().from(projectsTable).where(eq(projectsTable.id, id)).limit(1);
@@ -97,14 +100,14 @@ router.delete("/projects/:id", requireAuth, async (req, res) => {
 });
 
 // Project Tasks
-router.get("/projects/:id/tasks", requireAuth, async (req, res) => {
+router.get("/projects/:id/tasks", requireAuth, async (req: any, res: any) => {
   try {
     const tasks = await db.select().from(projectTasksTable).where(eq(projectTasksTable.projectId, Number(req.params.id))).orderBy(desc(projectTasksTable.createdAt), desc(projectTasksTable.id));
     res.json({ data: tasks });
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.post("/projects/:id/tasks", requireAuth, async (req, res) => {
+router.post("/projects/:id/tasks", requireAuth, async (req: any, res: any) => {
   try {
     const [task] = await db.insert(projectTasksTable).values({ ...req.body, projectId: Number(req.params.id) }).returning();
     await createAuditLog({ module: "projects", action: "task_create", recordId: Number(req.params.id), userId: req.user!.id, userName: req.user!.name, description: `Created task: ${task.title}`, newValues: req.body });
@@ -112,7 +115,7 @@ router.post("/projects/:id/tasks", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.put("/projects/:projectId/tasks/:taskId", requireAuth, async (req, res) => {
+router.put("/projects/:projectId/tasks/:taskId", requireAuth, async (req: any, res: any) => {
   try {
     const projectId = Number(req.params.projectId);
     const taskId = Number(req.params.taskId);
@@ -124,7 +127,7 @@ router.put("/projects/:projectId/tasks/:taskId", requireAuth, async (req, res) =
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.delete("/projects/:projectId/tasks/:taskId", requireAuth, async (req, res) => {
+router.delete("/projects/:projectId/tasks/:taskId", requireAuth, async (req: any, res: any) => {
   try {
     const projectId = Number(req.params.projectId);
     const taskId = Number(req.params.taskId);

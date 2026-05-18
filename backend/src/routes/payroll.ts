@@ -1,5 +1,10 @@
 import { Router } from "express";
-import { db, payrollTable, employeesTable, attendanceTable, leavesTable, settingsTable, overtimeTable, advancePaymentsTable, payrollAdjustmentsTable } from "@workspace/db";
+import { db } from "@workspace/db";
+import { advancePaymentsTable, overtimeTable, payrollAdjustmentsTable, payrollTable } from "@workspace/db/schema/payroll";
+import { employeesTable } from "@workspace/db/schema/employees";
+import { attendanceTable } from "@workspace/db/schema/attendance";
+import { leavesTable } from "@workspace/db/schema/leaves";
+import { settingsTable } from "@workspace/db/schema/settings";
 import { desc, eq, ilike, count, sql, and, gte, lte, or } from "@workspace/db/drizzle";
 import { requireAuth, requirePermission } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
@@ -106,7 +111,7 @@ const buildWhatsAppMessage = (pay: any, emp: any, settings: any, hostUrl: string
     .replace(/\{\{payslipUrl\}\}/g, `${hostUrl}/api/payroll/${pay.id}/payslip`);
 };
 
-router.get("/payroll/stats", requireAuth, requirePermission("payroll", "view"), async (req, res) => {
+router.get("/payroll/stats", requireAuth, requirePermission("payroll", "view"), async (req: any, res: any) => {
   try {
     const filter = getPayrollFilter(req);
     const query = db.select({
@@ -121,7 +126,7 @@ router.get("/payroll/stats", requireAuth, requirePermission("payroll", "view"), 
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/payroll", requireAuth, requirePermission("payroll", "view"), async (req, res) => {
+router.get("/payroll", requireAuth, requirePermission("payroll", "view"), async (req: any, res: any) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
@@ -159,7 +164,7 @@ router.get("/payroll", requireAuth, requirePermission("payroll", "view"), async 
 });
 
 // Generate payroll based on attendance and salary formula
-router.post("/payroll/generate", requireAuth, requirePermission("payroll", "create"), async (req, res) => {
+router.post("/payroll/generate", requireAuth, requirePermission("payroll", "create"), async (req: any, res: any) => {
   try {
     const { employeeId, month, excusedAbsences = [], excuseNotes, markPaid = false } = req.body;
     const shouldMarkPaid = Boolean(markPaid);
@@ -298,7 +303,7 @@ router.post("/payroll/generate", requireAuth, requirePermission("payroll", "crea
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.post("/payroll", requireAuth, requirePermission("payroll", "create"), async (req, res) => {
+router.post("/payroll", requireAuth, requirePermission("payroll", "create"), async (req: any, res: any) => {
   try {
     const body = req.body;
     const net = (Number(body.basicSalary) + Number(body.hra || 0) + Number(body.allowances || 0)) - Number(body.deductions || 0) - Number(body.pf || 0) - Number(body.esic || 0);
@@ -318,7 +323,7 @@ router.post("/payroll", requireAuth, requirePermission("payroll", "create"), asy
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/payroll/:id", requireAuth, requirePermission("payroll", "view"), async (req, res) => {
+router.get("/payroll/:id", requireAuth, requirePermission("payroll", "view"), async (req: any, res: any) => {
   try {
     const records = await db.select({ pay: payrollTable, emp: { firstName: employeesTable.firstName, lastName: employeesTable.lastName, email: employeesTable.email, salary: employeesTable.salary, department: employeesTable.department, designation: employeesTable.designation, imageUrl: employeesTable.imageUrl } })
       .from(payrollTable).leftJoin(employeesTable, eq(payrollTable.employeeId, employeesTable.id))
@@ -333,7 +338,7 @@ router.get("/payroll/:id", requireAuth, requirePermission("payroll", "view"), as
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/payroll/:id/payslip", requireAuth, requirePermission("payroll", "view"), async (req, res) => {
+router.get("/payroll/:id/payslip", requireAuth, requirePermission("payroll", "view"), async (req: any, res: any) => {
     try {
       const records = await db.select({ pay: payrollTable, emp: employeesTable })
         .from(payrollTable)
@@ -400,7 +405,7 @@ router.get("/payroll/:id/payslip", requireAuth, requirePermission("payroll", "vi
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.post("/payroll/batch/download-zip", requireAuth, requirePermission("payroll", "view"), async (req, res) => {
+router.post("/payroll/batch/download-zip", requireAuth, requirePermission("payroll", "view"), async (req: any, res: any) => {
   try {
     const payrollIds = Array.isArray(req.body.payrollIds)
       ? req.body.payrollIds.map((id: any) => Number(id)).filter((id: number) => Number.isFinite(id))
@@ -502,7 +507,7 @@ router.post("/payroll/batch/download-zip", requireAuth, requirePermission("payro
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.post("/payroll/:id/send-whatsapp", requireAuth, requirePermission("payroll", "view"), async (req, res) => {
+router.post("/payroll/:id/send-whatsapp", requireAuth, requirePermission("payroll", "view"), async (req: any, res: any) => {
   try {
     const payrollId = Number(req.params.id);
     if (isNaN(payrollId)) {
@@ -654,7 +659,7 @@ router.post("/payroll/:id/send-whatsapp", requireAuth, requirePermission("payrol
   }
 });
 
-router.put("/payroll/:id", requireAuth, requirePermission("payroll", "edit"), async (req, res) => {
+router.put("/payroll/:id", requireAuth, requirePermission("payroll", "edit"), async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [existingPayroll] = await db.select().from(payrollTable).where(eq(payrollTable.id, id)).limit(1);
@@ -684,7 +689,7 @@ router.put("/payroll/:id", requireAuth, requirePermission("payroll", "edit"), as
 });
 
 // Batch send WhatsApp payslips
-router.post("/payroll/batch/send-whatsapp", requireAuth, requirePermission("payroll", "view"), async (req, res) => {
+router.post("/payroll/batch/send-whatsapp", requireAuth, requirePermission("payroll", "view"), async (req: any, res: any) => {
   try {
     const { payrollIds } = req.body;
     if (!Array.isArray(payrollIds) || payrollIds.length === 0) {

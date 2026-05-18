@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { db, remindersTable } from "@workspace/db";
+import { db } from "@workspace/db";
+import { remindersTable } from "@workspace/db/schema/reminders";
 import { eq, count, sql, lte, and } from "@workspace/db/drizzle";
 import { requireAuth } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
@@ -8,7 +9,7 @@ const router = Router();
 
 const fmt = (r: any) => ({ ...r });
 
-router.get("/reminders/due-today", requireAuth, async (req, res) => {
+router.get("/reminders/due-today", requireAuth, async (req: any, res: any) => {
   try {
     const now = new Date();
     const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
@@ -19,7 +20,7 @@ router.get("/reminders/due-today", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/reminders", requireAuth, async (req, res) => {
+router.get("/reminders", requireAuth, async (req: any, res: any) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
@@ -30,7 +31,7 @@ router.get("/reminders", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.post("/reminders", requireAuth, async (req, res) => {
+router.post("/reminders", requireAuth, async (req: any, res: any) => {
   try {
     const body = req.body;
     const [r] = await db.insert(remindersTable).values({ ...body, remindAt: new Date(body.remindAt), createdBy: req.user!.name }).returning();
@@ -39,7 +40,7 @@ router.post("/reminders", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.put("/reminders/:id", requireAuth, async (req, res) => {
+router.put("/reminders/:id", requireAuth, async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [old] = await db.select().from(remindersTable).where(eq(remindersTable.id, id)).limit(1);
@@ -53,7 +54,7 @@ router.put("/reminders/:id", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.delete("/reminders/:id", requireAuth, async (req, res) => {
+router.delete("/reminders/:id", requireAuth, async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [r] = await db.select().from(remindersTable).where(eq(remindersTable.id, id)).limit(1);

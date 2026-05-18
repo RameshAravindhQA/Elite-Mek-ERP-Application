@@ -1,11 +1,20 @@
 import { Router } from "express";
-import { db, employeesTable, projectsTable, revenueTable, expensesTable, invoicesTable, leavesTable, inventoryTable, purchaseOrdersTable, auditLogsTable } from "@workspace/db";
+import { db } from "@workspace/db";
+import { employeesTable } from "@workspace/db/schema/employees";
+import { projectsTable } from "@workspace/db/schema/projects";
+import { revenueTable } from "@workspace/db/schema/revenue";
+import { expensesTable } from "@workspace/db/schema/expenses";
+import { invoicesTable } from "@workspace/db/schema/invoices";
+import { leavesTable } from "@workspace/db/schema/leaves";
+import { inventoryTable } from "@workspace/db/schema/inventory";
+import { purchaseOrdersTable } from "@workspace/db/schema/purchase_orders";
+import { auditLogsTable } from "@workspace/db/schema/audit_logs";
 import { count, sql } from "@workspace/db/drizzle";
 import { requireAuth } from "../middlewares/auth.js";
 
 const router = Router();
 
-router.get("/dashboard/summary", requireAuth, async (req, res) => {
+router.get("/dashboard/summary", requireAuth, async (req: any, res: any) => {
   try {
     const [empStats] = await db.select({ total: count() }).from(employeesTable);
     const [projStats] = await db.select({ active: sql<number>`count(*) filter (where status = 'active')` }).from(projectsTable);
@@ -36,14 +45,14 @@ router.get("/dashboard/summary", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/dashboard/recent-activity", requireAuth, async (req, res) => {
+router.get("/dashboard/recent-activity", requireAuth, async (req: any, res: any) => {
   try {
     const logs = await db.select().from(auditLogsTable).orderBy(sql`created_at desc`).limit(10);
     res.json({ data: logs.map(l => ({ id: l.id, module: l.module, action: l.action, description: l.description, user: l.userName, createdAt: l.createdAt })) });
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/dashboard/monthly-financials", requireAuth, async (req, res) => {
+router.get("/dashboard/monthly-financials", requireAuth, async (req: any, res: any) => {
   try {
     const months = Number(req.query.months) || 12;
     const revData = await db.execute(sql`

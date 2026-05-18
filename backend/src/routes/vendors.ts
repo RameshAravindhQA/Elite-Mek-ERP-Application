@@ -1,12 +1,13 @@
 import { Router } from "express";
-import { db, vendorsTable } from "@workspace/db";
+import { db } from "@workspace/db";
+import { vendorsTable } from "@workspace/db/schema/vendors";
 import { desc, eq, ilike, count, sql, or, and } from "@workspace/db/drizzle";
 import { requireAuth } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
 
 const router = Router();
 
-router.get("/vendors", requireAuth, async (req, res) => {
+router.get("/vendors", requireAuth, async (req: any, res: any) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
@@ -26,7 +27,7 @@ router.get("/vendors", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.post("/vendors", requireAuth, async (req, res) => {
+router.post("/vendors", requireAuth, async (req: any, res: any) => {
   try {
     const [v] = await db.insert(vendorsTable).values(req.body).returning();
     await createAuditLog({ module: "vendors", action: "create", recordId: v.id, userId: req.user!.id, userName: req.user!.name, description: `Created vendor ${v.name}`, newValues: req.body });
@@ -34,7 +35,7 @@ router.post("/vendors", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/vendors/:id", requireAuth, async (req, res) => {
+router.get("/vendors/:id", requireAuth, async (req: any, res: any) => {
   try {
     const [v] = await db.select().from(vendorsTable).where(eq(vendorsTable.id, Number(req.params.id))).limit(1);
     if (!v) { res.status(404).json({ error: "Not found" }); return; }
@@ -42,7 +43,7 @@ router.get("/vendors/:id", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.put("/vendors/:id", requireAuth, async (req, res) => {
+router.put("/vendors/:id", requireAuth, async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [old] = await db.select().from(vendorsTable).where(eq(vendorsTable.id, id)).limit(1);
@@ -52,7 +53,7 @@ router.put("/vendors/:id", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.delete("/vendors/:id", requireAuth, async (req, res) => {
+router.delete("/vendors/:id", requireAuth, async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [v] = await db.select().from(vendorsTable).where(eq(vendorsTable.id, id)).limit(1);

@@ -1,11 +1,12 @@
 import { Router } from "express";
-import { db, auditLogsTable } from "@workspace/db";
+import { db } from "@workspace/db";
+import { auditLogsTable } from "@workspace/db/schema/audit_logs";
 import { and, eq, count, sql } from "@workspace/db/drizzle";
 import { requireAuth } from "../middlewares/auth.js";
 
 const router = Router();
 
-router.get("/audit-logs", requireAuth, async (req, res) => {
+router.get("/audit-logs", requireAuth, async (req: any, res: any) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;

@@ -1,5 +1,11 @@
 import { Router } from "express";
-import { db, ledgerTable, ledgerTransactionTable, projectsTable, customersTable, invoicesTable, purchaseOrdersTable, settingsTable } from "@workspace/db";
+import { db } from "@workspace/db";
+import { ledgerTable, ledgerTransactionTable } from "@workspace/db/schema/ledger";
+import { projectsTable } from "@workspace/db/schema/projects";
+import { customersTable } from "@workspace/db/schema/customers";
+import { invoicesTable } from "@workspace/db/schema/invoices";
+import { purchaseOrdersTable } from "@workspace/db/schema/purchase_orders";
+import { settingsTable } from "@workspace/db/schema/settings";
 import { desc, eq, count, ilike, or, and } from "@workspace/db/drizzle";
 import { requireAuth, requirePermission } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
@@ -19,7 +25,7 @@ const fmtTransaction = (txn: any) => ({
   credit: Number(txn.credit),
 });
 
-router.get("/ledger", requireAuth, requirePermission("ledger", "view"), async (req, res) => {
+router.get("/ledger", requireAuth, requirePermission("ledger", "view"), async (req: any, res: any) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
@@ -41,7 +47,7 @@ router.get("/ledger", requireAuth, requirePermission("ledger", "view"), async (r
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.post("/ledger", requireAuth, requirePermission("ledger", "create"), async (req, res) => {
+router.post("/ledger", requireAuth, requirePermission("ledger", "create"), async (req: any, res: any) => {
   try {
     const body = req.body;
     const [ledger] = await db.insert(ledgerTable).values({
@@ -56,7 +62,7 @@ router.post("/ledger", requireAuth, requirePermission("ledger", "create"), async
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/ledger/:id", requireAuth, requirePermission("ledger", "view"), async (req, res) => {
+router.get("/ledger/:id", requireAuth, requirePermission("ledger", "view"), async (req: any, res: any) => {
   try {
     const [ledger] = await db.select().from(ledgerTable).where(eq(ledgerTable.id, Number(req.params.id))).limit(1);
     if (!ledger) { res.status(404).json({ error: "Not found" }); return; }
@@ -64,7 +70,7 @@ router.get("/ledger/:id", requireAuth, requirePermission("ledger", "view"), asyn
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.put("/ledger/:id", requireAuth, requirePermission("ledger", "edit"), async (req, res) => {
+router.put("/ledger/:id", requireAuth, requirePermission("ledger", "edit"), async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [old] = await db.select().from(ledgerTable).where(eq(ledgerTable.id, id)).limit(1);
@@ -78,7 +84,7 @@ router.put("/ledger/:id", requireAuth, requirePermission("ledger", "edit"), asyn
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.delete("/ledger/:id", requireAuth, requirePermission("ledger", "delete"), async (req, res) => {
+router.delete("/ledger/:id", requireAuth, requirePermission("ledger", "delete"), async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [ledger] = await db.select().from(ledgerTable).where(eq(ledgerTable.id, id)).limit(1);
@@ -88,7 +94,7 @@ router.delete("/ledger/:id", requireAuth, requirePermission("ledger", "delete"),
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/ledger/:id/transactions", requireAuth, requirePermission("ledger", "view"), async (req, res) => {
+router.get("/ledger/:id/transactions", requireAuth, requirePermission("ledger", "view"), async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const page = Number(req.query.page) || 1;
@@ -101,7 +107,7 @@ router.get("/ledger/:id/transactions", requireAuth, requirePermission("ledger", 
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.post("/ledger/:id/transactions", requireAuth, requirePermission("ledger", "edit"), async (req, res) => {
+router.post("/ledger/:id/transactions", requireAuth, requirePermission("ledger", "edit"), async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const body = req.body;
@@ -121,7 +127,7 @@ router.post("/ledger/:id/transactions", requireAuth, requirePermission("ledger",
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/ledger/projects/:projectId", requireAuth, requirePermission("ledger", "view"), async (req, res) => {
+router.get("/ledger/projects/:projectId", requireAuth, requirePermission("ledger", "view"), async (req: any, res: any) => {
   try {
     const projectId = Number(req.params.projectId);
     const records = await db.select({ project: projectsTable, customer: { name: customersTable.name, email: customersTable.email, phone: customersTable.phone, address: customersTable.address } })
@@ -197,7 +203,7 @@ router.get("/ledger/projects/:projectId", requireAuth, requirePermission("ledger
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/ledger/projects/:projectId/pdf", requireAuth, requirePermission("ledger", "view"), async (req, res) => {
+router.get("/ledger/projects/:projectId/pdf", requireAuth, requirePermission("ledger", "view"), async (req: any, res: any) => {
   try {
     const projectId = Number(req.params.projectId);
     const records = await db.select({ project: projectsTable, customer: { name: customersTable.name, email: customersTable.email, phone: customersTable.phone, address: customersTable.address } })

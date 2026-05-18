@@ -1,11 +1,12 @@
 import { Router } from "express";
-import { db, notificationsTable } from "@workspace/db";
+import { db } from "@workspace/db";
+import { notificationsTable } from "@workspace/db/schema/notifications";
 import { eq, count, sql } from "@workspace/db/drizzle";
 import { requireAuth } from "../middlewares/auth.js";
 
 const router = Router();
 
-router.get("/notifications", requireAuth, async (req, res) => {
+router.get("/notifications", requireAuth, async (req: any, res: any) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
@@ -17,14 +18,14 @@ router.get("/notifications", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.put("/notifications/:id/read", requireAuth, async (req, res) => {
+router.put("/notifications/:id/read", requireAuth, async (req: any, res: any) => {
   try {
     await db.update(notificationsTable).set({ isRead: true }).where(eq(notificationsTable.id, Number(req.params.id)));
     res.json({ success: true });
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.put("/notifications/read-all", requireAuth, async (req, res) => {
+router.put("/notifications/read-all", requireAuth, async (req: any, res: any) => {
   try {
     await db.update(notificationsTable).set({ isRead: true });
     res.json({ success: true });

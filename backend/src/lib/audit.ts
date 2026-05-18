@@ -1,5 +1,5 @@
 import { db } from "@workspace/db";
-import { auditLogsTable } from "@workspace/db";
+import { auditLogsTable } from "@workspace/db/schema/audit_logs";
 
 export async function createAuditLog(params: {
   module: string;

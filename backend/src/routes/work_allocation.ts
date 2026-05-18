@@ -1,13 +1,16 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { projectsTable, employeesTable, workAllocationsTable, customersTable } from "@workspace/db";
+import { projectsTable } from "@workspace/db/schema/projects";
+import { employeesTable } from "@workspace/db/schema/employees";
+import { workAllocationsTable } from "@workspace/db/schema/work_allocations";
+import { customersTable } from "@workspace/db/schema/customers";
 import { eq } from "@workspace/db/drizzle";
 import { requireAuth } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
 
 const router = Router();
 
-router.get("/work-allocation", requireAuth, async (req, res) => {
+router.get("/work-allocation", requireAuth, async (req: any, res: any) => {
   try {
     const projectId = req.query.projectId ? Number(req.query.projectId) : null;
     if (!projectId) {
@@ -23,7 +26,7 @@ router.get("/work-allocation", requireAuth, async (req, res) => {
   }
 });
 
-router.post("/work-allocation", requireAuth, async (req, res) => {
+router.post("/work-allocation", requireAuth, async (req: any, res: any) => {
   try {
     const { projectId, employeeIds } = req.body;
     if (!projectId) {
@@ -51,7 +54,7 @@ router.post("/work-allocation", requireAuth, async (req, res) => {
   }
 });
 
-router.get("/work-allocation/all", requireAuth, async (req, res) => {
+router.get("/work-allocation/all", requireAuth, async (req: any, res: any) => {
   try {
     const rows = await db.select({
       allocation: workAllocationsTable,

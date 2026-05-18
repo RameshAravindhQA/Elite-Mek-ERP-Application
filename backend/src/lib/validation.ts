@@ -1,33 +1,24 @@
 import { type Request, type Response, type NextFunction } from "express";
 import { z, type ZodTypeAny, type ZodError } from "zod";
-import {
-  insertAttendanceSchema,
-  insertAttendanceCategorySchema,
-  insertEmployeeSchema,
-  insertPayrollSchema,
-  insertOvertimeSchema,
-  insertAdvancePaymentSchema,
-  insertPayrollAdjustmentSchema,
-  insertLeaveSchema,
-  insertCustomerSchema,
-  insertVendorSchema,
-  insertProjectSchema,
-  insertProjectTaskSchema,
-  insertPurchaseOrderSchema,
-  insertInventorySchema,
-  insertInventoryMovementSchema,
-  insertExpenseSchema,
-  insertExpenseCategorySchema,
-  insertRevenueSchema,
-  insertInvoiceSchema,
-  insertDocumentSchema,
-  insertRoleSchema,
-  insertSettingsSchema,
-  insertReminderSchema,
-  insertLedgerSchema,
-  insertLedgerTransactionSchema,
-  insertWorkAllocationSchema,
-} from "@workspace/db";
+import { insertAttendanceCategorySchema, insertAttendanceSchema } from "@workspace/db/schema/attendance";
+import { insertEmployeeSchema } from "@workspace/db/schema/employees";
+import { insertAdvancePaymentSchema, insertOvertimeSchema, insertPayrollAdjustmentSchema, insertPayrollSchema } from "@workspace/db/schema/payroll";
+import { insertLeaveSchema } from "@workspace/db/schema/leaves";
+import { insertCustomerSchema } from "@workspace/db/schema/customers";
+import { insertVendorSchema } from "@workspace/db/schema/vendors";
+import { insertProjectSchema, insertProjectTaskSchema } from "@workspace/db/schema/projects";
+import { insertPurchaseOrderSchema } from "@workspace/db/schema/purchase_orders";
+import { insertInventorySchema } from "@workspace/db/schema/inventory";
+import { insertInventoryMovementSchema } from "@workspace/db/schema/inventory_movements";
+import { insertExpenseCategorySchema, insertExpenseSchema } from "@workspace/db/schema/expenses";
+import { insertRevenueSchema } from "@workspace/db/schema/revenue";
+import { insertInvoiceSchema } from "@workspace/db/schema/invoices";
+import { insertDocumentSchema } from "@workspace/db/schema/documents";
+import { insertRoleSchema } from "@workspace/db/schema/roles";
+import { insertSettingsSchema } from "@workspace/db/schema/settings";
+import { insertReminderSchema } from "@workspace/db/schema/reminders";
+import { insertLedgerSchema, insertLedgerTransactionSchema } from "@workspace/db/schema/ledger";
+import { insertWorkAllocationSchema } from "@workspace/db/schema/work_allocations";
 
 interface RouteSchema {
   path: string;

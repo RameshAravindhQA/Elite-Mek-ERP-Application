@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { db, advancePaymentsTable, employeesTable, overtimeTable, payrollAdjustmentsTable, projectsTable } from "@workspace/db";
+import { db } from "@workspace/db";
+import { advancePaymentsTable, overtimeTable, payrollAdjustmentsTable } from "@workspace/db/schema/payroll";
+import { employeesTable } from "@workspace/db/schema/employees";
+import { projectsTable } from "@workspace/db/schema/projects";
 import { and, count, desc, eq, gte, ilike, lte, or, sql } from "@workspace/db/drizzle";
 import { requireAuth, requirePermission } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
@@ -27,7 +30,7 @@ const fmtOvertime = (row: any) => ({
   projectName: row.project?.name || null,
 });
 
-router.get("/overtime", requireAuth, requirePermission("payroll", "view"), async (req, res) => {
+router.get("/overtime", requireAuth, requirePermission("payroll", "view"), async (req: any, res: any) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
@@ -71,7 +74,7 @@ router.get("/overtime", requireAuth, requirePermission("payroll", "view"), async
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.post("/overtime", requireAuth, requirePermission("payroll", "create"), async (req, res) => {
+router.post("/overtime", requireAuth, requirePermission("payroll", "create"), async (req: any, res: any) => {
   try {
     const employeeId = Number(req.body.employeeId);
     const [emp] = await db.select().from(employeesTable).where(eq(employeesTable.id, employeeId)).limit(1);
@@ -97,7 +100,7 @@ router.post("/overtime", requireAuth, requirePermission("payroll", "create"), as
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.put("/overtime/:id", requireAuth, requirePermission("payroll", "edit"), async (req, res) => {
+router.put("/overtime/:id", requireAuth, requirePermission("payroll", "edit"), async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [old] = await db.select().from(overtimeTable).where(eq(overtimeTable.id, id)).limit(1);
@@ -120,7 +123,7 @@ router.put("/overtime/:id", requireAuth, requirePermission("payroll", "edit"), a
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.delete("/overtime/:id", requireAuth, requirePermission("payroll", "delete"), async (req, res) => {
+router.delete("/overtime/:id", requireAuth, requirePermission("payroll", "delete"), async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [old] = await db.select().from(overtimeTable).where(eq(overtimeTable.id, id)).limit(1);
@@ -137,7 +140,7 @@ const fmtAdvance = (row: any) => ({
   employeeCode: row.emp?.employeeId || null,
 });
 
-router.get("/advance-payments", requireAuth, requirePermission("payroll", "view"), async (req, res) => {
+router.get("/advance-payments", requireAuth, requirePermission("payroll", "view"), async (req: any, res: any) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
@@ -158,7 +161,7 @@ router.get("/advance-payments", requireAuth, requirePermission("payroll", "view"
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.post("/advance-payments", requireAuth, requirePermission("payroll", "create"), async (req, res) => {
+router.post("/advance-payments", requireAuth, requirePermission("payroll", "create"), async (req: any, res: any) => {
   try {
     const [adv] = await db.insert(advancePaymentsTable).values({
       employeeId: Number(req.body.employeeId),
@@ -175,7 +178,7 @@ router.post("/advance-payments", requireAuth, requirePermission("payroll", "crea
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.put("/advance-payments/:id", requireAuth, requirePermission("payroll", "edit"), async (req, res) => {
+router.put("/advance-payments/:id", requireAuth, requirePermission("payroll", "edit"), async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) { res.status(400).json({ error: "Invalid advance payment id" }); return; }
@@ -190,7 +193,7 @@ router.put("/advance-payments/:id", requireAuth, requirePermission("payroll", "e
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.delete("/advance-payments/:id", requireAuth, requirePermission("payroll", "delete"), async (req, res) => {
+router.delete("/advance-payments/:id", requireAuth, requirePermission("payroll", "delete"), async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) { res.status(400).json({ error: "Invalid advance payment id" }); return; }
@@ -202,7 +205,7 @@ router.delete("/advance-payments/:id", requireAuth, requirePermission("payroll",
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/payroll-adjustments", requireAuth, requirePermission("payroll", "view"), async (req, res) => {
+router.get("/payroll-adjustments", requireAuth, requirePermission("payroll", "view"), async (req: any, res: any) => {
   try {
     const month = String(req.query.month || "");
     const employeeId = req.query.employeeId ? Number(req.query.employeeId) : null;
@@ -214,7 +217,7 @@ router.get("/payroll-adjustments", requireAuth, requirePermission("payroll", "vi
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.post("/payroll-adjustments", requireAuth, requirePermission("payroll", "create"), async (req, res) => {
+router.post("/payroll-adjustments", requireAuth, requirePermission("payroll", "create"), async (req: any, res: any) => {
   try {
     const employeeIds = Array.isArray(req.body.employeeIds) ? req.body.employeeIds.map(Number).filter(Boolean) : [Number(req.body.employeeId)].filter(Boolean);
     const rows = [];

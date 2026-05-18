@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { db, settingsTable } from "@workspace/db";
+import { db } from "@workspace/db";
+import { settingsTable } from "@workspace/db/schema/settings";
 import { sql } from "@workspace/db/drizzle";
 import { requireAuth } from "../middlewares/auth.js";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -24,7 +25,7 @@ const ALLOWED_FIELDS = [
   "smsApiKey"
 ];
 
-router.get("/settings", requireAuth, async (req, res) => {
+router.get("/settings", requireAuth, async (req: any, res: any) => {
   try {
     const [settings] = await db.select().from(settingsTable).limit(1);
     if (!settings) {
@@ -35,7 +36,7 @@ router.get("/settings", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.put("/settings", requireAuth, async (req, res) => {
+router.put("/settings", requireAuth, async (req: any, res: any) => {
   try {
     const body = req.body || {};
     const updates: Record<string, any> = {};
@@ -71,7 +72,7 @@ async function writeSoundSettings(settings: any) {
   await writeFile(soundSettingsFile, JSON.stringify(settings, null, 2));
 }
 
-router.get("/settings/sounds", requireAuth, async (req, res) => {
+router.get("/settings/sounds", requireAuth, async (req: any, res: any) => {
   try {
     res.json(await readSoundSettings());
   } catch (err) {
@@ -80,7 +81,7 @@ router.get("/settings/sounds", requireAuth, async (req, res) => {
   }
 });
 
-router.put("/settings/sounds", requireAuth, async (req, res) => {
+router.put("/settings/sounds", requireAuth, async (req: any, res: any) => {
   try {
     const body = req.body || {};
     const oldSettings = await readSoundSettings();

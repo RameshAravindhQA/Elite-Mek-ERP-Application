@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { db, leavesTable, employeesTable, attendanceTable } from "@workspace/db";
+import { db } from "@workspace/db";
+import { leavesTable } from "@workspace/db/schema/leaves";
+import { employeesTable } from "@workspace/db/schema/employees";
+import { attendanceTable } from "@workspace/db/schema/attendance";
 import { desc, eq, count, and, inArray, gte, lte, ilike, or } from "@workspace/db/drizzle";
 import { requireAuth, requirePermission } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
@@ -55,7 +58,7 @@ const joinLeaves = async (page: number, limit: number, emailFilter?: string, sea
   return { data: records.map(r => ({ ...r.leave, employeeName: r.emp ? `${r.emp.firstName} ${r.emp.lastName}` : "Unknown", days: Number(r.leave.days) })), total: Number(total) };
 };
 
-router.get("/leaves", requireAuth, requirePermission("leaves", "view"), async (req, res) => {
+router.get("/leaves", requireAuth, requirePermission("leaves", "view"), async (req: any, res: any) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
@@ -67,7 +70,7 @@ router.get("/leaves", requireAuth, requirePermission("leaves", "view"), async (r
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.post("/leaves", requireAuth, requirePermission("leaves", "create"), async (req, res) => {
+router.post("/leaves", requireAuth, requirePermission("leaves", "create"), async (req: any, res: any) => {
   try {
     const body = req.body;
     const start = new Date(body.startDate);
@@ -80,7 +83,7 @@ router.post("/leaves", requireAuth, requirePermission("leaves", "create"), async
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.post("/leaves/sync-approved", requireAuth, requirePermission("leaves", "edit"), async (req, res) => {
+router.post("/leaves/sync-approved", requireAuth, requirePermission("leaves", "edit"), async (req: any, res: any) => {
   try {
     const month = req.query.month as string | undefined;
     let approvedLeaves = await db.select().from(leavesTable).where(eq(leavesTable.status, "approved"));
@@ -145,7 +148,7 @@ router.post("/leaves/sync-approved", requireAuth, requirePermission("leaves", "e
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/leaves/:id", requireAuth, requirePermission("leaves", "view"), async (req, res) => {
+router.get("/leaves/:id", requireAuth, requirePermission("leaves", "view"), async (req: any, res: any) => {
   try {
     const records = await db.select({ leave: leavesTable, emp: { firstName: employeesTable.firstName, lastName: employeesTable.lastName, email: employeesTable.email } })
       .from(leavesTable).leftJoin(employeesTable, eq(leavesTable.employeeId, employeesTable.id))
@@ -160,7 +163,7 @@ router.get("/leaves/:id", requireAuth, requirePermission("leaves", "view"), asyn
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.put("/leaves/:id", requireAuth, requirePermission("leaves", "edit"), async (req, res) => {
+router.put("/leaves/:id", requireAuth, requirePermission("leaves", "edit"), async (req: any, res: any) => {
   try {
     const leaveId = Number(req.params.id);
     const [existingLeave] = await db.select().from(leavesTable).where(eq(leavesTable.id, leaveId)).limit(1);
@@ -219,7 +222,7 @@ router.put("/leaves/:id", requireAuth, requirePermission("leaves", "edit"), asyn
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.delete("/leaves/:id", requireAuth, requirePermission("leaves", "delete"), async (req, res) => {
+router.delete("/leaves/:id", requireAuth, requirePermission("leaves", "delete"), async (req: any, res: any) => {
   try {
     const leaveId = Number(req.params.id);
     const [existingLeave] = await db.select().from(leavesTable).where(eq(leavesTable.id, leaveId)).limit(1);

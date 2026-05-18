@@ -1,6 +1,10 @@
 import { Router } from "express";
 import XLSX from "xlsx";
-import { db, invoicesTable, customersTable, projectsTable, settingsTable } from "@workspace/db";
+import { db } from "@workspace/db";
+import { invoicesTable } from "@workspace/db/schema/invoices";
+import { customersTable } from "@workspace/db/schema/customers";
+import { projectsTable } from "@workspace/db/schema/projects";
+import { settingsTable } from "@workspace/db/schema/settings";
 import { desc, eq, count, sql, ilike, or, and } from "@workspace/db/drizzle";
 import { requireAuth } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
@@ -64,7 +68,7 @@ function statusChangeDescription(oldRecord: any, newStatus: string, invoiceNumbe
   return `Updated invoice ${invoiceNumber}`;
 }
 
-router.get("/invoices/stats", requireAuth, async (req, res) => {
+router.get("/invoices/stats", requireAuth, async (req: any, res: any) => {
   try {
     const [stats] = await db.select({
       totalInvoiced: sql<number>`sum(total_amount)`,
@@ -77,7 +81,7 @@ router.get("/invoices/stats", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/invoices", requireAuth, async (req, res) => {
+router.get("/invoices", requireAuth, async (req: any, res: any) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
@@ -111,7 +115,7 @@ router.get("/invoices", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.post("/invoices", requireAuth, async (req, res) => {
+router.post("/invoices", requireAuth, async (req: any, res: any) => {
   try {
     const body = req.body;
     const customerId = parseRequiredPositiveInt(body.customerId, "customerId");
@@ -165,7 +169,7 @@ router.post("/invoices", requireAuth, async (req, res) => {
   }
 });
 
-router.get("/invoices/:id", requireAuth, async (req, res) => {
+router.get("/invoices/:id", requireAuth, async (req: any, res: any) => {
   try {
     const records = await db.select({ inv: invoicesTable, cust: { name: customersTable.name } })
       .from(invoicesTable).leftJoin(customersTable, eq(invoicesTable.customerId, customersTable.id))
@@ -176,7 +180,7 @@ router.get("/invoices/:id", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.put("/invoices/:id", requireAuth, async (req, res) => {
+router.put("/invoices/:id", requireAuth, async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [old] = await db.select().from(invoicesTable).where(eq(invoicesTable.id, id)).limit(1);
@@ -217,7 +221,7 @@ router.put("/invoices/:id", requireAuth, async (req, res) => {
   }
 });
 
-router.delete("/invoices/:id", requireAuth, async (req, res) => {
+router.delete("/invoices/:id", requireAuth, async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [inv] = await db.select().from(invoicesTable).where(eq(invoicesTable.id, id)).limit(1);
@@ -239,7 +243,7 @@ async function getInvoiceDetail(id: number) {
   return { invoice: records[0].inv, customer: records[0].cust, project, settings: settings || {} };
 }
 
-router.get("/invoices/:id/pdf", requireAuth, async (req, res) => {
+router.get("/invoices/:id/pdf", requireAuth, async (req: any, res: any) => {
   try {
     const detail = await getInvoiceDetail(Number(req.params.id));
     if (!detail) { res.status(404).json({ error: "Not found" }); return; }
@@ -251,7 +255,7 @@ router.get("/invoices/:id/pdf", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/invoices/:id/excel", requireAuth, async (req, res) => {
+router.get("/invoices/:id/excel", requireAuth, async (req: any, res: any) => {
   try {
     const detail = await getInvoiceDetail(Number(req.params.id));
     if (!detail) { res.status(404).json({ error: "Not found" }); return; }

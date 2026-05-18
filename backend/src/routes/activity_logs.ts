@@ -20,7 +20,7 @@ const activityLogs: ActivityLog[] = [];
 const MAX_ACTIVITY_LOGS = 5000;
 
 // POST endpoint to log activities from frontend
-router.post("/activity-logs", requireAuth, async (req, res) => {
+router.post("/activity-logs", requireAuth, async (req: any, res: any) => {
   try {
     const { action, module, details } = req.body;
     
@@ -61,7 +61,7 @@ router.post("/activity-logs", requireAuth, async (req, res) => {
 });
 
 // GET endpoint to retrieve activities
-router.get("/activity-logs", requireAuth, async (req, res) => {
+router.get("/activity-logs", requireAuth, async (req: any, res: any) => {
   try {
     const limit = Number(req.query.limit) || 100;
     const offset = Number(req.query.offset) || 0;
@@ -98,7 +98,7 @@ router.get("/activity-logs", requireAuth, async (req, res) => {
 });
 
 // GET endpoint for activity statistics
-router.get("/activity-logs/stats", requireAuth, async (req, res) => {
+router.get("/activity-logs/stats", requireAuth, async (req: any, res: any) => {
   try {
     const actions = new Map<string, number>();
     const modules = new Map<string, number>();
@@ -122,7 +122,7 @@ router.get("/activity-logs/stats", requireAuth, async (req, res) => {
 });
 
 // DELETE endpoint to clear all activities
-router.delete("/activity-logs", requireAuth, async (req, res) => {
+router.delete("/activity-logs", requireAuth, async (req: any, res: any) => {
   try {
     // Only allow admins to clear logs (you might want to add role check)
     activityLogs.length = 0;
