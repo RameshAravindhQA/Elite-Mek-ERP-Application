@@ -1,12 +1,14 @@
 import { Router } from "express";
-import { db, employeesTable, salaryHikesTable } from "@workspace/db";
+import { db } from "@workspace/db";
+import { employeesTable } from "@workspace/db/schema/employees";
+import { salaryHikesTable } from "@workspace/db/schema/salary_hikes";
 import { desc, eq, ilike, count, sql, or, and } from "@workspace/db/drizzle";
 import { requireAuth } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
 
 const router = Router();
 
-router.get("/employees/stats", requireAuth, async (req, res) => {
+router.get("/employees/stats", requireAuth, async (req: any, res: any) => {
   try {
     const [totals] = await db.select({ total: count(), active: sql<number>`count(*) filter (where status = 'active')`, inactive: sql<number>`count(*) filter (where status = 'inactive')` }).from(employeesTable);
     const byDept = await db.select({ department: employeesTable.department, count: count() }).from(employeesTable).groupBy(employeesTable.department);
@@ -14,7 +16,7 @@ router.get("/employees/stats", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/employees", requireAuth, async (req, res) => {
+router.get("/employees", requireAuth, async (req: any, res: any) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
@@ -36,7 +38,7 @@ router.get("/employees", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.post("/employees", requireAuth, async (req, res) => {
+router.post("/employees", requireAuth, async (req: any, res: any) => {
   try {
     const body = req.body;
     const salary = Number(body.salary);
@@ -101,7 +103,7 @@ router.post("/employees", requireAuth, async (req, res) => {
   }
 });
 
-router.get("/employees/:id", requireAuth, async (req, res) => {
+router.get("/employees/:id", requireAuth, async (req: any, res: any) => {
   try {
     const [emp] = await db.select().from(employeesTable).where(eq(employeesTable.id, Number(req.params.id))).limit(1);
     if (!emp) { res.status(404).json({ error: "Not found" }); return; }
@@ -109,7 +111,7 @@ router.get("/employees/:id", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.get("/employees/:id/salary-hikes", requireAuth, async (req, res) => {
+router.get("/employees/:id/salary-hikes", requireAuth, async (req: any, res: any) => {
   try {
     const employeeId = Number(req.params.id);
     const records = await db.select().from(salaryHikesTable)
@@ -119,7 +121,7 @@ router.get("/employees/:id/salary-hikes", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.post("/employees/:id/salary-hikes", requireAuth, async (req, res) => {
+router.post("/employees/:id/salary-hikes", requireAuth, async (req: any, res: any) => {
   try {
     const employeeId = Number(req.params.id);
     const [employee] = await db.select().from(employeesTable).where(eq(employeesTable.id, employeeId)).limit(1);
@@ -167,7 +169,7 @@ router.post("/employees/:id/salary-hikes", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.put("/employees/:id", requireAuth, async (req, res) => {
+router.put("/employees/:id", requireAuth, async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [old] = await db.select().from(employeesTable).where(eq(employeesTable.id, id)).limit(1);
@@ -178,7 +180,7 @@ router.put("/employees/:id", requireAuth, async (req, res) => {
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 
-router.delete("/employees/:id", requireAuth, async (req, res) => {
+router.delete("/employees/:id", requireAuth, async (req: any, res: any) => {
   try {
     const id = Number(req.params.id);
     const [emp] = await db.select().from(employeesTable).where(eq(employeesTable.id, id)).limit(1);
