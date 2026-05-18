@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { parseToken } from "../lib/auth.js";
-import { db, usersTable, rolesTable } from "@workspace/db";
+import { db } from "@workspace/db";
+import { rolesTable, usersTable } from "@workspace/db/schema";
 import { eq } from "@workspace/db/drizzle";
 
 type PermissionAction = "view" | "create" | "edit" | "delete";

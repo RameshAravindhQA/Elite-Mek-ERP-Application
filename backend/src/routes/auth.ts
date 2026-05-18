@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { db, usersTable } from "@workspace/db";
+import { db } from "@workspace/db";
+import { usersTable } from "@workspace/db/schema";
 import { eq } from "@workspace/db/drizzle";
 import { hashPassword, verifyPassword, generateToken } from "../lib/auth.js";
 import { requireAuth } from "../middlewares/auth.js";
