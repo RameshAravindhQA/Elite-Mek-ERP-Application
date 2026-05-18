@@ -1,4 +1,3 @@
-import type { Request, Response, NextFunction } from "express";
 import { parseToken } from "../lib/auth.js";
 import { db } from "@workspace/db";
 import { rolesTable } from "@workspace/db/schema/roles";
@@ -19,6 +18,24 @@ interface AuthUser {
   role: string;
   permissions: RolePermission[];
 }
+
+type AuthRequest = {
+  headers: {
+    authorization?: string;
+  };
+  user?: AuthUser;
+  log?: {
+    error?: (payload: unknown, message?: string) => void;
+  };
+};
+
+type AuthResponse = {
+  status(code: number): {
+    json(body: unknown): unknown;
+  };
+};
+
+type AuthNext = () => unknown;
 
 declare global {
   namespace Express {
@@ -134,7 +151,7 @@ const userHasPermission = (user: AuthUser | undefined, module: string, action: P
 };
 
 export const requirePermission = (module: string, action: PermissionAction) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: AuthRequest, res: AuthResponse, next: AuthNext) => {
     if (!req.user) {
       res.status(401).json({ error: "Unauthorized" });
       return;
@@ -147,7 +164,7 @@ export const requirePermission = (module: string, action: PermissionAction) => {
   };
 };
 
-export async function requireAuth(req: Request, res: Response, next: NextFunction) {
+export async function requireAuth(req: AuthRequest, res: AuthResponse, next: AuthNext) {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer ")) {
     res.status(401).json({ error: "Unauthorized" });
@@ -171,7 +188,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     req.user = { id: user.id, name: user.name, email: user.email, role: user.role, permissions };
     next();
   } catch (err) {
-    req.log?.error({ err }, "Auth middleware error");
+    req.log?.error?.({ err }, "Auth middleware error");
     res.status(500).json({ error: "Internal server error" });
   }
 }
