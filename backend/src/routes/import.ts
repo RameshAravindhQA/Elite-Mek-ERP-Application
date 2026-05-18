@@ -530,7 +530,7 @@ const tables: Record<string, any> = {
   "expense-categories": expenseCategoriesTable,
 };
 
-router.get("/import/modules", requireAuth, (_req, res) => {
+router.get("/import/modules", requireAuth, (_req: any, res: any) => {
   res.json({ modules: Object.keys(tables).sort() });
 });
 

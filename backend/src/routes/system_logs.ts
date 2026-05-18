@@ -9,7 +9,7 @@ const sanitizeString = (value: unknown, max = 500) => {
   return value.replace(/\s+/g, " ").trim().slice(0, max);
 };
 
-router.get("/system-logs/status", requireAuth, (_req, res) => {
+router.get("/system-logs/status", requireAuth, (_req: any, res: any) => {
   res.json({
     enabled: Boolean(systemLogFile),
     file: systemLogFile,
@@ -17,7 +17,7 @@ router.get("/system-logs/status", requireAuth, (_req, res) => {
   });
 });
 
-router.post("/system-logs/client", requireAuth, (req, res) => {
+router.post("/system-logs/client", requireAuth, (req: any, res: any) => {
   const events = Array.isArray(req.body?.events) ? req.body.events : [];
 
   if (!events.length) {
