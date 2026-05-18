@@ -611,7 +611,7 @@ router.post("/payroll/:id/send-whatsapp", requireAuth, requirePermission("payrol
     const recipientNumber = settings.payslipWhatsappSenderPhone || WHATSAPP_RECIPIENT_NUMBER;
 
     try {
-      const response = await fetch(openwaUrl, {
+      const response: any = await fetch(openwaUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -727,7 +727,7 @@ router.post("/payroll/batch/send-whatsapp", requireAuth, requirePermission("payr
         const pdfBase64 = pdfBuffer.toString('base64');
         const openwaUrl = `${settings.openwaApiUrl}/sessions/${settings.openwaSessionId}/messages/send-document`;
         const recipientNumber = settings.payslipWhatsappSenderPhone || WHATSAPP_RECIPIENT_NUMBER;
-        const response = await fetch(openwaUrl, {
+        const response: any = await fetch(openwaUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-API-Key': settings.openwaApiKey },
           body: JSON.stringify({ chatId: `${recipientNumber}@c.us`, caption: message, filename, document: `data:application/pdf;base64,${pdfBase64}` }),

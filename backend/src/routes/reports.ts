@@ -47,7 +47,7 @@ const loadLogoImage = async (logoUrl?: string | null) => {
 
   if (/^https?:\/\//i.test(trimmed)) {
     try {
-      const response = await fetch(trimmed);
+      const response: any = await fetch(trimmed);
       const contentType = response.headers.get("content-type") || "";
       if (!response.ok || !/^image\/(png|jpe?g)/i.test(contentType)) return null;
       return Buffer.from(await response.arrayBuffer());
