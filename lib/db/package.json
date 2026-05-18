@@ -3,19 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "types": "./src/index.ts",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./src/index.ts"
-    },
-    "./drizzle": {
-      "types": "./dist/drizzle.d.ts",
-      "default": "./src/drizzle.ts"
-    },
-    "./schema": {
-      "types": "./dist/schema/index.d.ts",
-      "default": "./src/schema/index.ts"
-    }
+    ".": "./src/index.ts",
+    "./drizzle": "./src/drizzle.ts",
+    "./schema": "./src/schema/index.ts"
   },
   "scripts": {
     "push": "drizzle-kit push --config ./drizzle.config.ts",
