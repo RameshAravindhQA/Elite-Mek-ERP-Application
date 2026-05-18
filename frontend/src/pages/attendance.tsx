@@ -375,7 +375,7 @@ export default function Attendance() {
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
-        <Input type="month" value={month} onChange={e => setMonth(e.target.value)} className="w-44" />
+        <Input type="month" value={month} onChange={e => setMonth(e.target.value)} className="w-full sm:w-44 max-w-xs" />
         <div className="relative flex-1 min-w-[180px] max-w-xs">
           <Input placeholder="Search employee..." value={search} onChange={e => setSearch(e.target.value)} className="pl-3" />
         </div>
@@ -396,7 +396,8 @@ export default function Attendance() {
         <Card><CardContent className="py-16 text-center text-red-500">Error loading attendance: {(error as any)?.message || 'Unknown error'}</CardContent></Card>
       ) : view === "grid" ? (
         <>
-        <Table className="min-w-full text-xs">
+        <div className="overflow-x-auto">
+        <Table className="min-w-full text-xs table-auto">
           <thead>
             <TableRow className="bg-muted/50 sticky top-0 z-10">
               <th className="sticky left-0 z-20 bg-muted/80 text-left p-2 font-semibold min-w-[180px] border-r">Employee</th>
@@ -453,6 +454,7 @@ export default function Attendance() {
             )}
           </tbody>
         </Table>
+        </div>
         <Pagination
           page={safePage}
           totalPages={totalPages}
@@ -465,7 +467,8 @@ export default function Attendance() {
         <>
         <Card>
           <CardContent className="p-0">
-            <Table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <Table className="w-full text-sm table-auto">
               <TableHeader>
                 <TableRow>
                   <TableHead>Employee</TableHead>
@@ -495,6 +498,7 @@ export default function Attendance() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
         <Pagination

@@ -263,7 +263,7 @@ export default function WorkAllocation() {
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
               <History className="w-5 h-5 text-muted-foreground" />
               <Select value={selectedCustomer} onValueChange={v => { setSelectedCustomer(v); setSelectedProject("none"); setSelectedLeft(new Set()); setSelectedRight(new Set()); }}>
-                <SelectTrigger className="w-72">
+                <SelectTrigger className="w-full sm:w-72 max-w-xs">
                   <SelectValue placeholder="Select customer..." />
                 </SelectTrigger>
                 <SelectContent searchable>
@@ -274,7 +274,7 @@ export default function WorkAllocation() {
                 </SelectContent>
               </Select>
               <Select value={selectedProject} onValueChange={v => { setSelectedProject(v); setSelectedLeft(new Set()); setSelectedRight(new Set()); }}>
-                <SelectTrigger className="w-72">
+                <SelectTrigger className="w-full sm:w-72 max-w-xs">
                   <SelectValue placeholder="Select a project to allocate..." />
                 </SelectTrigger>
                 <SelectContent searchable>
@@ -430,7 +430,7 @@ export default function WorkAllocation() {
                     <th>Code</th>
                     <th>Status</th>
                     <th>Assigned Date</th>
-                    <th className="min-w-[220px] text-right">Actions</th>
+                    <th className="min-w-[160px] sm:min-w-[220px] text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
