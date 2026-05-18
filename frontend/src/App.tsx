@@ -10,6 +10,8 @@ import NotFound from "@/pages/not-found";
 import { installGlobalClickSound } from "@/lib/sound-effects";
 import { getApiErrorMessage } from "@/lib/error-utils";
 import { installInlineValidation, showInlineValidationErrors } from "@/lib/inline-validation";
+import { installSystemLogging } from "@/lib/system-logging";
+import { ImportErrorDialog } from "@/components/import/ImportErrorDialog";
 import { toast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 
@@ -121,6 +123,7 @@ function App() {
   useEffect(() => {
     installGlobalClickSound();
     installInlineValidation();
+    installSystemLogging();
   }, []);
 
   return (
@@ -131,6 +134,7 @@ function App() {
             <AuthProvider>
               <AppRoutes />
               <DebugLogs />
+              <ImportErrorDialog />
             </AuthProvider>
           </ThemeUIProvider>
         </WouterRouter>

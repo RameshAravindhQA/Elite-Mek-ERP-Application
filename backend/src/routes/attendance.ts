@@ -1,40 +1,114 @@
 import { Router } from "express";
-import { db, attendanceTable, attendanceCategoriesTable, employeesTable } from "@workspace/db";
-import { eq, and, count, sql, gte, lte } from "@workspace/db/drizzle";
+import { db, attendanceTable, attendanceCategoriesTable, employeesTable, leavesTable } from "@workspace/db";
+import { eq, and, count, gte, lte } from "@workspace/db/drizzle";
 import { requireAuth } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
 
 const router = Router();
 
+const normalizeLeaveStatus = (leaveType: string) => {
+  const type = (leaveType || "").toLowerCase();
+  if (type.includes("sick")) return "sick_leave";
+  if (type.includes("half")) return "half_day";
+  if (type.includes("unpaid")) return "unpaid_leave";
+  if (type.includes("week") || type.includes("off")) return "week_off";
+  if (type.includes("holiday")) return "holiday";
+  return "paid_leave";
+};
+
+const getDatesBetween = (startDate: string | Date, endDate: string | Date) => {
+  const toDate = (value: string | Date) => {
+    if (value instanceof Date) return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+    const [year, month, day] = String(value).slice(0, 10).split("-").map(Number);
+    return new Date(year, month - 1, day);
+  };
+  const toDateString = (value: Date) =>
+    `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`;
+
+  const start = toDate(startDate);
+  const end = toDate(endDate);
+  const dates: string[] = [];
+  for (let dt = new Date(start); dt <= end; dt.setDate(dt.getDate() + 1)) {
+    dates.push(toDateString(dt));
+  }
+  return dates;
+};
+
+const getMonthDays = (month: string) => {
+  const [year, mon] = month.split("-").map(Number);
+  const lastDay = new Date(year, mon, 0).getDate();
+  return Array.from({ length: lastDay }, (_, index) => {
+    const day = index + 1;
+    const date = new Date(year, mon - 1, day);
+    return {
+      day,
+      dateStr: `${month}-${String(day).padStart(2, "0")}`,
+      dow: date.getDay(),
+    };
+  });
+};
+
+const getDefaultAttendanceStatus = (dow: number) => (dow === 0 ? "week_off" : "present");
+
+async function buildEffectiveAttendance(month: string) {
+  const days = getMonthDays(month);
+  const startDate = `${month}-01`;
+  const endDate = `${month}-${String(days.length).padStart(2, "0")}`;
+
+  const employees = await db.select().from(employeesTable).where(eq(employeesTable.status, "active"));
+  const attendance = await db.select().from(attendanceTable)
+    .where(and(gte(attendanceTable.date, startDate), lte(attendanceTable.date, endDate)));
+  const approvedLeaves = await db.select().from(leavesTable).where(and(
+    eq(leavesTable.status, "approved"),
+    lte(leavesTable.startDate, endDate),
+    gte(leavesTable.endDate, startDate),
+  ));
+
+  const attendanceByEmployee = new Map<number, Record<string, string>>();
+  attendance.forEach((record) => {
+    const map = attendanceByEmployee.get(record.employeeId) || {};
+    map[record.date] = record.status;
+    attendanceByEmployee.set(record.employeeId, map);
+  });
+
+  const leaveByEmployee = new Map<number, Record<string, string>>();
+  approvedLeaves.forEach((leave) => {
+    const map = leaveByEmployee.get(leave.employeeId) || {};
+    getDatesBetween(leave.startDate, leave.endDate)
+      .filter((date) => date >= startDate && date <= endDate)
+      .forEach((date) => {
+        map[date] = normalizeLeaveStatus(leave.leaveType);
+      });
+    leaveByEmployee.set(leave.employeeId, map);
+  });
+
+  const grid = employees.map(emp => {
+    const empAttendance: Record<string, string> = {};
+    const employeeAttendance = attendanceByEmployee.get(emp.id) || {};
+    const employeeLeaves = leaveByEmployee.get(emp.id) || {};
+    days.forEach(({ dateStr, dow }) => {
+      empAttendance[dateStr] = employeeAttendance[dateStr] || employeeLeaves[dateStr] || getDefaultAttendanceStatus(dow);
+    });
+    return { employee: { id: emp.id, name: `${emp.firstName} ${emp.lastName}`, employeeId: emp.employeeId, department: emp.department }, attendance: empAttendance };
+  });
+
+  return { days, grid };
+}
+
 router.get("/attendance/summary", requireAuth, async (req, res) => {
   try {
     const month = req.query.month as string || new Date().toISOString().slice(0, 7);
-    const [year, mon] = month.split("-").map(Number);
-    const daysInMonth = new Date(year, mon, 0).getDate();
-    const startDate = `${month}-01`;
-    const endDate = `${month}-${String(daysInMonth).padStart(2, "0")}`;
-    const totalWorkingDays = Array.from({ length: daysInMonth }, (_, index) => new Date(year, mon - 1, index + 1).getDay())
-      .filter((dow) => dow !== 0)
-      .length;
-
-    const [summary] = await db.select({
-      present: sql<number>`count(*) filter (where date >= ${startDate} and date <= ${endDate} and status = 'present')`,
-      absent: sql<number>`count(*) filter (where date >= ${startDate} and date <= ${endDate} and status = 'absent')`,
-      late: sql<number>`count(*) filter (where date >= ${startDate} and date <= ${endDate} and status = 'late')`,
-      halfDay: sql<number>`count(*) filter (where date >= ${startDate} and date <= ${endDate} and status = 'half_day')`,
-      sickLeave: sql<number>`count(*) filter (where date >= ${startDate} and date <= ${endDate} and status = 'sick_leave')`,
-      paidLeave: sql<number>`count(*) filter (where date >= ${startDate} and date <= ${endDate} and status = 'paid_leave')`,
-      unpaidLeave: sql<number>`count(*) filter (where date >= ${startDate} and date <= ${endDate} and status = 'unpaid_leave')`,
-      total: count()
-    }).from(attendanceTable);
+    const { days, grid } = await buildEffectiveAttendance(month);
+    const statuses = grid.flatMap((row) => Object.values(row.attendance));
+    const totalWorkingDays = days.filter((day) => day.dow !== 0).length;
     res.json({
-      present: Number(summary.present),
-      absent: Number(summary.absent),
-      late: Number(summary.late),
-      halfDay: Number(summary.halfDay),
-      sickLeave: Number(summary.sickLeave),
-      paidLeave: Number(summary.paidLeave),
-      unpaidLeave: Number(summary.unpaidLeave),
+      present: statuses.filter(status => status === "present").length,
+      absent: statuses.filter(status => status === "absent").length,
+      late: statuses.filter(status => status === "late").length,
+      halfDay: statuses.filter(status => status === "half_day").length,
+      sickLeave: statuses.filter(status => status === "sick_leave").length,
+      paidLeave: statuses.filter(status => status === "paid_leave").length,
+      unpaidLeave: statuses.filter(status => status === "unpaid_leave").length,
       totalWorkingDays,
     });
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
@@ -63,33 +137,9 @@ router.get("/attendance", requireAuth, async (req, res) => {
 router.get("/attendance/monthly", requireAuth, async (req, res) => {
   try {
     const month = req.query.month as string || new Date().toISOString().slice(0, 7);
-    const employees = await db.select().from(employeesTable).where(eq(employeesTable.status, "active"));
-    const startDate = `${month}-01`;
-    const [year, mon] = month.split("-").map(Number);
-    const lastDay = new Date(year, mon, 0).getDate();
-    const endDate = `${month}-${String(lastDay).padStart(2, "0")}`;
+    const { days, grid } = await buildEffectiveAttendance(month);
 
-    const attendance = await db.select().from(attendanceTable)
-      .where(and(gte(attendanceTable.date, startDate), lte(attendanceTable.date, endDate)));
-
-    const attendanceByEmployee = new Map<number, Record<string, string>>();
-    attendance.forEach((record) => {
-      const map = attendanceByEmployee.get(record.employeeId) || {};
-      map[record.date] = record.status;
-      attendanceByEmployee.set(record.employeeId, map);
-    });
-
-    const grid = employees.map(emp => {
-      const empAttendance: Record<string, string> = {};
-      const employeeAttendance = attendanceByEmployee.get(emp.id) || {};
-      for (let d = 1; d <= lastDay; d++) {
-        const dateStr = `${month}-${String(d).padStart(2, "0")}`;
-        empAttendance[dateStr] = employeeAttendance[dateStr] || "";
-      }
-      return { employee: { id: emp.id, name: `${emp.firstName} ${emp.lastName}`, employeeId: emp.employeeId, department: emp.department }, attendance: empAttendance };
-    });
-
-    res.json({ month, daysInMonth: lastDay, grid });
+    res.json({ month, daysInMonth: days.length, grid });
   } catch (err) { req.log.error({ err }); res.status(500).json({ error: "Internal server error" }); }
 });
 

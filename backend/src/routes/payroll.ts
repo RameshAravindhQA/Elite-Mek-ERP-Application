@@ -47,6 +47,48 @@ const getOverlapDays = (leaveStart: string | Date, leaveEnd: string | Date, peri
   return Math.ceil((overlapEnd.getTime() - overlapStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 };
 
+const normalizeLeaveStatus = (leaveType: string) => {
+  const type = (leaveType || "").toLowerCase();
+  if (type.includes("sick")) return "sick_leave";
+  if (type.includes("half")) return "half_day";
+  if (type.includes("unpaid")) return "unpaid_leave";
+  if (type.includes("week") || type.includes("off")) return "week_off";
+  if (type.includes("holiday")) return "holiday";
+  return "paid_leave";
+};
+
+const getDatesBetween = (startDate: string | Date, endDate: string | Date) => {
+  const toDate = (value: string | Date) => {
+    if (value instanceof Date) return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+    const [year, month, day] = String(value).slice(0, 10).split("-").map(Number);
+    return new Date(year, month - 1, day);
+  };
+  const toDateString = (value: Date) =>
+    `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`;
+
+  const start = toDate(startDate);
+  const end = toDate(endDate);
+  const dates: string[] = [];
+  for (let dt = new Date(start); dt <= end; dt.setDate(dt.getDate() + 1)) {
+    dates.push(toDateString(dt));
+  }
+  return dates;
+};
+
+const getMonthDays = (month: string) => {
+  const [year, mon] = month.split("-").map(Number);
+  const lastDay = new Date(year, mon, 0).getDate();
+  return Array.from({ length: lastDay }, (_, index) => {
+    const day = index + 1;
+    const date = new Date(year, mon - 1, day);
+    return {
+      day,
+      dateStr: `${month}-${String(day).padStart(2, "0")}`,
+      dow: date.getDay(),
+    };
+  });
+};
+
 const WHATSAPP_RECIPIENT_NUMBER = "919600579204";
 const WHATSAPP_RECIPIENT_DISPLAY = "+91 96005 79204";
 
@@ -123,6 +165,7 @@ router.post("/payroll/generate", requireAuth, requirePermission("payroll", "crea
     const shouldMarkPaid = Boolean(markPaid);
     const [emp] = await db.select().from(employeesTable).where(eq(employeesTable.id, Number(employeeId))).limit(1);
     if (!emp) { res.status(404).json({ error: "Employee not found" }); return; }
+    if (emp.status !== "active") { res.status(400).json({ error: "Payroll can only be generated for active employees" }); return; }
 
     // Get attendance for the month
     const startDate = `${month}-01`;
@@ -132,6 +175,8 @@ router.post("/payroll/generate", requireAuth, requirePermission("payroll", "crea
     
     const attendance = await db.select().from(attendanceTable)
       .where(and(eq(attendanceTable.employeeId, Number(employeeId)), gte(attendanceTable.date, startDate), lte(attendanceTable.date, endDate)));
+    const approvedLeaves = await db.select().from(leavesTable)
+      .where(and(eq(leavesTable.employeeId, Number(employeeId)), eq(leavesTable.status, "approved"), lte(leavesTable.startDate, endDate), gte(leavesTable.endDate, startDate)));
     const overtime = await db.select().from(overtimeTable)
       .where(and(eq(overtimeTable.employeeId, Number(employeeId)), gte(overtimeTable.workDate, startDate), lte(overtimeTable.workDate, endDate)));
     const advances = await db.select().from(advancePaymentsTable)
@@ -139,11 +184,25 @@ router.post("/payroll/generate", requireAuth, requirePermission("payroll", "crea
     const adjustments = await db.select().from(payrollAdjustmentsTable)
       .where(and(eq(payrollAdjustmentsTable.employeeId, Number(employeeId)), eq(payrollAdjustmentsTable.month, month)));
     
-    const totalWorkingDays = 26;
-    const presentCount = attendance.filter(a => ["present", "late", "half_day"].includes(a.status)).length;
-    const halfDayCount = attendance.filter(a => a.status === "half_day").length;
-    const absentDays = totalWorkingDays - presentCount + (excusedAbsences?.length || 0);
-    const effectiveDays = presentCount + (excusedAbsences?.length || 0) - (halfDayCount * 0.5);
+    const monthDays = getMonthDays(month);
+    const totalWorkingDays = monthDays.filter(day => day.dow !== 0).length;
+    const attendanceMap = new Map(attendance.map(record => [record.date, record.status]));
+    const leaveMap = new Map<string, string>();
+    approvedLeaves.forEach((leave) => {
+      getDatesBetween(leave.startDate, leave.endDate)
+        .filter((date) => date >= startDate && date <= endDate)
+        .forEach((date) => leaveMap.set(date, normalizeLeaveStatus(leave.leaveType)));
+    });
+
+    const effectiveStatuses = monthDays
+      .filter(day => day.dow !== 0)
+      .map(({ dateStr }) => attendanceMap.get(dateStr) || leaveMap.get(dateStr) || "present");
+    const presentCount = effectiveStatuses.filter(status => ["present", "late", "paid_leave", "sick_leave", "holiday"].includes(status)).length;
+    const halfDayCount = effectiveStatuses.filter(status => status === "half_day").length;
+    const unpaidLeaveCount = effectiveStatuses.filter(status => status === "unpaid_leave").length;
+    const absentCount = effectiveStatuses.filter(status => status === "absent").length;
+    const excusedCount = Array.isArray(excusedAbsences) ? excusedAbsences.length : 0;
+    const effectiveDays = presentCount + excusedCount + (halfDayCount * 0.5);
     
     const grossSalary = Number(emp.salary);
     const basicPct = Number(emp.basicPercent || 60) / 100;
@@ -178,7 +237,7 @@ router.post("/payroll/generate", requireAuth, requirePermission("payroll", "crea
       .where(and(eq(payrollTable.employeeId, Number(employeeId)), eq(payrollTable.month, month))).limit(1);
     
     const roundedPresentDays = Math.round(effectiveDays);
-    const roundedAbsentDays = Math.round(Math.max(0, totalWorkingDays - effectiveDays));
+    const roundedAbsentDays = Math.round(Math.max(0, absentCount + unpaidLeaveCount - excusedCount + (halfDayCount * 0.5)));
 
     let pay;
     if (existing.length) {

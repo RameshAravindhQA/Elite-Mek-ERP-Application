@@ -19,6 +19,7 @@ import { Pagination } from "@/components/Pagination";
 import { format } from "date-fns";
 import { AuditLogDialog } from "@/components/audit/AuditLogDialog";
 import { showInlineFieldErrors, validateRequiredFields } from "@/lib/inline-validation";
+import { downloadImportTemplate, importModuleFile } from "@/lib/import-utils";
 
 const fmtINR = (n: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n || 0);
 
@@ -26,17 +27,6 @@ const defaultForm = () => ({
   name: "", description: "", status: "active", priority: "medium",
   budget: "", startDate: "", endDate: "", customerId: "none", managerId: "none", progress: 0, imageUrl: ""
 });
-
-function downloadCSVTemplate() {
-  const headers = ["name","description","status","priority","budget","startDate","endDate","progress"];
-  const example = ["Website Redesign","Full website overhaul","active","high","500000","2024-01-01","2024-06-30","25"];
-  const csv = [headers.join(","), example.join(",")].join("\n");
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = "projects_template.csv"; a.click();
-  URL.revokeObjectURL(url);
-}
 
 export default function Projects() {
   const { toast } = useToast();
@@ -69,6 +59,26 @@ export default function Projects() {
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
+
+  const handleTemplateDownload = async () => {
+    try {
+      await downloadImportTemplate("projects", "projects-template.xlsx");
+      toast({ title: "Projects template downloaded" });
+    } catch (err) {
+      toast({ title: "Template download failed", description: (err as Error).message, variant: "destructive" });
+    }
+  };
+
+  const handleImportProjects = async (file: File) => {
+    try {
+      const response = await importModuleFile("projects", file);
+      queryClient.invalidateQueries({ queryKey: getListProjectsQueryKey() });
+      setPage(1);
+      toast({ title: `Imported ${response.imported || 0} projects` });
+    } catch (err) {
+      toast({ title: "Projects import failed", description: (err as Error).message, variant: "destructive" });
+    }
+  };
 
   const filtered = (projectsData?.data || []).filter((p: any) => {
     const matchSearch = !search || p.name.toLowerCase().includes(search.toLowerCase());
@@ -172,7 +182,17 @@ export default function Projects() {
         description="Track projects, budgets, progress and tasks"
         actions={
           <div className="flex gap-2 flex-wrap">
-            <Button variant="outline" size="sm" onClick={downloadCSVTemplate}><Download className="w-4 h-4 mr-2" />CSV Template</Button>
+            <Button variant="outline" size="sm" onClick={handleTemplateDownload}><Download className="w-4 h-4 mr-2" />Template</Button>
+            <label>
+              <Button variant="outline" size="sm" asChild>
+                <span><Upload className="w-4 h-4 mr-2" />Import</span>
+              </Button>
+              <input type="file" accept=".xlsx,.csv" className="hidden" onChange={e => {
+                const file = e.target.files?.[0];
+                if (file) handleImportProjects(file);
+                if (e.target) e.target.value = "";
+              }} />
+            </label>
             <Button variant="outline" size="sm" onClick={() => setView(v => v === "card" ? "table" : "card")}>
               {view === "card" ? <List className="w-4 h-4 mr-2" /> : <Grid className="w-4 h-4 mr-2" />}
               {view === "card" ? "Table" : "Cards"}

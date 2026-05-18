@@ -21,6 +21,7 @@ import { Users, UserCheck, UserMinus, Building, Search, Download, Upload, Grid, 
 import { Label } from "@/components/ui/label";
 import { Pagination } from "@/components/Pagination";
 import { Link } from "wouter";
+import { downloadImportTemplate, importModuleFile } from "@/lib/import-utils";
 
 const DEPARTMENTS = ["Engineering", "HR", "Sales", "Finance", "Marketing", "Operations", "Production", "Quality", "Maintenance"];
 
@@ -48,15 +49,19 @@ function normalizePhone(phone: string): string {
   return phone.replace(/\s+/g, " ").trim();
 }
 
-function downloadCSVTemplate() {
-  const headers = ["firstName","lastName","email","phone","employeeId","department","designation","status","salary","joiningDate","panNumber","aadharNumber","bankAccount","bankName","ifscCode","address","emergencyContact"];
-  const example = ["Ravi","Kumar","ravi@company.com","9876543210","EMP001","Engineering","Engineer","active","35000","2024-01-15","ABCDE1234F","123456789012","1234567890","SBI","SBIN0001234","123 Main St Chennai","9876543211"];
-  const csv = [headers.join(","), example.join(",")].join("\n");
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = "employees_template.csv"; a.click();
-  URL.revokeObjectURL(url);
+function EmployeeAvatar({ employee, size = "md" }: { employee: any; size?: "sm" | "md" }) {
+  const [failed, setFailed] = useState(false);
+  const sizeClass = size === "sm" ? "w-9 h-9 text-sm" : "w-20 h-20 text-2xl";
+  const imageClass = size === "sm" ? "w-9 h-9 rounded-full object-cover border" : "w-20 h-20 rounded-full object-cover border-4 border-white shadow-md";
+  const fallbackClass = size === "sm"
+    ? "w-9 h-9 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm"
+    : "w-20 h-20 rounded-full border-4 border-white shadow-md bg-slate-900 text-white flex items-center justify-center font-bold text-2xl";
+
+  if (employee.imageUrl && !failed) {
+    return <img src={employee.imageUrl} alt="" className={imageClass} onError={() => setFailed(true)} />;
+  }
+
+  return <div className={`${fallbackClass} ${sizeClass}`}>{employeeInitials(employee)}</div>;
 }
 
 export default function Employees() {
@@ -307,28 +312,25 @@ export default function Employees() {
     });
   };
 
-  const handleImportCSV = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const text = e.target?.result as string;
-      const lines = text.split("\n").filter(l => l.trim());
-      const headers = lines[0].split(",").map(h => h.trim());
-      let imported = 0;
-      for (let i = 1; i < lines.length; i++) {
-        const vals = lines[i].split(",").map(v => v.trim());
-        const row: any = {};
-        headers.forEach((h, idx) => { row[h] = vals[idx] || ""; });
-        if (row.firstName && row.email && row.employeeId) {
-          try {
-            await createMutation.mutateAsync({ data: { ...row, salary: Number(row.salary) || 0 } });
-            imported++;
-          } catch {}
-        }
-      }
+  const handleDownloadTemplate = async () => {
+    try {
+      await downloadImportTemplate("employees", "employees-template.xlsx");
+      toast({ title: "Employee template downloaded" });
+    } catch (err) {
+      toast({ title: "Template download failed", description: (err as Error).message, variant: "destructive" });
+    }
+  };
+
+  const handleImportEmployees = async (file: File) => {
+    try {
+      const response = await importModuleFile("employees", file);
       queryClient.invalidateQueries({ queryKey: getListEmployeesQueryKey() });
-      toast({ title: `Imported ${imported} employees` });
-    };
-    reader.readAsText(file);
+      queryClient.invalidateQueries({ queryKey: getGetEmployeeStatsQueryKey() });
+      setPage(1);
+      toast({ title: `Imported ${response.imported || 0} employees` });
+    } catch (err) {
+      toast({ title: "Employee import failed", description: (err as Error).message, variant: "destructive" });
+    }
   };
 
   const getStatusBadge = (s: string) => {
@@ -372,7 +374,7 @@ export default function Employees() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="space-y-1"><Label className="text-xs">First Name *</Label><Input name="firstName" required aria-invalid={!!fieldError("firstName")} className={inputErrorClass("firstName")} value={formData.firstName} onChange={(e) => handleFormChange("firstName", e.target.value)} />{renderFieldError("firstName")}</div>
         <div className="space-y-1"><Label className="text-xs">Last Name *</Label><Input name="lastName" required aria-invalid={!!fieldError("lastName")} className={inputErrorClass("lastName")} value={formData.lastName} onChange={(e) => handleFormChange("lastName", e.target.value)} />{renderFieldError("lastName")}</div>
         <div className="space-y-1"><Label className="text-xs">Email *</Label><Input name="email" type="email" required aria-invalid={!!fieldError("email")} className={inputErrorClass("email")} value={formData.email} onChange={(e) => handleFormChange("email", e.target.value)} />{renderFieldError("email")}</div>
@@ -443,20 +445,20 @@ export default function Employees() {
         title="Employees"
         description="Manage your workforce"
         actions={
-          <div className="flex gap-2 flex-wrap">
-            <Button variant="outline" size="sm" onClick={downloadCSVTemplate}><Download className="w-4 h-4 mr-2" />CSV Template</Button>
+          <div className="flex w-full flex-wrap gap-2 lg:w-auto lg:justify-end">
+            <Button variant="outline" size="sm" onClick={handleDownloadTemplate}><Download className="w-4 h-4 mr-2" />Template</Button>
             <label>
               <Button variant="outline" size="sm" asChild>
                 <span><Upload className="w-4 h-4 mr-2" />Import</span>
               </Button>
-              <input ref={fileInputRef} type="file" accept=".csv" className="hidden" onChange={e => { if (e.target.files?.[0]) handleImportCSV(e.target.files[0]); e.target.value = ""; }} />
+              <input ref={fileInputRef} type="file" accept=".xlsx,.csv" className="hidden" onChange={e => { if (e.target.files?.[0]) handleImportEmployees(e.target.files[0]); e.target.value = ""; }} />
             </label>
             <Button size="sm" onClick={openAdd}><Plus className="w-4 h-4 mr-2" />Add Employee</Button>
           </div>
         }
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {[
           { label: "Total Employees", value: stats?.total || 0, icon: Users, bg: "bg-blue-600" },
           { label: "Active", value: stats?.active || 0, icon: UserCheck, bg: "bg-emerald-600" },
@@ -467,27 +469,27 @@ export default function Employees() {
         ))}
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+        <div className="relative w-full lg:max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search employees..." className="pl-8" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
         </div>
         <Select value={department} onValueChange={v => { setDepartment(v); setPage(1); }}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Department" /></SelectTrigger>
+          <SelectTrigger className="w-full lg:w-[180px]"><SelectValue placeholder="Department" /></SelectTrigger>
           <SelectContent searchable>
             <SelectItem value="all">All Departments</SelectItem>
             {DEPARTMENTS.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={status} onValueChange={v => { setStatus(v); setPage(1); }}>
-          <SelectTrigger className="w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectTrigger className="w-full lg:w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
           <SelectContent searchable>
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="active">Active</SelectItem>
             <SelectItem value="inactive">Inactive</SelectItem>
           </SelectContent>
         </Select>
-        <div className="flex items-center rounded-md border p-1">
+        <div className="flex w-full items-center rounded-md border p-1 sm:w-auto">
           <Button variant={view === "table" ? "secondary" : "ghost"} size="sm" onClick={() => setView("table")}><List className="w-4 h-4 mr-1" />Table</Button>
           <Button variant={view === "card" ? "secondary" : "ghost"} size="sm" onClick={() => setView("card")}><Grid className="w-4 h-4 mr-1" />Cards</Button>
         </div>
@@ -496,7 +498,7 @@ export default function Employees() {
       {isLoading ? (
         <div className="text-center py-12 text-muted-foreground">Loading...</div>
       ) : view === "table" ? (
-        <div className="border rounded-md">
+        <div className="rounded-md">
           <Table>
             <TableHeader>
               <TableRow>
@@ -514,11 +516,7 @@ export default function Employees() {
               {employeesData?.data?.map((emp) => (
                 <TableRow key={emp.id}>
                   <TableCell>
-                    {(emp as any).imageUrl ? (
-                      <img src={(emp as any).imageUrl} alt="" className="w-9 h-9 rounded-full object-cover border" />
-                    ) : (
-                      <div className="w-9 h-9 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm">{employeeInitials(emp)}</div>
-                    )}
+                    <EmployeeAvatar employee={emp} size="sm" />
                   </TableCell>
                   <TableCell>
                     <Link href={`/employees/${emp.id}`}>
@@ -551,13 +549,7 @@ export default function Employees() {
               <Card key={emp.id} className="overflow-hidden hover:shadow-lg transition-all duration-200 group border">
                 <div className="relative bg-gradient-to-br from-primary/10 to-primary/5 pt-6 pb-10 flex flex-col items-center">
                   <div className="relative">
-                    {(emp as any).imageUrl ? (
-                      <img src={(emp as any).imageUrl} alt="" className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md" />
-                    ) : (
-                      <div className="w-20 h-20 rounded-full border-4 border-white shadow-md bg-slate-900 text-white flex items-center justify-center font-bold text-2xl">
-                        {employeeInitials(emp)}
-                      </div>
-                    )}
+                    <EmployeeAvatar employee={emp} />
                     <span className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white ${emp.status === 'active' ? 'bg-green-500' : 'bg-gray-400'}`} />
                   </div>
                   <div className="absolute top-2 right-2">
@@ -634,7 +626,7 @@ export default function Employees() {
           });
         }
       }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add Employee</DialogTitle>
           </DialogHeader>

@@ -2,14 +2,16 @@ import { Router } from "express";
 import multer from "multer";
 import XLSX from "xlsx";
 import fs from "fs/promises";
+import os from "os";
 import path from "path";
 import { db, attendanceTable, customersTable, documentsTable, employeesTable, expenseCategoriesTable, expensesTable, invoicesTable, inventoryMovementsTable, inventoryTable, leavesTable, payrollTable, projectsTable, purchaseOrdersTable, revenueTable, rolesTable, settingsTable, vendorsTable } from "@workspace/db";
+import { inArray, or } from "@workspace/db/drizzle";
 
 import { requireAuth } from "../middlewares/auth.js";
 import { createAuditLog } from "../lib/audit.js";
 
 const upload = multer({
-  dest: "uploads/",
+  dest: process.env.VERCEL ? path.join(os.tmpdir(), "uploads") : "uploads/",
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB
   },
@@ -28,11 +30,42 @@ const router = Router();
 
 const jsonFields = new Set(["items", "dependencies", "additionalContent", "tags", "permissions"]);
 const numericFields = new Set([
-  "vendorId", "customerId", "projectId", "employeeId", "quantity", "reorderLevel", "costPrice",
+  "vendorId", "customerId", "projectId", "employeeId", "itemId", "quantity", "reorderLevel", "costPrice",
   "sellingPrice", "amount", "salary", "budget", "spent", "progress", "subtotal", "taxAmount",
   "totalAmount", "paidAmount", "basicSalary", "hra", "allowances", "deductions", "pf", "esic",
   "netSalary", "presentDays", "absentDays", "totalWorkingDays", "hoursWorked", "days",
+  "previousStock", "currentStock", "parentId", "smtpPort", "payslipDefaultWorkingDays",
 ]);
+const dateFields = new Set([
+  "joiningDate", "startDate", "endDate", "orderDate", "deliveryDate", "date", "issueDate",
+  "dueDate", "paidAt",
+]);
+const booleanFields = new Set(["isDefault", "payslipWhatsappEnabled", "payslipIncludeLeaveDetails"]);
+const nullableNumericFields = new Set(["projectId", "parentId", "smtpPort"]);
+const requiredFieldsByModule: Record<string, Set<string>> = {
+  employees: new Set(["employeeId", "firstName", "lastName", "email", "department", "designation", "salary", "joiningDate"]),
+};
+
+type ImportValidationError = {
+  row?: number;
+  field?: string;
+  message: string;
+  expected?: string;
+  value?: unknown;
+};
+
+class ImportValidationException extends Error {
+  validationErrors: ImportValidationError[];
+  expectedHeaders: string[];
+  receivedHeaders: string[];
+
+  constructor(message: string, validationErrors: ImportValidationError[], expectedHeaders: string[], receivedHeaders: string[]) {
+    super(message);
+    this.validationErrors = validationErrors;
+    this.expectedHeaders = expectedHeaders;
+    this.receivedHeaders = receivedHeaders;
+  }
+}
 
 function normalizeTemplateValue(value: unknown) {
   if (Array.isArray(value) || (value && typeof value === "object")) {
@@ -48,20 +81,117 @@ function parseMaybeJson(value: unknown, field: string) {
   try {
     return JSON.parse(value);
   } catch {
-    return value.split(",").map(item => item.trim()).filter(Boolean);
+    if (field === "tags") return value.split(",").map(item => item.trim()).filter(Boolean);
+    throw new Error(`${field} must be valid JSON`);
   }
 }
 
-function normalizeImportRow(moduleName: string, row: Record<string, any>) {
+function expectedDataType(field: string, sample: unknown) {
+  if (jsonFields.has(field)) return "JSON array/object";
+  if (numericFields.has(field)) return "Number";
+  if (dateFields.has(field)) return "Date (YYYY-MM-DD)";
+  if (booleanFields.has(field)) return "Boolean (true/false)";
+  if (Array.isArray(sample) || (sample && typeof sample === "object")) return "JSON";
+  return "Text";
+}
+
+function isRequiredField(moduleName: string, field: string, template: Record<string, unknown>) {
+  const moduleRequired = requiredFieldsByModule[moduleName];
+  if (moduleRequired) return moduleRequired.has(field);
+  return !nullableNumericFields.has(field) && template[field] !== "";
+}
+
+function isNumericField(moduleName: string, field: string) {
+  if (moduleName === "employees" && field === "employeeId") return false;
+  return numericFields.has(field);
+}
+
+function normalizeDateValue(value: unknown) {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toISOString().slice(0, 10);
+  }
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    const parsed = XLSX.SSF.parse_date_code(value);
+    if (parsed) {
+      return `${parsed.y}-${String(parsed.m).padStart(2, "0")}-${String(parsed.d).padStart(2, "0")}`;
+    }
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+    const parsed = new Date(trimmed);
+    if (!Number.isNaN(parsed.getTime())) return parsed.toISOString().slice(0, 10);
+  }
+
+  return value;
+}
+
+function validateHeaders(moduleName: string, rows: Record<string, any>[]) {
+  const expectedHeaders = Object.keys(templates[moduleName] || {});
+  const receivedHeaders = Array.from(new Set(rows.flatMap(row => Object.keys(row).filter(key => String(key).trim()))));
+  const unexpectedHeaders = receivedHeaders.filter(header => !expectedHeaders.includes(header));
+  const missingHeaders = expectedHeaders.filter(header => isRequiredField(moduleName, header, templates[moduleName]) && !receivedHeaders.includes(header));
+  const validationErrors: ImportValidationError[] = [];
+
+  if (unexpectedHeaders.length) {
+    validationErrors.push({
+      message: `Remove unsupported header(s): ${unexpectedHeaders.join(", ")}`,
+      expected: expectedHeaders.join(", "),
+      value: unexpectedHeaders.join(", "),
+    });
+  }
+
+  if (missingHeaders.length) {
+    validationErrors.push({
+      message: `Add missing header(s): ${missingHeaders.join(", ")}`,
+      expected: expectedHeaders.join(", "),
+      value: receivedHeaders.join(", "),
+    });
+  }
+
+  if (validationErrors.length) {
+    throw new ImportValidationException("Sheet headers do not match the import template", validationErrors, expectedHeaders, receivedHeaders);
+  }
+
+  return { expectedHeaders, receivedHeaders };
+}
+
+function normalizeImportRow(moduleName: string, row: Record<string, any>, rowNumber: number) {
   const normalized: Record<string, any> = {};
+  const validationErrors: ImportValidationError[] = [];
   const templateKeys = Object.keys(templates[moduleName] || {});
   for (const key of templateKeys) {
     if (row[key] === undefined || row[key] === "") continue;
-    let value = parseMaybeJson(row[key], key);
-    if (numericFields.has(key)) {
+    let value: unknown;
+    try {
+      value = parseMaybeJson(row[key], key);
+    } catch {
+      validationErrors.push({ row: rowNumber, field: key, message: `${key} must be valid JSON`, expected: expectedDataType(key, templates[moduleName][key]), value: row[key] });
+      continue;
+    }
+    if (isNumericField(moduleName, key)) {
       const parsed = Number(value);
-      if (!Number.isFinite(parsed)) throw new Error(`${key} must be a valid number`);
+      if (!Number.isFinite(parsed)) {
+        validationErrors.push({ row: rowNumber, field: key, message: `${key} must be a valid number`, expected: "Number", value: row[key] });
+        continue;
+      }
       value = parsed;
+    }
+    if (dateFields.has(key)) {
+      value = normalizeDateValue(value);
+    }
+    if (dateFields.has(key) && (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value))) {
+      validationErrors.push({ row: rowNumber, field: key, message: `${key} must use YYYY-MM-DD format`, expected: "Date (YYYY-MM-DD)", value: row[key] });
+      continue;
+    }
+    if (booleanFields.has(key) && typeof value === "string") {
+      if (!/^(true|false)$/i.test(value.trim())) {
+        validationErrors.push({ row: rowNumber, field: key, message: `${key} must be true or false`, expected: "Boolean (true/false)", value: row[key] });
+        continue;
+      }
+      value = value.trim().toLowerCase() === "true";
     }
     if (key === "projectId" && value !== undefined && value !== null) {
       value = String(value);
@@ -70,10 +200,86 @@ function normalizeImportRow(moduleName: string, row: Record<string, any>) {
   }
 
   if ((moduleName === "invoices" || moduleName === "purchase-orders" || moduleName === "purchase_orders") && !Array.isArray(normalized.items)) {
-    throw new Error("items must be a valid JSON array");
+    validationErrors.push({ row: rowNumber, field: "items", message: "items must be a valid JSON array", expected: "JSON array", value: row.items });
+  }
+
+  for (const key of templateKeys) {
+    if (nullableNumericFields.has(key)) continue;
+    if (isRequiredField(moduleName, key, templates[moduleName]) && normalized[key] === undefined) {
+      validationErrors.push({ row: rowNumber, field: key, message: `${key} is required`, expected: expectedDataType(key, templates[moduleName][key]), value: row[key] });
+    }
+  }
+
+  if (moduleName === "employees" && !normalized.status) {
+    normalized.status = "active";
+  }
+
+  if (validationErrors.length) {
+    const expectedHeaders = Object.keys(templates[moduleName] || {});
+    throw new ImportValidationException("Sheet data has validation errors", validationErrors, expectedHeaders, Object.keys(row));
   }
 
   return normalized;
+}
+
+async function validateRowsBeforeInsert(moduleName: string, rows: Record<string, any>[]) {
+  if (moduleName !== "employees") return;
+
+  const validationErrors: ImportValidationError[] = [];
+  const seenEmployeeIds = new Map<string, number>();
+  const seenEmails = new Map<string, number>();
+
+  rows.forEach((row, index) => {
+    const rowNumber = index + 2;
+    const employeeId = String(row.employeeId || "").trim();
+    const email = String(row.email || "").trim().toLowerCase();
+
+    if (employeeId) {
+      const previousRow = seenEmployeeIds.get(employeeId);
+      if (previousRow) {
+        validationErrors.push({ row: rowNumber, field: "employeeId", message: `Employee ID duplicates row ${previousRow}`, expected: "Unique employee ID", value: employeeId });
+      } else {
+        seenEmployeeIds.set(employeeId, rowNumber);
+      }
+    }
+
+    if (email) {
+      const previousRow = seenEmails.get(email);
+      if (previousRow) {
+        validationErrors.push({ row: rowNumber, field: "email", message: `Email duplicates row ${previousRow}`, expected: "Unique email", value: email });
+      } else {
+        seenEmails.set(email, rowNumber);
+      }
+    }
+  });
+
+  const employeeIds = Array.from(seenEmployeeIds.keys());
+  const emails = Array.from(seenEmails.keys());
+  if (employeeIds.length || emails.length) {
+    const conditions = [
+      employeeIds.length ? inArray(employeesTable.employeeId, employeeIds) : undefined,
+      emails.length ? inArray(employeesTable.email, emails) : undefined,
+    ].filter(Boolean) as any[];
+    const existing = await db.select({
+      employeeId: employeesTable.employeeId,
+      email: employeesTable.email,
+    }).from(employeesTable).where(or(...conditions));
+
+    existing.forEach((row) => {
+      const employeeRow = row.employeeId ? seenEmployeeIds.get(row.employeeId) : undefined;
+      if (employeeRow) {
+        validationErrors.push({ row: employeeRow, field: "employeeId", message: "Employee ID already exists", expected: "Unique employee ID", value: row.employeeId });
+      }
+      const emailRow = row.email ? seenEmails.get(row.email.toLowerCase()) : undefined;
+      if (emailRow) {
+        validationErrors.push({ row: emailRow, field: "email", message: "Email already exists", expected: "Unique email", value: row.email });
+      }
+    });
+  }
+
+  if (validationErrors.length) {
+    throw new ImportValidationException("Sheet data has validation errors", validationErrors, Object.keys(templates[moduleName] || {}), Object.keys(rows[0] || {}));
+  }
 }
 
 const templates: Record<string, any> = {
@@ -88,7 +294,9 @@ const templates: Record<string, any> = {
     status: "active",
     salary: "65000",
     joiningDate: "2024-05-01",
-    imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
+    imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop",
+    panNumber: "ABCDE1234F",
+    aadharNumber: "123456789012",
     bankAccount: "50200012345999",
     bankName: "HDFC Bank",
     ifscCode: "HDFC0001234",
@@ -130,6 +338,17 @@ const templates: Record<string, any> = {
     imageUrl: "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=200&h=200&fit=crop",
   },
   "purchase-orders": {
+    poNumber: "PO-2024-031",
+    customerId: 1,
+    projectId: 1,
+    status: "approved",
+    orderDate: "2024-06-10",
+    deliveryDate: "2024-06-30",
+    totalAmount: "98000",
+    items: [{ id: 1, itemName: "MS Plate", quantity: 50, unitPrice: 1800, total: 90000 }],
+    notes: "Urgent delivery required.",
+  },
+  purchase_orders: {
     poNumber: "PO-2024-031",
     customerId: 1,
     projectId: 1,
@@ -243,6 +462,32 @@ const templates: Record<string, any> = {
     currency: "INR",
     timezone: "Asia/Kolkata",
   },
+  "inventory-movements": {
+    itemId: 1,
+    type: "IN",
+    quantity: "25",
+    previousStock: "100",
+    currentStock: "125",
+    reference: "GRN-2024-031",
+    notes: "Stock received from supplier",
+    createdBy: "Warehouse Admin",
+  },
+  inventory_movements: {
+    itemId: 1,
+    type: "IN",
+    quantity: "25",
+    previousStock: "100",
+    currentStock: "125",
+    reference: "GRN-2024-031",
+    notes: "Stock received from supplier",
+    createdBy: "Warehouse Admin",
+  },
+  "expense-categories": {
+    name: "Office Supplies",
+    parentId: "",
+    description: "Stationery, printing, and office consumables",
+    color: "#6B7280",
+  },
 };
 
 const tables: Record<string, any> = {
@@ -284,8 +529,8 @@ router.get("/import/:module/template", requireAuth, async (req, res) => {
   const headers = Object.keys(template);
   const exampleData = [
     { ...template },
-    { ...template, [`_${moduleName}2`]: 'Example Row 2' }, // Differentiate
-    { ...template, [`_${moduleName}3`]: 'Example Row 3' }
+    { ...template },
+    { ...template }
   ].map(row => {
     const cleanRow: Record<string, unknown> = {};
     headers.forEach(key => cleanRow[key] = normalizeTemplateValue(row[key]));
@@ -293,9 +538,17 @@ router.get("/import/:module/template", requireAuth, async (req, res) => {
   });
 
   const ws = XLSX.utils.json_to_sheet(exampleData);
+  const guideRows = headers.map(header => ({
+    Header: header,
+    "Data Type": expectedDataType(header, template[header]),
+    "Example Value": normalizeTemplateValue(template[header]),
+    Required: isRequiredField(moduleName, header, template) ? "Yes" : "No",
+  }));
+  const guide = XLSX.utils.json_to_sheet(guideRows);
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Template");
+  XLSX.utils.book_append_sheet(wb, guide, "Field Guide");
 
   const buffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
   res.setHeader("Content-Disposition", `attachment; filename=template-${moduleName}.xlsx`);
@@ -340,8 +593,19 @@ router.post("/import/:module", requireAuth, upload.single('file'), async (req, r
 
   // Basic validation - keys match template
   try {
-    rows = rows.map(row => normalizeImportRow(moduleName, row)).filter(row => Object.keys(row).length > 0);
+    validateHeaders(moduleName, rows);
+    rows = rows.map((row, index) => normalizeImportRow(moduleName, row, index + 2)).filter(row => Object.keys(row).length > 0);
+    await validateRowsBeforeInsert(moduleName, rows);
   } catch (validationErr) {
+    if (validationErr instanceof ImportValidationException) {
+      res.status(400).json({
+        error: validationErr.message,
+        validationErrors: validationErr.validationErrors,
+        expectedHeaders: validationErr.expectedHeaders,
+        receivedHeaders: validationErr.receivedHeaders,
+      });
+      return;
+    }
     res.status(400).json({ error: (validationErr as Error).message });
     return;
   }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useListExpenses, useCreateExpense, useUpdateExpense, useDeleteExpense, useGetExpenseStats, useListProjects, getListExpensesQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -18,47 +18,17 @@ import { AuditLogDialog } from "@/components/audit/AuditLogDialog";
 import { Loader2, Plus, Search, FileDown, Edit, Trash2, Receipt, TrendingDown, Clock, Upload, Download, History } from "lucide-react";
 import { Pagination } from "@/components/Pagination";
 import { showInlineFieldErrors, validateRequiredFields } from "@/lib/inline-validation";
+import { downloadImportTemplate, importModuleFile } from "@/lib/import-utils";
 
 const CATEGORIES = ["Travel", "Office Supplies", "Utilities", "Maintenance", "Marketing", "Software", "Training", "Miscellaneous"];
 const fmtINR = (n: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n || 0);
 
 const defaultForm = () => ({ title: "", category: "Miscellaneous", subCategory: "", amount: "", date: format(new Date(), "yyyy-MM-dd"), status: "pending", projectId: "none", description: "" });
 
-function downloadCSVTemplate() {
-  const headers = ["title", "category", "subCategory", "amount", "date", "status", "description"];
-  const example = ["Office Chairs", "Office Supplies", "Furniture", "15000", "2024-01-15", "pending", "Ergonomic chairs for team"];
-  const csv = [headers.join(","), example.join(",")].join("\n");
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = "expenses_template.csv"; a.click();
-  URL.revokeObjectURL(url);
-}
-
-function handleImportCSV(file: File, onCreate: (data: any) => void, toast: any) {
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const text = e.target?.result as string;
-    const lines = text.split("\n").filter(l => l.trim());
-    const headers = lines[0].split(",").map(h => h.trim());
-    let imported = 0;
-    for (let i = 1; i < lines.length; i++) {
-      const vals = lines[i].split(",").map(v => v.trim());
-      const row: any = {};
-      headers.forEach((h, idx) => { row[h] = vals[idx] || ""; });
-      if (row.title && row.amount) {
-        onCreate({ ...row, amount: Number(row.amount), projectId: null });
-        imported++;
-      }
-    }
-    toast({ title: `Imported ${imported} expenses` });
-  };
-  reader.readAsText(file);
-}
-
 export default function Expenses() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -87,6 +57,25 @@ export default function Expenses() {
   const createExpense = useCreateExpense();
   const updateExpense = useUpdateExpense();
   const deleteExpense = useDeleteExpense();
+
+  const handleTemplateDownload = async () => {
+    try {
+      await downloadImportTemplate("expenses", "expenses-template.xlsx");
+      toast({ title: "Expenses template downloaded" });
+    } catch (err) {
+      toast({ title: "Template download failed", description: (err as Error).message, variant: "destructive" });
+    }
+  };
+
+  const handleImportExpenses = async (file: File) => {
+    try {
+      const response = await importModuleFile("expenses", file);
+      queryClient.invalidateQueries({ queryKey: getListExpensesQueryKey() });
+      toast({ title: `Imported ${response.imported || 0} expenses` });
+    } catch (err) {
+      toast({ title: "Expenses import failed", description: (err as Error).message, variant: "destructive" });
+    }
+  };
 
   const filtered = (expensesData?.data || []).filter((e: any) => {
     const matchSearch = !search || e.title.toLowerCase().includes(search.toLowerCase());
@@ -161,15 +150,15 @@ export default function Expenses() {
         description="Track and manage business expenses"
         actions={
           <div className="flex gap-2 flex-wrap">
-            <Button variant="outline" size="sm" onClick={downloadCSVTemplate}><Download className="w-4 h-4 mr-2" />CSV Template</Button>
+            <Button variant="outline" size="sm" onClick={handleTemplateDownload}><Download className="w-4 h-4 mr-2" />Template</Button>
             <label>
               <Button variant="outline" size="sm" asChild>
-                <span><Upload className="w-4 h-4 mr-2" />Import CSV</span>
+                <span><Upload className="w-4 h-4 mr-2" />Import</span>
               </Button>
-              <input type="file" accept=".csv" className="hidden" onChange={e => {
+              <input ref={fileInputRef} type="file" accept=".xlsx,.csv" className="hidden" onChange={e => {
                 const file = e.target.files?.[0];
-                if (file) handleImportCSV(file, (data) => createExpense.mutateAsync({ data }), toast);
-                e.target.value = "";
+                if (file) handleImportExpenses(file);
+                if (e.target) e.target.value = "";
               }} />
             </label>
             <Button variant="outline" size="sm"><FileDown className="w-4 h-4 mr-2" />Export</Button>

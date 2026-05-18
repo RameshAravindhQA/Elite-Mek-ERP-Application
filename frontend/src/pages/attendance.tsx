@@ -17,6 +17,7 @@ import { useApiClient } from "@/lib/api-client";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { downloadRowsAsCsv, openRowsPdfPrint } from "@/lib/export-utils";
+import { downloadImportTemplate, importModuleFile } from "@/lib/import-utils";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; shortCode: string; textColor: string }> = {
   present:      { label: "Present",     color: "text-green-700",  bg: "bg-green-500",  shortCode: "P",  textColor: "text-white" },
@@ -33,6 +34,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
 
 const STATUS_OPTIONS = ["present", "absent", "late", "half_day", "sick_leave", "paid_leave", "unpaid_leave", "week_off", "holiday"];
 const NOT_MARKED_VALUE = "not_marked";
+const PROTECTED_BULK_STATUSES = new Set(["sick_leave", "paid_leave", "unpaid_leave", "half_day", "week_off", "holiday"]);
 
 // Memoized cell component to prevent re-renders
 const AttendanceCell = memo(function AttendanceCell({
@@ -125,50 +127,18 @@ export default function Attendance() {
   const [isSyncingPayroll, setIsSyncingPayroll] = useState(false);
   const [search, setSearch] = useState("");
 
-  const getBaseApiPath = () => {
-    const base = import.meta.env.BASE_URL || "/";
-    const normalized = base.endsWith("/") ? base.slice(0, -1) : base;
-    return `${normalized}/api`;
-  };
-
   const downloadAttendanceTemplate = async () => {
     try {
-      const response = await fetch(`${getBaseApiPath()}/import/attendance/template`, {
-        credentials: "include",
-        headers: {
-          Authorization: localStorage.getItem("token") ? `Bearer ${localStorage.getItem("token")}` : "",
-        },
-      });
-      if (!response.ok) throw new Error("Failed to download template");
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "attendance-template.xlsx";
-      a.click();
-      URL.revokeObjectURL(url);
+      await downloadImportTemplate("attendance", "attendance-template.xlsx");
+      toast({ title: "Attendance template downloaded" });
     } catch (err) {
       toast({ title: "Unable to download template", description: (err as Error).message, variant: "destructive" });
     }
   };
 
   const handleImportAttendance = async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
     try {
-      const response = await fetch(`${getBaseApiPath()}/import/attendance`, {
-        method: "POST",
-        body: formData,
-        credentials: "include",
-        headers: {
-          Authorization: localStorage.getItem("token") ? `Bearer ${localStorage.getItem("token")}` : "",
-        },
-      });
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({ error: response.statusText }));
-        throw new Error(err.error || response.statusText);
-      }
-      const data = await response.json();
+      const data = await importModuleFile("attendance", file);
       queryClient.invalidateQueries({ queryKey: ["attendance-monthly", month] });
       queryClient.invalidateQueries({ queryKey: ["attendance-summary", month] });
       toast({ title: `Imported ${data.imported || 0} attendance records` });
@@ -232,9 +202,8 @@ export default function Attendance() {
     if (pendingChanges[key] !== undefined) return pendingChanges[key];
     if (existingAttendance[dateStr]) return existingAttendance[dateStr];
     if (dow === 0) return "week_off";
-    if (dateStr === todayStr) return "";
-    return "";
-  }, [pendingChanges, todayStr]);
+    return "present";
+  }, [pendingChanges]);
 
   const handleStatusChange = (employeeId: number, dateStr: string, newStatus: string, dow: number) => {
     if (dow === 0) return;
@@ -266,17 +235,22 @@ export default function Attendance() {
     }
   };
 
-  const markAllPresent = () => {
+  const markWorkingDaysPresent = () => {
     const changes: Record<string, string> = {};
-    (monthlyData?.grid || []).forEach((row: any) => {
+    attendanceRows.forEach((row: any) => {
       days.forEach(({ dow, dateStr }) => {
         if (dow === 0) return;
+        const currentStatus = row.statusMap?.[dateStr] || "";
+        if (PROTECTED_BULK_STATUSES.has(currentStatus)) return;
         const key = `${row.employee.id}__${dateStr}`;
-        if (!row.attendance[dateStr]) changes[key] = "present";
+        if (currentStatus !== "present") changes[key] = "present";
       });
     });
     setPendingChanges(prev => ({ ...prev, ...changes }));
-    toast({ title: `Marked ${Object.keys(changes).length} entries as present` });
+    toast({
+      title: `Marked ${Object.keys(changes).length} working-day cells as present`,
+      description: "Sunday, leave, holiday, and week-off cells were preserved.",
+    });
   };
 
   const attendanceRows = useMemo(() => {
@@ -371,7 +345,9 @@ export default function Attendance() {
               {view === "grid" ? <List className="w-4 h-4 mr-2" /> : <Grid className="w-4 h-4 mr-2" />}
               {view === "grid" ? "List" : "Grid"}
             </Button>
-            <Button variant="outline" size="sm" onClick={markAllPresent}>Mark All Present</Button>
+            <Button variant="outline" size="sm" onClick={markWorkingDaysPresent} title="Mark all Monday-Saturday non-leave cells as present">
+              Mark Mon-Sat Present
+            </Button>
             <Button size="sm" onClick={handleSyncPayroll} disabled={isSyncingPayroll} className="bg-slate-700 text-white hover:bg-slate-800">
               <Zap className="w-4 h-4 mr-2" />{isSyncingPayroll ? "Syncing..." : "Sync Payroll"}
             </Button>

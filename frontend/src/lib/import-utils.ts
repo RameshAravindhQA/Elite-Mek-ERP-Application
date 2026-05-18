@@ -4,6 +4,36 @@ export const getBaseApiPath = () => {
   return `${normalized}/api`;
 };
 
+export type ImportValidationIssue = {
+  row?: number;
+  field?: string;
+  message: string;
+  expected?: string;
+  value?: unknown;
+};
+
+export type ImportErrorPayload = {
+  title: string;
+  message: string;
+  validationErrors?: ImportValidationIssue[];
+  expectedHeaders?: string[];
+  receivedHeaders?: string[];
+};
+
+export class ImportRequestError extends Error {
+  payload: ImportErrorPayload;
+
+  constructor(payload: ImportErrorPayload) {
+    super(payload.message);
+    this.name = "ImportRequestError";
+    this.payload = payload;
+  }
+}
+
+const notifyImportError = (payload: ImportErrorPayload) => {
+  window.dispatchEvent(new CustomEvent<ImportErrorPayload>("import-validation-error", { detail: payload }));
+};
+
 const getAuthHeaders = (): HeadersInit => {
   const token = localStorage.getItem("token");
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -46,7 +76,15 @@ export const importModuleFile = async (moduleName: string, file: File) => {
 
   const payload = await response.json();
   if (!response.ok) {
-    throw new Error(payload.error || "Import failed");
+    const errorPayload: ImportErrorPayload = {
+      title: "Import failed",
+      message: payload.error || "Import failed",
+      validationErrors: payload.validationErrors,
+      expectedHeaders: payload.expectedHeaders,
+      receivedHeaders: payload.receivedHeaders,
+    };
+    notifyImportError(errorPayload);
+    throw new ImportRequestError(errorPayload);
   }
 
   return payload;

@@ -26,6 +26,7 @@ const moduleRoutes = [
   { path: "/settings", title: /settings/i },
   { path: "/reminders", title: /reminders/i },
   { path: "/reports", title: /reports/i },
+  { path: "/import", title: /^import$/i },
 ];
 
 test.describe("production browser smoke", () => {
@@ -100,5 +101,23 @@ test.describe("production browser smoke", () => {
       await detailButton.click();
       await expect(page.getByText(/invoice |purchase order /i).first()).toBeVisible();
     }
+  });
+
+  test("shows data-level import errors in the system dialog", async ({ page }) => {
+    await page.goto("/import");
+    await page.waitForLoadState("networkidle");
+    await dismissStartupDialogs(page);
+
+    await page.getByRole("combobox").click();
+    await page.getByRole("option", { name: "Employees" }).click();
+    await page.setInputFiles('input[type="file"]', {
+      name: "bad-employees.csv",
+      mimeType: "text/csv",
+      buffer: Buffer.from("wrongHeader,salary\nabc,not-a-number\n"),
+    });
+
+    await expect(page.getByRole("dialog").getByText(/sheet headers do not match/i)).toBeVisible();
+    await expect(page.getByText(/Expected headers/i)).toBeVisible();
+    await expect(page.getByText("wrongHeader, salary")).toBeVisible();
   });
 });

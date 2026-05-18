@@ -39,6 +39,9 @@ export default function Payroll() {
   const [selectedPayroll, setSelectedPayroll] = useState<any>(null);
   const [selectedEmployee, setSelectedEmployee] = useState("");
   const [excuseNotes, setExcuseNotes] = useState("");
+  const [otherPaymentName, setOtherPaymentName] = useState("");
+  const [otherPaymentAmount, setOtherPaymentAmount] = useState("");
+  const [otherPaymentNotes, setOtherPaymentNotes] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isBulkGenerating, setIsBulkGenerating] = useState(false);
   const [isZipDownloading, setIsZipDownloading] = useState(false);
@@ -59,6 +62,8 @@ export default function Payroll() {
     { header: "Basic Salary", value: (row: any) => Number(row.basicSalary || 0) },
     { header: "Overtime", value: (row: any) => Number(row.overtimeAmount || 0) },
     { header: "Advance", value: (row: any) => Number(row.advanceDeduction || 0) },
+    { header: "Bonus", value: (row: any) => Number(row.bonusAmount || 0) },
+    { header: "Other Payments", value: (row: any) => Number(row.otherPayments || 0) },
     { header: "Net Salary", value: (row: any) => Number(row.netSalary || 0) },
     { header: "Status", value: (row: any) => row.status || "-" },
   ];
@@ -145,6 +150,22 @@ export default function Payroll() {
     if (!selectedEmployee) { toast({ title: "Please select an employee", variant: "destructive" }); return; }
     setIsGenerating(true);
     try {
+      const namedPaymentAmount = Number(otherPaymentAmount || 0);
+      if (namedPaymentAmount > 0) {
+        if (!otherPaymentName.trim()) {
+          toast({ title: "Enter other payment name", description: "A name is required when adding an other payment.", variant: "destructive" });
+          setIsGenerating(false);
+          return;
+        }
+        await apiClient.post("/payroll-adjustments", {
+          employeeId: Number(selectedEmployee),
+          month,
+          type: "other_payment",
+          label: otherPaymentName.trim(),
+          amount: namedPaymentAmount,
+          notes: otherPaymentNotes.trim() || null,
+        });
+      }
       await apiClient.post("/payroll/generate", { employeeId: Number(selectedEmployee), month, excuseNotes });
       queryClient.invalidateQueries({ queryKey: getListPayrollQueryKey() });
       setPage(1);
@@ -152,6 +173,9 @@ export default function Payroll() {
       setGenerateOpen(false);
       setSelectedEmployee("");
       setExcuseNotes("");
+      setOtherPaymentName("");
+      setOtherPaymentAmount("");
+      setOtherPaymentNotes("");
     } catch (e: any) {
       toast({ title: "Failed to generate payroll", description: e?.response?.data?.error || "Error occurred", variant: "destructive" });
     } finally {
@@ -388,6 +412,7 @@ export default function Payroll() {
               <TableHead className="text-right">Allowances</TableHead>
               <TableHead className="text-right">Overtime</TableHead>
               <TableHead className="text-right">Advance</TableHead>
+              <TableHead className="text-right">Bonus/Other</TableHead>
               <TableHead className="text-right">PF + ESIC</TableHead>
               <TableHead className="text-right">Net Salary</TableHead>
               <TableHead className="text-center">Days</TableHead>
@@ -397,9 +422,9 @@ export default function Payroll() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={12} className="text-center py-12"><Loader2 className="w-6 h-6 animate-spin mx-auto text-primary" /></TableCell></TableRow>
+              <TableRow><TableCell colSpan={13} className="text-center py-12"><Loader2 className="w-6 h-6 animate-spin mx-auto text-primary" /></TableCell></TableRow>
             ) : filteredData.length === 0 ? (
-              <TableRow><TableCell colSpan={12} className="text-center py-12 text-muted-foreground">
+              <TableRow><TableCell colSpan={13} className="text-center py-12 text-muted-foreground">
                 No payroll records found. Generate payroll from attendance data.
               </TableCell></TableRow>
             ) : filteredData.map((p: any) => (
@@ -411,6 +436,7 @@ export default function Payroll() {
                 <TableCell className="text-right">{fmtINR(p.allowances)}</TableCell>
                 <TableCell className="text-right text-emerald-700">{fmtINR(p.overtimeAmount || 0)}</TableCell>
                 <TableCell className="text-right text-red-600">-{fmtINR(p.advanceDeduction || 0)}</TableCell>
+                <TableCell className="text-right text-emerald-700">{fmtINR((p.bonusAmount || 0) + (p.otherPayments || 0))}</TableCell>
                 <TableCell className="text-right text-red-600">{fmtINR((p.pf || 0) + (p.esic || 0))}</TableCell>
                 <TableCell className="text-right font-semibold text-green-700">{fmtINR(p.netSalary)}</TableCell>
                 <TableCell className="text-center text-xs">
@@ -462,8 +488,22 @@ export default function Payroll() {
               <Label>Excuse Notes (optional)</Label>
               <Textarea value={excuseNotes} onChange={e => setExcuseNotes(e.target.value)} placeholder="Any excused absences or special notes..." className="min-h-[80px]" />
             </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Other Payment Name (optional)</Label>
+                <Input value={otherPaymentName} onChange={e => setOtherPaymentName(e.target.value)} placeholder="Incentive, arrears, reimbursement..." />
+              </div>
+              <div className="space-y-2">
+                <Label>Other Payment Amount</Label>
+                <Input type="number" min="0" value={otherPaymentAmount} onChange={e => setOtherPaymentAmount(e.target.value)} placeholder="0" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Other Payment Notes (optional)</Label>
+              <Input value={otherPaymentNotes} onChange={e => setOtherPaymentNotes(e.target.value)} placeholder="Reference or approval note" />
+            </div>
             <div className="bg-blue-50 rounded-md p-3 text-sm text-blue-700">
-              Payroll will be computed based on attendance data, applying salary formula (Basic 60%, HRA 20%, Allowances 20%) with PF/ESIC deductions where applicable.
+              Payroll will be computed from attendance, overtime, advance payments, and named payroll adjustments for this month.
             </div>
           </div>
           <DialogFooter>
@@ -488,6 +528,12 @@ export default function Payroll() {
               <div className="flex justify-between"><span className="text-sm text-muted-foreground">HRA</span><span>{fmtINR(selectedPayroll?.hra)}</span></div>
               <div className="flex justify-between"><span className="text-sm text-muted-foreground">Allowances</span><span>{fmtINR(selectedPayroll?.allowances)}</span></div>
               <div className="flex justify-between text-emerald-700"><span className="text-sm">Overtime</span><span>+{fmtINR(selectedPayroll?.overtimeAmount || 0)}</span></div>
+              {(selectedPayroll?.bonusAmount || 0) > 0 && (
+                <div className="flex justify-between text-emerald-700"><span className="text-sm">Bonus</span><span>+{fmtINR(selectedPayroll?.bonusAmount || 0)}</span></div>
+              )}
+              {(selectedPayroll?.otherPayments || 0) > 0 && (
+                <div className="flex justify-between text-emerald-700"><span className="text-sm">Other Payments</span><span>+{fmtINR(selectedPayroll?.otherPayments || 0)}</span></div>
+              )}
               <div className="flex justify-between text-red-600"><span className="text-sm">Advance</span><span>-{fmtINR(selectedPayroll?.advanceDeduction || 0)}</span></div>
               {(selectedPayroll?.pf + selectedPayroll?.esic) > 0 && (
                 <div className="flex justify-between text-red-600"><span className="text-sm">PF + ESIC</span><span>-{fmtINR((selectedPayroll?.pf || 0) + (selectedPayroll?.esic || 0))}</span></div>

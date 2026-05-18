@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import XLSX from "xlsx";
 import { authHeaders, getFirstRecord, login } from "./helpers";
 
 const listEndpoints = [
@@ -172,5 +173,48 @@ test.describe("production API smoke", () => {
       data: { email: "admin@elitemek.com", password: "definitely-wrong" },
     });
     expect(response.status()).toBe(401);
+  });
+
+  test("all advertised import modules provide strict templates and row-level validation errors", async ({ request }) => {
+    const headers = await authHeaders(request);
+    const modulesResponse = await request.get("/api/import/modules", { headers });
+    expect(modulesResponse).toBeOK();
+    const modules = ((await modulesResponse.json()).modules || []) as string[];
+    expect(modules.length).toBeGreaterThan(0);
+
+    for (const moduleName of modules) {
+      const templateResponse = await request.get(`/api/import/${moduleName}/template`, { headers });
+      expect(templateResponse, `${moduleName} template should download`).toBeOK();
+      const workbook = XLSX.read(await templateResponse.body(), { type: "buffer" });
+      expect(workbook.SheetNames, `${moduleName} should include the import sheet`).toContain("Template");
+      expect(workbook.SheetNames, `${moduleName} should include the datatype guide`).toContain("Field Guide");
+
+      const templateRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(workbook.Sheets.Template);
+      const guideRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(workbook.Sheets["Field Guide"]);
+      expect(templateRows.length, `${moduleName} should include example rows`).toBeGreaterThanOrEqual(1);
+      expect(guideRows.length, `${moduleName} should document headers`).toBe(Object.keys(templateRows[0]).length);
+      expect(Object.keys(guideRows[0])).toEqual(expect.arrayContaining(["Header", "Data Type", "Example Value", "Required"]));
+    }
+
+    const badWorkbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(badWorkbook, XLSX.utils.json_to_sheet([{ wrongHeader: "abc", salary: "not-a-number" }]), "Template");
+    const badBuffer = XLSX.write(badWorkbook, { type: "buffer", bookType: "xlsx" });
+
+    const failedImport = await request.post("/api/import/employees", {
+      headers,
+      multipart: {
+        file: {
+          name: "bad-employees.xlsx",
+          mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          buffer: badBuffer,
+        },
+      },
+    });
+    expect(failedImport.status()).toBe(400);
+    const payload = await failedImport.json();
+    expect(payload.error).toMatch(/headers/i);
+    expect(payload.expectedHeaders).toContain("employeeId");
+    expect(payload.receivedHeaders).toContain("wrongHeader");
+    expect(payload.validationErrors.length).toBeGreaterThan(0);
   });
 });
