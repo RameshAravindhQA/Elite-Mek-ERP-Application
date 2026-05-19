@@ -3,8 +3,13 @@ import fs from "node:fs";
 import path from "node:path";
 
 const isProduction = process.env.NODE_ENV === "production";
+const isServerless = process.env.VERCEL === "1" || Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME);
 
 const resolveLogDir = () => {
+  if (isServerless) {
+    return null;
+  }
+
   const configured = process.env.LOG_DIR;
   const candidates = [
     configured ? path.resolve(configured) : null,
