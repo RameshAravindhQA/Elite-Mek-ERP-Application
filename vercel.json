@@ -4,7 +4,7 @@
   "buildCommand": "pnpm --filter @workspace/api-server run build:vercel",
   "functions": {
     "api/index.js": {
-      "includeFiles": "backend/dist/**"
+      "includeFiles": "backend/api/**"
     }
   },
   "rewrites": [
