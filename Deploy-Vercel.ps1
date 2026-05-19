@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 <#
 .SYNOPSIS
 Elite-Mek ERP Backend Deployment to Vercel
@@ -30,10 +30,10 @@ Write-Host ""
 # Check if vercel CLI is installed
 try {
     $vercelVersion = vercel --version 2>$null
-    Write-Host "[✓] Vercel CLI found: $vercelVersion" -ForegroundColor Green
+    Write-Host "[+] Vercel CLI found: $vercelVersion" -ForegroundColor Green
 }
 catch {
-    Write-Host "[✗] Vercel CLI not found. Install with:" -ForegroundColor Red
+    Write-Host "[-] Vercel CLI not found. Install with:" -ForegroundColor Red
     Write-Host "npm install -g vercel" -ForegroundColor Yellow
     exit 1
 }
@@ -41,10 +41,10 @@ catch {
 # Check if pnpm is installed
 try {
     $pnpmVersion = pnpm --version 2>$null
-    Write-Host "[✓] pnpm found: $pnpmVersion" -ForegroundColor Green
+    Write-Host "[+] pnpm found: $pnpmVersion" -ForegroundColor Green
 }
 catch {
-    Write-Host "[✗] pnpm not found. Install with:" -ForegroundColor Red
+    Write-Host "[-] pnpm not found. Install with:" -ForegroundColor Red
     Write-Host "npm install -g pnpm" -ForegroundColor Yellow
     exit 1
 }
@@ -53,21 +53,21 @@ Write-Host ""
 Write-Host "[1/5] Installing dependencies..." -ForegroundColor Yellow
 pnpm install --frozen-lockfile
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "[✗] Failed to install dependencies" -ForegroundColor Red
+    Write-Host "[-] Failed to install dependencies" -ForegroundColor Red
     exit 1
 }
-Write-Host "[✓] Dependencies installed" -ForegroundColor Green
+Write-Host "[+] Dependencies installed" -ForegroundColor Green
 
 Write-Host ""
 Write-Host "[2/5] Verifying Supabase connection..." -ForegroundColor Yellow
 try {
     $env:DATABASE_URL = "postgresql://postgres.czbjiixzbbwbbhplvdur:Admin%40elitemek@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres?sslmode=require"
     pnpm --filter @workspace/db run push
-    Write-Host "[✓] Database connection verified" -ForegroundColor Green
+    Write-Host "[+] Database connection verified" -ForegroundColor Green
 }
 catch {
-    Write-Host "[⚠] Database schema push warning: $_" -ForegroundColor Yellow
-    Write-Host "[→] Continuing with deployment..." -ForegroundColor Yellow
+    Write-Host "[!] Database schema push warning: $_" -ForegroundColor Yellow
+    Write-Host "[>] Continuing with deployment..." -ForegroundColor Yellow
 }
 
 Write-Host ""
@@ -76,10 +76,10 @@ Push-Location backend
 try {
     pnpm run build:vercel
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "[✗] Vercel build failed" -ForegroundColor Red
+        Write-Host "[-] Vercel build failed" -ForegroundColor Red
         exit 1
     }
-    Write-Host "[✓] Vercel build completed" -ForegroundColor Green
+    Write-Host "[+] Vercel build completed" -ForegroundColor Green
 }
 finally {
     Pop-Location
@@ -90,10 +90,10 @@ Write-Host "[4/5] Preparing deployment..." -ForegroundColor Yellow
 $vercelArgs = @()
 if (-not $Preview) {
     $vercelArgs += "--prod"
-    Write-Host "[→] Production deployment mode" -ForegroundColor Cyan
+    Write-Host "[>] Production deployment mode" -ForegroundColor Cyan
 }
 else {
-    Write-Host "[→] Preview deployment mode" -ForegroundColor Cyan
+    Write-Host "[>] Preview deployment mode" -ForegroundColor Cyan
 }
 $vercelArgs += "--env"
 $vercelArgs += "DATABASE_URL=$env:DATABASE_URL"
@@ -109,7 +109,7 @@ vercel @vercelArgs
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host ""
-    Write-Host "[✗] Deployment failed" -ForegroundColor Red
+    Write-Host "[-] Deployment failed" -ForegroundColor Red
     Write-Host ""
     Write-Host "Check logs at: https://vercel.com/dashboard" -ForegroundColor Yellow
     exit 1
@@ -117,7 +117,7 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host ""
 Write-Host "================================================" -ForegroundColor Green
-Write-Host "[✓] Deployment Completed Successfully!" -ForegroundColor Green
+Write-Host "[+] Deployment Completed Successfully!" -ForegroundColor Green
 Write-Host "================================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "Your backend is now live at:" -ForegroundColor Cyan
