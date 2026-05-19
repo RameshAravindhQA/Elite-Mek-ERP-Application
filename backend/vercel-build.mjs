@@ -1,3 +1,54 @@
+import { cp, mkdir, rm, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { buildVercel } from "./build.mjs";
 
+const artifactDir = path.dirname(fileURLToPath(import.meta.url));
+const outputDir = path.join(artifactDir, ".vercel", "output");
+const functionDir = path.join(outputDir, "functions", "index.func");
+
 await buildVercel();
+
+await rm(outputDir, { recursive: true, force: true });
+await mkdir(functionDir, { recursive: true });
+
+for (const file of [
+  "index.js",
+  "vercel.mjs",
+  "pino-worker.mjs",
+  "pino-file.mjs",
+  "pino-pretty.mjs",
+  "thread-stream-worker.mjs",
+]) {
+  await cp(path.join(artifactDir, "api", file), path.join(functionDir, file));
+}
+
+await cp(path.join(artifactDir, "api", "data"), path.join(functionDir, "data"), {
+  recursive: true,
+});
+
+await writeFile(
+  path.join(functionDir, ".vc-config.json"),
+  JSON.stringify(
+    {
+      runtime: "nodejs22.x",
+      handler: "index.js",
+      launcherType: "Nodejs",
+      shouldAddHelpers: true,
+    },
+    null,
+    2,
+  ),
+);
+
+await writeFile(
+  path.join(outputDir, "config.json"),
+  JSON.stringify(
+    {
+      version: 3,
+      routes: [{ src: "/(.*)", dest: "/index" }],
+    },
+    null,
+    2,
+  ),
+);
