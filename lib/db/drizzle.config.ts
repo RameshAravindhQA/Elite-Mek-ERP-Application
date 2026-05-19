@@ -1,9 +1,8 @@
 import { defineConfig } from "drizzle-kit";
-import path from "path";
-
 const defaultDatabaseUrl =
   "postgresql://postgres:postgres@localhost:5432/postgres";
 const databaseUrl = process.env.DATABASE_URL?.trim() || defaultDatabaseUrl;
+const parsedDatabaseUrl = new URL(databaseUrl);
 
 if (!process.env.DATABASE_URL) {
   console.warn(
@@ -13,9 +12,39 @@ if (!process.env.DATABASE_URL) {
 }
 
 export default defineConfig({
-  schema: "./src/schema/index.ts",
+  schema: [
+    "./src/schema/activity_logs.ts",
+    "./src/schema/audit_logs.ts",
+    "./src/schema/attendance.ts",
+    "./src/schema/customers.ts",
+    "./src/schema/documents.ts",
+    "./src/schema/employees.ts",
+    "./src/schema/expenses.ts",
+    "./src/schema/inventory.ts",
+    "./src/schema/inventory_movements.ts",
+    "./src/schema/invoices.ts",
+    "./src/schema/leaves.ts",
+    "./src/schema/ledger.ts",
+    "./src/schema/notifications.ts",
+    "./src/schema/payroll.ts",
+    "./src/schema/projects.ts",
+    "./src/schema/purchase_orders.ts",
+    "./src/schema/reminders.ts",
+    "./src/schema/revenue.ts",
+    "./src/schema/roles.ts",
+    "./src/schema/salary_hikes.ts",
+    "./src/schema/settings.ts",
+    "./src/schema/users.ts",
+    "./src/schema/vendors.ts",
+    "./src/schema/work_allocations.ts",
+  ],
   dialect: "postgresql",
   dbCredentials: {
-    url: databaseUrl,
+    host: parsedDatabaseUrl.hostname,
+    port: parsedDatabaseUrl.port ? Number(parsedDatabaseUrl.port) : 5432,
+    user: decodeURIComponent(parsedDatabaseUrl.username),
+    password: decodeURIComponent(parsedDatabaseUrl.password),
+    database: parsedDatabaseUrl.pathname.replace(/^\//, ""),
+    ssl: parsedDatabaseUrl.searchParams.has("sslmode") ? "require" : false,
   },
 });

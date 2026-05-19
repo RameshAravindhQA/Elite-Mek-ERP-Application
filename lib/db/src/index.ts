@@ -15,7 +15,20 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-export const pool = new Pool({ connectionString: databaseUrl });
+const parsedDatabaseUrl = new URL(databaseUrl);
+const useSsl =
+  parsedDatabaseUrl.hostname.includes("supabase.com") ||
+  parsedDatabaseUrl.searchParams.has("sslmode");
+const poolConfig: pg.PoolConfig = {
+  host: parsedDatabaseUrl.hostname,
+  port: parsedDatabaseUrl.port ? Number(parsedDatabaseUrl.port) : 5432,
+  user: decodeURIComponent(parsedDatabaseUrl.username),
+  password: decodeURIComponent(parsedDatabaseUrl.password),
+  database: parsedDatabaseUrl.pathname.replace(/^\//, ""),
+  ...(useSsl ? { ssl: { rejectUnauthorized: false } } : {}),
+};
+
+export const pool = new Pool(poolConfig);
 export const db = drizzle(pool, { schema });
 
 export * from "./schema/users.js";
