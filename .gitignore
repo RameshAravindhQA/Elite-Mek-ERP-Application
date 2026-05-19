@@ -35,6 +35,8 @@ node_modules
 /playwright-report/
 /test-results/
 /backend/backend/data/
+/backend/api/*.mjs
+/backend/api/data/
 /libpeerconnection.log
 npm-debug.log
 yarn-error.log
