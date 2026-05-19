@@ -10,8 +10,13 @@ router.get("/healthz", (_req: any, res: any) => {
 });
 
 router.get("/db/ping", async (_req: any, res: any) => {
-  await pool.query("SELECT 1");
-  res.json({ status: "ok", db: "connected" });
+  try {
+    await pool.query("SELECT 1");
+    res.json({ status: "ok", db: "connected" });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Database connection failed";
+    res.status(503).json({ status: "error", db: "disconnected", message });
+  }
 });
 
 export default router;

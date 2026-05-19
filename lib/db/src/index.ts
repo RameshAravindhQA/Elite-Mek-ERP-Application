@@ -15,16 +15,10 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-const parsedDatabaseUrl = new URL(databaseUrl);
 const useSsl =
-  parsedDatabaseUrl.hostname.includes("supabase.com") ||
-  parsedDatabaseUrl.searchParams.has("sslmode");
+  databaseUrl.includes("supabase.com") || databaseUrl.includes("sslmode=");
 const poolConfig: pg.PoolConfig = {
-  host: parsedDatabaseUrl.hostname,
-  port: parsedDatabaseUrl.port ? Number(parsedDatabaseUrl.port) : 5432,
-  user: decodeURIComponent(parsedDatabaseUrl.username),
-  password: decodeURIComponent(parsedDatabaseUrl.password),
-  database: parsedDatabaseUrl.pathname.replace(/^\//, ""),
+  connectionString: databaseUrl,
   ...(useSsl ? { ssl: { rejectUnauthorized: false } } : {}),
 };
 
