@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "noEmitOnError": false,
+    "skipLibCheck": true,
+    "target": "es2022"
+  },
+  "include": ["index.js"]
+}

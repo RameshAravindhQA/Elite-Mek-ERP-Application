@@ -2,15 +2,21 @@
   "version": 2,
   "installCommand": "pnpm install --frozen-lockfile",
   "buildCommand": "pnpm run build",
-  "functions": {
-    "api/index.js": {
-      "includeFiles": "dist/**"
-    }
-  },
-  "rewrites": [
+  "builds": [
     {
-      "source": "/(.*)",
-      "destination": "/api/index"
+      "src": "api/index.js",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": [
+          "dist/**"
+        ]
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "api/index.js"
     }
   ]
 }
