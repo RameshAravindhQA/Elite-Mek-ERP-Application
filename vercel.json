@@ -1,16 +1,5 @@
 {
   "version": 2,
   "installCommand": "pnpm install --frozen-lockfile",
-  "buildCommand": "pnpm --filter @workspace/api-server run build:vercel",
-  "functions": {
-    "api/index.js": {
-      "includeFiles": "backend/api/**"
-    }
-  },
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/api/index.js"
-    }
-  ]
+  "buildCommand": "pnpm --filter @workspace/api-server run build:vercel"
 }
