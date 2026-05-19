@@ -3,7 +3,7 @@ REM Elite-Mek ERP Backend Deployment to Vercel
 REM This script deploys the backend to Vercel using Supabase PostgreSQL
 
 REM Set Supabase Database URL
-set "DATABASE_URL=postgresql://postgres.czbjiixzbbwbbhplvdur:Admin%%40elitemek@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres?sslmode=require"
+set "DATABASE_URL=postgresql://postgres.czbjiixzbbwbbhplvdur:Admin%%40elitemek@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres?sslmode=disable"
 
 REM Set environment
 set "NODE_ENV=production"

@@ -18,7 +18,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 # Supabase Database URL
-$env:DATABASE_URL = "postgresql://postgres.czbjiixzbbwbbhplvdur:Admin%40elitemek@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres?sslmode=require"
+$env:DATABASE_URL = "postgresql://postgres.czbjiixzbbwbbhplvdur:Admin%40elitemek@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres?sslmode=disable"
 $env:NODE_ENV = "production"
 
 Write-Host ""
