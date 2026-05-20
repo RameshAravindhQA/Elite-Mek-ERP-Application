@@ -53,6 +53,21 @@ For Vercel deployment with Supabase:
 deploy-to-vercel.bat
 ```
 
+Note: if your Vercel backend is configured with folder `backend`, that project will use `backend/vercel.json` and the command:
+```bash
+pnpm run build:vercel
+```
+
+If the frontend is deployed separately, the frontend project should build from `frontend` and use:
+```bash
+pnpm --filter ./frontend run build
+```
+
+#### GitHub commit author blocker
+If Vercel shows "commit email could not be matched to a Git account", fix it by committing directly from GitHub web UI or by updating your local Git config with your GitHub email. A GitHub web commit is the simplest fix and allows Vercel to recognize the author.
+
+See `SUPABASE-VERCEL-DEPLOYMENT.md` for more details.
+
 See [COMPLETE-DEPLOYMENT-GUIDE.md](COMPLETE-DEPLOYMENT-GUIDE.md) for full instructions.
 
 ## Usage

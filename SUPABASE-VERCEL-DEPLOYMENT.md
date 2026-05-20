@@ -43,6 +43,20 @@ DATABASE_URL=postgresql://postgres.czbjiixzbbwbbhplvdur:Admin%40elitemek@aws-1-a
 NODE_ENV=production
 ```
 
+If your backend uses `backend/vercel.json`, this is the backend Vercel project and it must have the correct `DATABASE_URL`.
+
+If you deploy the frontend as a separate Vercel project, add:
+
+```
+VITE_API_BASE_URL=https://<your-backend-project>.vercel.app/api
+```
+
+and optionally:
+
+```
+FRONTEND_URL=https://<your-frontend-project>.vercel.app
+```
+
 **IMPORTANT**: The password contains `@` which must be URL-encoded as `%40` in the connection string.
 
 ## Step 4: Vercel Configuration
