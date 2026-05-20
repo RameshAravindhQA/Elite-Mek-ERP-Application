@@ -16,8 +16,12 @@
 ### Local PostgreSQL (Development)
 1. Start Postgres locally.
 2. Set `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres` (or your creds).
-3. Run migrations: `pnpm --filter @workspace/db run push` (generates schema).
-4. Seed dummy data: `pnpm --filter scripts run seed` (30 records/module + images).
+3. Run migrations: `pnpm migrate` (generates schema).
+4. Seed dummy data: `pnpm seed` (30 records/module + images).
+
+Additional repo-level commands:
+- `pnpm migrate:force` — force push DB schema changes.
+- `pnpm seed:po` — seed only purchase orders.
 
 ### Supabase PostgreSQL (Production/Cloud)
 1. Create Supabase project at https://supabase.com
