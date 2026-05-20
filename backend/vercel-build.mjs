@@ -32,6 +32,12 @@ async function build() {
     recursive: true,
   });
 
+  // Also copy a top-level entrypoint so Vercel can detect the Build Output entrypoint
+  // Vercel searches for index.{js,cjs,mjs,ts,..} in the output directory; provide index.mjs
+  const topLevelEntrypointSrc = path.join(artifactDir, "api", "vercel.mjs");
+  const topLevelEntrypointDst = path.join(outputDir, "index.mjs");
+  await cp(topLevelEntrypointSrc, topLevelEntrypointDst);
+
   await writeFile(
     path.join(functionDir, ".vc-config.json"),
     JSON.stringify(
@@ -51,7 +57,7 @@ async function build() {
     JSON.stringify(
       {
         version: 3,
-        routes: [{ src: "/(.*)", dest: "/index.js" }],
+        routes: [{ src: "/(.*)", dest: "/index.mjs" }],
       },
       null,
       2,
