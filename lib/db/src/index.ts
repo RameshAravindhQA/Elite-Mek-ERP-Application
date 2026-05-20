@@ -6,9 +6,16 @@ const { Pool } = pg;
 
 const defaultDatabaseUrl =
   "postgresql://postgres:postgres@localhost:5432/postgres";
-const databaseUrl = process.env.DATABASE_URL?.trim() || defaultDatabaseUrl;
+const databaseUrl = process.env.DATABASE_URL?.trim();
+const effectiveDatabaseUrl = databaseUrl || defaultDatabaseUrl;
 
-if (!process.env.DATABASE_URL) {
+if (!databaseUrl && process.env.VERCEL === "1") {
+  throw new Error(
+    "DATABASE_URL is required in Vercel deployment. Set DATABASE_URL in your Vercel environment variables.",
+  );
+}
+
+if (!databaseUrl) {
   console.warn(
     "DATABASE_URL is not set. Falling back to local Postgres at",
     defaultDatabaseUrl,
@@ -16,9 +23,11 @@ if (!process.env.DATABASE_URL) {
 }
 
 const useSsl =
-  databaseUrl.includes("supabase.com") || databaseUrl.includes("sslmode=");
+  effectiveDatabaseUrl.includes("supabase.com") ||
+  effectiveDatabaseUrl.includes("sslmode=") ||
+  Boolean(process.env.PGSSLMODE?.trim());
 const poolConfig: pg.PoolConfig = {
-  connectionString: databaseUrl,
+  connectionString: effectiveDatabaseUrl,
   ...(useSsl ? { ssl: { rejectUnauthorized: false } } : {}),
 };
 

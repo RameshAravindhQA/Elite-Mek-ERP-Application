@@ -1,10 +1,17 @@
 import { defineConfig } from "drizzle-kit";
 const defaultDatabaseUrl =
   "postgresql://postgres:postgres@localhost:5432/postgres";
-const databaseUrl = process.env.DATABASE_URL?.trim() || defaultDatabaseUrl;
-const parsedDatabaseUrl = new URL(databaseUrl);
+const databaseUrl = process.env.DATABASE_URL?.trim();
+const effectiveDatabaseUrl = databaseUrl || defaultDatabaseUrl;
+const parsedDatabaseUrl = new URL(effectiveDatabaseUrl);
 
-if (!process.env.DATABASE_URL) {
+if (!databaseUrl && process.env.VERCEL === "1") {
+  throw new Error(
+    "DATABASE_URL is required in Vercel deployment. Set DATABASE_URL in your Vercel environment variables.",
+  );
+}
+
+if (!databaseUrl) {
   console.warn(
     "DATABASE_URL is not set. Falling back to local Postgres at",
     defaultDatabaseUrl,

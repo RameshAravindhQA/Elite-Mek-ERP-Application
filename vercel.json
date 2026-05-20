@@ -1,7 +1,7 @@
 {
   "version": 2,
   "installCommand": "pnpm install --frozen-lockfile",
-  "buildCommand": "pnpm --filter @workspace/api-server run build:vercel",
+  "buildCommand": "pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/api-server run build:vercel",
   "experimentalServices": {
     "frontend": {
       "entrypoint": "frontend",
