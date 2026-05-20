@@ -40,7 +40,6 @@ const commonExternal = [
   "@prisma/client",
   "@mikro-orm/*",
   "@grpc/*",
-  "@swc/*",
   "@aws-sdk/*",
   "@azure/*",
   "@opentelemetry/*",
