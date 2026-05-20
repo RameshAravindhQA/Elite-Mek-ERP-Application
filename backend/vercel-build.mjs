@@ -32,11 +32,11 @@ async function build() {
     recursive: true,
   });
 
-  // Also copy a top-level entrypoint so Vercel can detect the Build Output entrypoint
-  // Vercel searches for index.{js,cjs,mjs,ts,..} in the output directory; provide index.mjs
-  const topLevelEntrypointSrc = path.join(artifactDir, "api", "vercel.mjs");
-  const topLevelEntrypointDst = path.join(outputDir, "index.mjs");
-  await cp(topLevelEntrypointSrc, topLevelEntrypointDst);
+  // Write a small CommonJS wrapper `index.js` that requires the serverless function.
+  // This is the actual entrypoint Vercel should execute.
+  const wrapperIndexJs = `module.exports = require('./functions/index.func/index.js');\n`;
+  const topLevelEntrypointDstJs = path.join(outputDir, "index.js");
+  await writeFile(topLevelEntrypointDstJs, wrapperIndexJs, "utf8");
 
   await writeFile(
     path.join(functionDir, ".vc-config.json"),
@@ -57,7 +57,7 @@ async function build() {
     JSON.stringify(
       {
         version: 3,
-        routes: [{ src: "/(.*)", dest: "/index.mjs" }],
+        routes: [{ src: "/(.*)", dest: "/functions/index.func/index.js" }],
       },
       null,
       2,
