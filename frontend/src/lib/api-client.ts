@@ -6,6 +6,11 @@ import { playSound, type SoundEvent } from "./sound-effects";
 type CrudSoundEvent = Extract<SoundEvent, "create" | "update" | "delete">;
 
 const getBaseUrl = () => {
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+  if (apiBaseUrl) {
+    return apiBaseUrl.endsWith("/") ? apiBaseUrl.slice(0, -1) : apiBaseUrl;
+  }
+
   const base = import.meta.env.BASE_URL || "/";
   const normalized = base.endsWith("/") ? base.slice(0, -1) : base;
   return `${normalized}/api`;
