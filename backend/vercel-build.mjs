@@ -13,14 +13,17 @@ await rm(outputDir, { recursive: true, force: true });
 await mkdir(functionDir, { recursive: true });
 
 for (const file of [
-  "index.js",
   "vercel.mjs",
   "pino-worker.mjs",
   "pino-file.mjs",
   "pino-pretty.mjs",
   "thread-stream-worker.mjs",
 ]) {
-  await cp(path.join(artifactDir, "api", file), path.join(functionDir, file));
+  const destName = file === "vercel.mjs" ? "index.js" : file;
+  await cp(
+    path.join(artifactDir, "api", file),
+    path.join(functionDir, destName),
+  );
 }
 
 await cp(path.join(artifactDir, "api", "data"), path.join(functionDir, "data"), {
