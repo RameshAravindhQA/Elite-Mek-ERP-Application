@@ -83,6 +83,16 @@ Push to main branch - Vercel auto-deploys if connected
 3. Ensure environment variables are set
 4. Deploy
 
+## Vercel: Migrate and Seed
+- Vercel build itself does not automatically run database seed scripts.
+- Use the repo deployment script to migrate before deployment:
+  - `Deploy-Vercel.ps1` or `deploy-to-vercel.bat`
+  - These scripts already run `pnpm --filter @workspace/db run push` before building.
+- To seed the production Supabase database, run locally after deployment using the production `DATABASE_URL`:
+  - `pnpm --filter ./scripts run seed`
+  - or `pnpm --filter ./scripts run seed:purchase-orders` for purchase-order only seed.
+- Do not seed on every automatic Vercel deployment unless you want demo/sample data reset.
+
 ## Monitoring Deployment
 
 ### Check Vercel Build Logs
