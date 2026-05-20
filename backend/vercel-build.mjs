@@ -51,7 +51,7 @@ async function build() {
     JSON.stringify(
       {
         version: 3,
-        routes: [{ src: "/(.*)", dest: "/index" }],
+        routes: [{ src: "/(.*)", dest: "/index.js" }],
       },
       null,
       2,
