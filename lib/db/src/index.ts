@@ -28,6 +28,9 @@ const useSsl =
   Boolean(process.env.PGSSLMODE?.trim());
 const poolConfig: pg.PoolConfig = {
   connectionString: effectiveDatabaseUrl,
+  max: process.env.VERCEL === "1" ? 1 : 10,
+  allowExitOnIdle: process.env.VERCEL === "1",
+  idleTimeoutMillis: 10000,
   ...(useSsl ? { ssl: { rejectUnauthorized: false } } : {}),
 };
 
