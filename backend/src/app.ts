@@ -5,18 +5,34 @@ import router from "./routes/index.js";
 import { logger } from "./lib/logger.js";
 
 const app = express();
-const frontendUrl = process.env.FRONTEND_URL || "https://elite-mek-erp-system.vercel.app,https://elite-mek-erp-system-8ycfmwgyj.vercel.app,https://elite-mek-erp-system-9bfrjz2yt.vercel.app";
-const allowedOrigins = frontendUrl
-  .split(",")
-  .map((url) => url.trim())
-  .filter(Boolean);
 
 // pino-http's types may export a namespace object under certain resolutions.
 // Cast it to a callable middleware type so TypeScript accepts the call.
 const pinoHttpMiddleware = (pinoHttp as unknown as (opts?: any) => any);
 
 function corsOrigin(origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
-  if (!origin || allowedOrigins.includes(origin)) {
+  if (!origin) {
+    return callback(null, true);
+  }
+
+  // Allow configured origins from env var
+  const frontendUrl = process.env.FRONTEND_URL || "https://elite-mek-erp-system.vercel.app";
+  const allowedOrigins = frontendUrl
+    .split(",")
+    .map((url) => url.trim())
+    .filter(Boolean);
+
+  if (allowedOrigins.includes(origin)) {
+    return callback(null, true);
+  }
+
+  // Allow all Vercel preview/staging URLs for development
+  if (origin.includes(".vercel.app")) {
+    return callback(null, true);
+  }
+
+  // Allow localhost for local development
+  if (origin.includes("localhost")) {
     return callback(null, true);
   }
 
