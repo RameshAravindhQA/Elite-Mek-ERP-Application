@@ -8,7 +8,7 @@ const outputDir = path.join(artifactDir, ".vercel", "output");
 const functionDir = path.join(outputDir, "functions", "index.func");
 
 async function build() {
-  await buildVercel();
+  const apiDir = await buildVercel();
   await rm(outputDir, { recursive: true, force: true });
   await mkdir(functionDir, { recursive: true });
 
@@ -22,7 +22,7 @@ async function build() {
 
   for (const file of files) {
     const destName = file === "vercel.mjs" ? "index.js" : file;
-    const srcPath = path.join(artifactDir, "api", file);
+    const srcPath = path.join(apiDir, file);
     const destPath = path.join(functionDir, destName);
 
     await cp(srcPath, destPath);
@@ -34,7 +34,7 @@ async function build() {
     "utf8",
   );
 
-  await cp(path.join(artifactDir, "api", "data"), path.join(functionDir, "data"), {
+  await cp(path.join(apiDir, "data"), path.join(functionDir, "data"), {
     recursive: true,
   });
 

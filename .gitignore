@@ -10,6 +10,8 @@ out-tsc
 
 # dependencies
 node_modules
+backend/.vercel-tmp
+backend/api
 
 # IDEs and editors
 /.idea

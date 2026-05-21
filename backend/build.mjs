@@ -131,9 +131,8 @@ export async function buildAll() {
 }
 
 export async function buildVercel() {
-  const apiDir = path.resolve(artifactDir, "api");
-  await rm(path.join(apiDir, "vercel.mjs"), { force: true });
-  await rm(path.join(apiDir, "data"), { recursive: true, force: true });
+  const apiDir = path.resolve(artifactDir, ".vercel-tmp", "api");
+  await rm(apiDir, { recursive: true, force: true });
 
   await esbuild({
     entryPoints: [path.resolve(artifactDir, "src/vercel.ts")],
@@ -151,6 +150,8 @@ export async function buildVercel() {
   });
 
   await copyPdfKitData(apiDir);
+
+  return apiDir;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
