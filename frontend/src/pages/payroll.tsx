@@ -19,6 +19,7 @@ import { Pagination } from "@/components/Pagination";
 import { getAuthHeaders, useApiClient } from "@/lib/api-client";
 import { useMutation } from "@tanstack/react-query";
 import { downloadRowsAsCsv, openRowsPdfPrint } from "@/lib/export-utils";
+import { getBaseApiPath } from "@/lib/api-url";
 
 const fmtINR = (n: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n || 0);
 
@@ -97,7 +98,7 @@ export default function Payroll() {
 
     setIsZipDownloading(true);
     try {
-      const response = await fetch("/api/payroll/batch/download-zip", {
+      const response = await fetch(`${getBaseApiPath()}/payroll/batch/download-zip`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -232,7 +233,7 @@ export default function Payroll() {
     }
 
     try {
-      const response = await fetch(`/api/payroll/${payroll.id}/payslip`, {
+      const response = await fetch(`${getBaseApiPath()}/payroll/${payroll.id}/payslip`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,

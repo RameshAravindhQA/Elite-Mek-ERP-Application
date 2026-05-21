@@ -16,6 +16,7 @@ import { BookOpen, CreditCard, Download, Eye, IndianRupee, Loader2, Search, Shop
 import { useApiClient } from "@/lib/api-client";
 import { useListCustomers, useListProjects } from "@workspace/api-client-react";
 import { format } from "date-fns";
+import { getBaseApiPath } from "@/lib/api-url";
 
 type InvoiceRow = {
   id: number;
@@ -111,7 +112,7 @@ export default function Ledger() {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`/api/ledger/projects/${selectedProjectId}/pdf`, {
+        const response = await fetch(`${getBaseApiPath()}/ledger/projects/${selectedProjectId}/pdf`, {
         method: "GET",
         headers: {
           Authorization: token ? `Bearer ${token}` : "",

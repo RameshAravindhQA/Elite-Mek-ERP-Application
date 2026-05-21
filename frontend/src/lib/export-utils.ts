@@ -3,6 +3,8 @@ type ExportColumn<T> = {
   value: (row: T) => string | number | null | undefined;
 };
 
+import { getBaseApiPath } from "./api-url";
+
 const buildExportHeader = () => {
   const companyLines = [
     localStorage.getItem("company-name"),
@@ -120,7 +122,7 @@ export async function downloadRowsPdfPrint<T>(title: string, rows: T[], columns:
     });
 
     // Call PDF generation endpoint
-    const response = await fetch("/api/reports/generate-pdf", {
+    const response = await fetch(`${getBaseApiPath()}/reports/generate-pdf`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

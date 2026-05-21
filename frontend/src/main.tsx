@@ -3,21 +3,21 @@ import { setAuthTokenGetter, setBaseUrl } from "@workspace/api-client-react";
 import App from "./App";
 import clientLogger from "@/lib/client-logger";
 import { playSound } from "@/lib/sound-effects";
+import { getApiBaseUrl } from "@/lib/api-url";
 import "./index.css";
 
-const apiBaseUrl = import.meta.env.VITE_API_URL?.trim() || import.meta.env.VITE_API_BASE_URL?.trim() || null;
-const normalizedApiBaseUrl = apiBaseUrl ? apiBaseUrl.replace(/\/+$/, "") : null;
-if (normalizedApiBaseUrl) {
-  setBaseUrl(normalizedApiBaseUrl);
+const apiBaseUrl = getApiBaseUrl() || null;
+if (apiBaseUrl) {
+  setBaseUrl(apiBaseUrl);
 
   const originalFetch = window.fetch.bind(window);
   window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
     if (typeof input === "string" && input.startsWith("/api")) {
-      return originalFetch(`${normalizedApiBaseUrl}${input}`, init);
+      return originalFetch(`${apiBaseUrl}${input}`, init);
     }
 
     if (input instanceof Request && input.url.startsWith("/api")) {
-      const requestUrl = `${normalizedApiBaseUrl}${input.url}`;
+      const requestUrl = `${apiBaseUrl}${input.url}`;
       return originalFetch(new Request(requestUrl, input), init);
     }
 

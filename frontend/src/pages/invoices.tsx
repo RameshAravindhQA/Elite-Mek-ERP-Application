@@ -18,6 +18,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { downloadImportTemplate, importModuleFile } from "@/lib/import-utils";
 import { downloadRowsAsCsv, openRowsPdfPrint } from "@/lib/export-utils";
+import { getBaseApiPath } from "@/lib/api-url";
 import { AlertTriangle, CheckCircle, IndianRupee, Loader2, Plus, Search, FileDown, FileSpreadsheet, Edit, Trash2, History, Trash, Upload, Receipt, Eye } from "lucide-react";
 
 export default function Invoices() {
@@ -233,7 +234,7 @@ export default function Invoices() {
 
   const downloadInvoiceFile = async (invoice: any, type: "pdf" | "excel") => {
     const token = localStorage.getItem("token");
-    const response = await fetch(`/api/invoices/${invoice.id}/${type}`, { headers: { Authorization: `Bearer ${token}` } });
+    const response = await fetch(`${getBaseApiPath()}/invoices/${invoice.id}/${type}`, { headers: { Authorization: `Bearer ${token}` } });
     if (!response.ok) {
       toast({ title: "Download failed", description: `Unable to download ${type.toUpperCase()}`, variant: "destructive" });
       return;

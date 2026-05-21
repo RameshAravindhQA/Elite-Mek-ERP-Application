@@ -3,6 +3,7 @@ import { useGetMe, User } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 import clientLogger from "@/lib/client-logger";
 import { playSound } from "@/lib/sound-effects";
+import { getBaseApiPath } from "@/lib/api-url";
 
 interface AuthContextType {
   user: User | null;
@@ -33,7 +34,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const token = localStorage.getItem("token");
     void (async () => {
       try {
-        await fetch("/api/auth/logout", {
+        const logoutUrl = `${getBaseApiPath()}/auth/logout`;
+        await fetch(logoutUrl, {
           method: "POST",
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
           credentials: "include",

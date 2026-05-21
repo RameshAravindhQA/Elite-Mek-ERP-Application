@@ -3,6 +3,8 @@
  * Logs to IndexedDB with automatic size management
  */
 
+import { getBaseApiPath } from "./api-url";
+
 const DB_NAME = "erp_logs_db";
 const STORE_NAME = "logs";
 const DB_VERSION = 1;
@@ -220,7 +222,7 @@ class ClientLogger {
     const token = typeof localStorage !== "undefined" ? localStorage.getItem("token") : null;
     if (!token) return;
 
-    fetch("/api/activity-logs", {
+    fetch(`${getBaseApiPath()}/activity-logs`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

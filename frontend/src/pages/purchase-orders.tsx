@@ -19,6 +19,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Pagination } from "@/components/Pagination";
 import { downloadImportTemplate, importModuleFile } from "@/lib/import-utils";
 import { downloadRowsAsCsv } from "@/lib/export-utils";
+import { getBaseApiPath } from "@/lib/api-url";
 import { CheckCircle, Clock, IndianRupee, Loader2, Plus, Search, FileDown, FileSpreadsheet, Edit, Trash2, History, Trash, Upload, ShoppingCart } from "lucide-react";
 
 export default function PurchaseOrders() {
@@ -104,7 +105,7 @@ export default function PurchaseOrders() {
     }
 
     try {
-      const response = await fetch(`/api/purchase-orders/${po.id}/pdf`, {
+      const response = await fetch(`${getBaseApiPath()}/purchase-orders/${po.id}/pdf`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
