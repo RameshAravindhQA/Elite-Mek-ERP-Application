@@ -28,6 +28,12 @@ async function build() {
     await cp(srcPath, destPath);
   }
 
+  await writeFile(
+    path.join(functionDir, "package.json"),
+    JSON.stringify({ type: "module" }, null, 2),
+    "utf8",
+  );
+
   await cp(path.join(artifactDir, "api", "data"), path.join(functionDir, "data"), {
     recursive: true,
   });
@@ -57,7 +63,7 @@ async function build() {
     JSON.stringify(
       {
         version: 3,
-        routes: [{ src: "/(.*)", dest: "/functions/index.func/index.js" }],
+        routes: [{ src: "/(.*)", dest: "/index" }],
       },
       null,
       2,
