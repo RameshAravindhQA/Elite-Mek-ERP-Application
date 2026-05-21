@@ -3,11 +3,13 @@ import { pool } from "@workspace/db";
 
 const router = Router();
 
-// Simple health endpoint — return minimal runtime-safe response to avoid
-// depending on generated Zod types during typecheck/build.
-router.get("/healthz", (_req: any, res: any) => {
+// Simple health endpoint - return minimal runtime-safe response.
+const healthHandler = (_req: any, res: any) => {
   res.json({ status: "ok" });
-});
+};
+
+router.get("/healthz", healthHandler);
+router.get("/health", healthHandler);
 
 router.get("/db/ping", async (_req: any, res: any) => {
   try {
