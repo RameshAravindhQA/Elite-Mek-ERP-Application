@@ -86,7 +86,7 @@ async function ensureInventoryItems() {
   ]).returning();
 }
 
-async function seedPurchaseOrdersOnly() {
+export async function seedPurchaseOrdersOnly() {
   console.log("Starting purchase orders only seed...");
   await db.execute(sql`TRUNCATE TABLE purchase_orders RESTART IDENTITY CASCADE`);
 
@@ -135,11 +135,11 @@ async function seedPurchaseOrdersOnly() {
   console.log("Purchase orders-only seed completed.");
 }
 
-async function seed() {
+export async function seed() {
   console.log("Starting comprehensive seed...");
 
   // Clear all tables
-  await db.execute(sql`TRUNCATE TABLE attendance_categories, project_tasks, expense_categories, invoices, purchase_orders, inventory_movements, inventory, expenses, revenue, leaves, payroll, attendance, projects, vendors, customers, employees, roles, notifications, audit_logs, reminders, documents, settings RESTART IDENTITY CASCADE`);
+  await db.execute(sql`TRUNCATE TABLE attendance_categories, project_tasks, expense_categories, invoices, purchase_orders, inventory_movements, inventory, expenses, revenue, leaves, payroll, attendance, projects, vendors, customers, employees, roles, notifications, audit_logs, reminders, documents, settings, ledger, ledger_transactions, users RESTART IDENTITY CASCADE`);
 
   // Settings
   await db.insert(settingsTable).values({
