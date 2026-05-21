@@ -15,28 +15,36 @@ function corsOrigin(origin: string | undefined, callback: (err: Error | null, al
     return callback(null, true);
   }
 
-  // Allow configured origins from env var
-  const frontendUrl = process.env.FRONTEND_URL || "https://elite-mek-erp-system.vercel.app";
-  const allowedOrigins = frontendUrl
-    .split(",")
-    .map((url) => url.trim())
-    .filter(Boolean);
-
-  if (allowedOrigins.includes(origin)) {
+  // Production domain
+  if (origin === "https://elite-mek-erp-system.vercel.app") {
     return callback(null, true);
   }
 
-  // Allow all Vercel preview/staging URLs for development
-  if (origin.includes(".vercel.app")) {
+  // Dynamic frontend URLs from env
+  const frontendUrl = process.env.FRONTEND_URL;
+  if (frontendUrl) {
+    const allowedOrigins = frontendUrl
+      .split(",")
+      .map((url) => url.trim())
+      .filter(Boolean);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+  }
+
+  // Pattern: elite-mek-erp-system-*.vercel.app (Vercel preview deployments)
+  if (/^https:\/\/elite-mek-erp-system-[a-zA-Z0-9]+\.vercel\.app$/.test(origin)) {
     return callback(null, true);
   }
 
-  // Allow localhost for local development
-  if (origin.includes("localhost")) {
+  // Localhost for local development
+  if (origin.startsWith("http://localhost:")) {
     return callback(null, true);
   }
 
-  return callback(new Error(`CORS origin denied: ${origin}`));
+  // Reject other origins
+  logger.warn({ origin }, "CORS request from unauthorized origin");
+  return callback(new Error(`CORS policy: Origin ${origin} not allowed`));
 }
 
 app.use(
