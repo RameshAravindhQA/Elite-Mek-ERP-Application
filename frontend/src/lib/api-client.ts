@@ -6,7 +6,7 @@ import { playSound, type SoundEvent } from "./sound-effects";
 type CrudSoundEvent = Extract<SoundEvent, "create" | "update" | "delete">;
 
 const getBaseUrl = () => {
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+  const apiBaseUrl = import.meta.env.VITE_API_URL?.trim() ?? import.meta.env.VITE_API_BASE_URL?.trim();
   if (apiBaseUrl) {
     return apiBaseUrl.endsWith("/") ? apiBaseUrl.slice(0, -1) : apiBaseUrl;
   }
