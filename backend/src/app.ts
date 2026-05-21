@@ -5,7 +5,7 @@ import router from "./routes/index.js";
 import { logger } from "./lib/logger.js";
 
 const app = express();
-const frontendUrl = process.env.FRONTEND_URL || "https://elite-mek-erp-system.vercel.app,https://elite-mek-erp-system-8ycfmwgyj.vercel.app";
+const frontendUrl = process.env.FRONTEND_URL || "https://elite-mek-erp-system.vercel.app,https://elite-mek-erp-system-8ycfmwgyj.vercel.app,https://elite-mek-erp-system-9bfrjz2yt.vercel.app";
 const allowedOrigins = frontendUrl
   .split(",")
   .map((url) => url.trim())
