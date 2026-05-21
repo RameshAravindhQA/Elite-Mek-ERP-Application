@@ -3,6 +3,15 @@ import { describe, expect, it } from 'vitest';
 import app from './app';
 
 describe('Health API', () => {
+  it('returns 200 for /', async () => {
+    const response = await request(app).get('/');
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      message: 'Elite MEK ERP API is running',
+      status: 'ok',
+    });
+  });
+
   it('returns 200 for /api/healthz', async () => {
     const response = await request(app).get('/api/healthz');
     expect(response.status).toBe(200);
