@@ -26,8 +26,23 @@ const useSsl =
   effectiveDatabaseUrl.includes("supabase.com") ||
   effectiveDatabaseUrl.includes("sslmode=") ||
   Boolean(process.env.PGSSLMODE?.trim());
+
+function getConnectionStringForPg(url: string) {
+  if (!useSsl || !url.includes("sslmode=")) {
+    return url;
+  }
+
+  try {
+    const parsed = new URL(url);
+    parsed.searchParams.delete("sslmode");
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
 const poolConfig: pg.PoolConfig = {
-  connectionString: effectiveDatabaseUrl,
+  connectionString: getConnectionStringForPg(effectiveDatabaseUrl),
   max: process.env.VERCEL === "1" ? 1 : 10,
   allowExitOnIdle: process.env.VERCEL === "1",
   idleTimeoutMillis: 10000,
